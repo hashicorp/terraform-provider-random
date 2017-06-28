@@ -68,6 +68,7 @@ The following arguments are supported:
 
 The following attributes are exported:
 
-* `b64` - The generated id presented in base64, using the URL-friendly character set: case-sensitive letters, digits and the characters `_` and `-`.
+* `b64_url` - The generated id presented in base64, using the URL-friendly character set: case-sensitive letters, digits and the characters `_` and `-`.
+* `b64_std` - The generated id presented in base64 without additional transformations.
 * `hex` - The generated id presented in padded hexadecimal digits. This result will always be twice as long as the requested byte length.
 * `dec` - The generated id presented in non-padded decimal digits.
