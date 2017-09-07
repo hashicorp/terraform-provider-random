@@ -10,7 +10,7 @@ import (
 )
 
 func TestAccResourceShuffle(t *testing.T) {
-	resource.Test(t, resource.TestCase{
+	resource.UnitTest(t, resource.TestCase{
 		PreCheck:  func() { testAccPreCheck(t) },
 		Providers: testAccProviders,
 		Steps: []resource.TestStep{
