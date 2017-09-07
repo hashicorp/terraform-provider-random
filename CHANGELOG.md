@@ -1,4 +1,9 @@
 ## 0.1.1 (Unreleased)
+
+NEW FEATURES:
+
+* `random_string` resource generates random strings of a given length consisting of letters, digits and symbols. [GH-5]
+
 ## 0.1.0 (June 21, 2017)
 
 NOTES:
