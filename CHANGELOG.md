@@ -1,8 +1,8 @@
-## 1.0.0 (Unreleased)
+## 1.0.0 (September 15, 2017)
 
 NEW FEATURES:
 
-* `random_string` resource generates random strings of a given length consisting of letters, digits and symbols. [GH-5]
+* `random_string` resource generates random strings of a given length consisting of letters, digits and symbols. ([#5](https://github.com/terraform-providers/terraform-provider-random/issues/5))
 
 ## 0.1.0 (June 21, 2017)
 
