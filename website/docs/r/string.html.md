@@ -44,7 +44,7 @@ The following arguments are supported:
 * `number` - (Optional) (default true) Include numeric characters in random
   string.
 
-* `special` - (Optional) (default false) Include special characters in random
+* `special` - (Optional) (default true) Include special characters in random
   string. These are '!@#$%&*()-_=+[]{}<>:?'
 
 * `override_special` - (Optional) Supply your own list of special characters to
