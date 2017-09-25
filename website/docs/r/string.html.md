@@ -23,7 +23,7 @@ resource "random_string" "password" {
 }
 
 resource "aws_db_instance" "example" {
-  master_password = ${random_string.result}
+  master_password = ${random_string.password.result}
 
   # ... and other aws_db_instance arguments ...
 }
