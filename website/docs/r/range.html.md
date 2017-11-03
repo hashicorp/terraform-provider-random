@@ -24,8 +24,8 @@ resource "random_range" "priority" {
   min     = 1
   max     = 99999
   keepers = {
-    # Generate a new pet name each time we switch to a new AMI id
-    ami_id = "${var.listener_arn}"
+    # Generate a new range each time we switch to a new listener ARN
+    listener_arn = "${var.listener_arn}"
   }
 }
 
