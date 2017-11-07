@@ -24,14 +24,14 @@ resource "random_integer" "priority" {
   min     = 1
   max     = 99999
   keepers = {
-    # Generate a new range each time we switch to a new listener ARN
+    # Generate a new integer each time we switch to a new listener ARN
     listener_arn = "${var.listener_arn}"
   }
 }
 
 resource "aws_alb_listener_rule" "main" {
   listener_arn = "${var.listener_arn}"
-  priority     = "${random_range.priority.result}"
+  priority     = "${random_integer.priority.result}"
 
   action {
     type             = "forward"
