@@ -15,7 +15,7 @@ func Provider() terraform.ResourceProvider {
 			"random_shuffle": resourceShuffle(),
 			"random_pet":     resourcePet(),
 			"random_string":  resourceString(),
-			"random_range":   resourceRange(),
+			"random_integer": resourceInteger(),
 		},
 	}
 }

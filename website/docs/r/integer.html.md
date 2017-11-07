@@ -1,14 +1,14 @@
 ---
 layout: "random"
-page_title: "Random: random_range"
-sidebar_current: "docs-random-resource-range"
+page_title: "Random: random_integer"
+sidebar_current: "docs-random-resource-integer"
 description: |-
-  Generates a random integer value from a range.
+  Generates a random integer values.
 ---
 
-# random\_range
+# random\_integer
 
-The resource `random_range` generates random values from a given range, described by the `min` and `max` attributes of a given resource.
+The resource `random_integer` generates random values from a given range, described by the `min` and `max` attributes of a given resource.
 
 This resource can be used in conjunction with resources that have
 the `create_before_destroy` lifecycle flag set, to avoid conflicts with
@@ -20,7 +20,7 @@ exist concurrently.
 The following example shows how to generate a random priority between 1 and 99999 for
 a `aws_alb_listener_rule` resource:
 ```hcl
-resource "random_range" "priority" {
+resource "random_integer" "priority" {
   min     = 1
   max     = 99999
   keepers = {
@@ -31,7 +31,7 @@ resource "random_range" "priority" {
 
 resource "aws_alb_listener_rule" "main" {
   listener_arn = "${var.listener_arn}"
-  priority     = "${random_range.priority.id}"
+  priority     = "${random_range.priority.result}"
 
   action {
     type             = "forward"
@@ -61,4 +61,5 @@ The following arguments are supported:
 
 The following attributes are supported:
 
-* `id` - (int) The random range value.
+* `id` - (string) An internal id.
+* `result` - (int) The random Integer result.

@@ -8,29 +8,30 @@ import (
 	"github.com/hashicorp/terraform/terraform"
 )
 
-func TestAccResourceRangeBasic(t *testing.T) {
+func TestAccResourceIntegerBasic(t *testing.T) {
 	t.Parallel()
 	resource.UnitTest(t, resource.TestCase{
 		PreCheck:  func() { testAccPreCheck(t) },
 		Providers: testAccProviders,
 		Steps: []resource.TestStep{
 			{
-				Config: testRandomRangeBasic,
+				Config: testRandomIntegerBasic,
 				Check: resource.ComposeTestCheckFunc(
-					testAccResourceRangeBasic("random_range.range_1"),
+					testAccResourceIntegerBasic("random_integer.integer_1"),
 				),
 			},
 		},
 	})
 }
 
-func testAccResourceRangeBasic(id string) resource.TestCheckFunc {
+func testAccResourceIntegerBasic(id string) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 		rs, ok := s.RootModule().Resources[id]
-		result := rs.Primary.ID
 		if !ok {
 			return fmt.Errorf("Not found: %s", id)
 		}
+		result := rs.Primary.Attributes["result"]
+
 		if rs.Primary.ID == "" {
 			return fmt.Errorf("No ID is set")
 		}
@@ -47,8 +48,8 @@ func testAccResourceRangeBasic(id string) resource.TestCheckFunc {
 }
 
 const (
-	testRandomRangeBasic = `
-resource "random_range" "range_1" {
+	testRandomIntegerBasic = `
+resource "random_integer" "integer_1" {
    min  = 1
    max  = 3
    seed = "12345"

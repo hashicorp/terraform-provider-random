@@ -7,10 +7,10 @@ import (
 	"github.com/hashicorp/terraform/helper/schema"
 )
 
-func resourceRange() *schema.Resource {
+func resourceInteger() *schema.Resource {
 	return &schema.Resource{
-		Create: CreateRange,
-		Read:   RepopulateRange,
+		Create: CreateInteger,
+		Read:   RepopulateInteger,
 		Delete: schema.RemoveFromState,
 
 		Schema: map[string]*schema.Schema{
@@ -19,6 +19,7 @@ func resourceRange() *schema.Resource {
 				Optional: true,
 				ForceNew: true,
 			},
+
 			"min": {
 				Type:     schema.TypeInt,
 				Required: true,
@@ -30,16 +31,22 @@ func resourceRange() *schema.Resource {
 				Required: true,
 				ForceNew: true,
 			},
+
 			"seed": {
 				Type:     schema.TypeString,
 				Optional: true,
+				Computed: true,
+			},
+
+			"result": {
+				Type:     schema.TypeInt,
 				Computed: true,
 			},
 		},
 	}
 }
 
-func CreateRange(d *schema.ResourceData, meta interface{}) error {
+func CreateInteger(d *schema.ResourceData, meta interface{}) error {
 	min := d.Get("min").(int)
 	max := d.Get("max").(int)
 	seed := d.Get("seed").(string)
@@ -49,11 +56,13 @@ func CreateRange(d *schema.ResourceData, meta interface{}) error {
 	}
 	rand := NewRand(seed)
 	number := rand.Intn((max+1)-min) + min
+
+	d.Set("result", number)
 	d.SetId(strconv.Itoa(number))
 
 	return nil
 }
 
-func RepopulateRange(d *schema.ResourceData, _ interface{}) error {
+func RepopulateInteger(d *schema.ResourceData, _ interface{}) error {
 	return nil
 }
