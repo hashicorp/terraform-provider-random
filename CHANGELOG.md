@@ -1,4 +1,9 @@
-## 1.0.1 (Unreleased)
+## 1.2.0 (Unreleased)
+
+NEW FEATURES:
+
+* `random_integer` resource generates a single integer within a given range. [GH-12]
+
 ## 1.0.0 (September 15, 2017)
 
 NEW FEATURES:
