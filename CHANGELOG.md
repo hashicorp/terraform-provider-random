@@ -1,8 +1,8 @@
-## 1.1.0 (Unreleased)
+## 1.1.0 (December 01, 2017)
 
 NEW FEATURES:
 
-* `random_integer` resource generates a single integer within a given range. [GH-12]
+* `random_integer` resource generates a single integer within a given range. ([#12](https://github.com/terraform-providers/terraform-provider-random/issues/12))
 
 ## 1.0.0 (September 15, 2017)
 
