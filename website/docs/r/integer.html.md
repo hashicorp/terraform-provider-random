@@ -19,6 +19,7 @@ exist concurrently.
 
 The following example shows how to generate a random priority between 1 and 99999 for
 a `aws_alb_listener_rule` resource:
+
 ```hcl
 resource "random_integer" "priority" {
   min     = 1
