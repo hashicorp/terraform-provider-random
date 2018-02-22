@@ -72,3 +72,18 @@ The following attributes are exported:
 * `b64_std` - The generated id presented in base64 without additional transformations.
 * `hex` - The generated id presented in padded hexadecimal digits. This result will always be twice as long as the requested byte length.
 * `dec` - The generated id presented in non-padded decimal digits.
+
+## Import
+
+Random Ids can be imported using the `b64_url` with an optional `prefix`. This can be used to replace a config value with a value
+interpolated from the random provider without experiencing diffs.
+
+Example with no prefix:
+```
+$ terraform import random_id.server p-9hUg
+```
+
+Example with prefix (prefix is separated by a `,`):
+```
+$ terraform import random_id.server my-prefix-,p-9hUg
+```
