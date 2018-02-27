@@ -20,6 +20,7 @@ ie. if length = 4 and special = true, output could be 'Aa0#' or '1111'
 resource "random_string" "password" {
   length = 16
   special = true
+  override_special = "/@\" "
 }
 
 resource "aws_db_instance" "example" {
