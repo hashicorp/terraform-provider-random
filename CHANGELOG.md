@@ -2,7 +2,7 @@
 
 NEW FEATURES:
 
-* `random_integer` and `random_string` are now importable. [GH-20]
+* `random_integer` and `random_id` are now importable. [GH-20]
 
 ## 1.1.0 (December 01, 2017)
 
