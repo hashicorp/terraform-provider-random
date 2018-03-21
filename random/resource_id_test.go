@@ -37,6 +37,17 @@ func TestAccResourceID(t *testing.T) {
 					}),
 				),
 			},
+			{
+				ResourceName:      "random_id.foo",
+				ImportState:       true,
+				ImportStateVerify: true,
+			},
+			{
+				ResourceName:        "random_id.bar",
+				ImportState:         true,
+				ImportStateIdPrefix: "cloud-,",
+				ImportStateVerify:   true,
+			},
 		},
 	})
 }
@@ -85,7 +96,7 @@ resource "random_id" "foo" {
 
 resource "random_id" "bar" {
   byte_length = 4
-	prefix      = "cloud-"
+  prefix      = "cloud-"
 }
 `
 )

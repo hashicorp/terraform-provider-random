@@ -20,6 +20,12 @@ func TestAccResourceIntegerBasic(t *testing.T) {
 					testAccResourceIntegerBasic("random_integer.integer_1"),
 				),
 			},
+			{
+				ResourceName:      "random_integer.integer_1",
+				ImportState:       true,
+				ImportStateId:     "3,1,3,12345",
+				ImportStateVerify: true,
+			},
 		},
 	})
 }
