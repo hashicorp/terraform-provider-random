@@ -1,8 +1,8 @@
-## 1.2.0 (Unreleased)
+## 1.2.0 (April 03, 2018)
 
 NEW FEATURES:
 
-* `random_integer` and `random_id` are now importable. [GH-20]
+* `random_integer` and `random_id` are now importable. ([#20](https://github.com/terraform-providers/terraform-provider-random/issues/20))
 
 ## 1.1.0 (December 01, 2017)
 
