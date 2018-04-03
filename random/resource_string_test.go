@@ -2,6 +2,7 @@ package random
 
 import (
 	"fmt"
+	"regexp"
 	"testing"
 
 	"github.com/hashicorp/terraform/helper/resource"
@@ -30,6 +31,13 @@ func TestAccResourceString(t *testing.T) {
 						customLen: 4,
 					}),
 					patternMatch("random_string.three", "!!!!"),
+					testAccResourceStringCheck("random_string.min", &customLens{
+						customLen: 12,
+					}),
+					regexMatch("random_string.min", regexp.MustCompile(`([a-z])`), 2),
+					regexMatch("random_string.min", regexp.MustCompile(`([A-Z])`), 3),
+					regexMatch("random_string.min", regexp.MustCompile(`([0-9])`), 4),
+					regexMatch("random_string.min", regexp.MustCompile(`([!#@])`), 1),
 				),
 			},
 		},
@@ -56,6 +64,25 @@ func testAccResourceStringCheck(id string, want *customLens) resource.TestCheckF
 	}
 }
 
+func regexMatch(id string, exp *regexp.Regexp, requiredMatches int) resource.TestCheckFunc {
+	return func(s *terraform.State) error {
+		rs, ok := s.RootModule().Resources[id]
+		if !ok {
+			return fmt.Errorf("Not found: %s", id)
+		}
+		if rs.Primary.ID == "" {
+			return fmt.Errorf("No ID is set")
+		}
+
+		customStr := rs.Primary.Attributes["result"]
+
+		if matches := exp.FindAllStringSubmatchIndex(customStr, -1); len(matches) < requiredMatches {
+			return fmt.Errorf("custom string is %s; did not match %s", customStr, exp)
+		}
+
+		return nil
+	}
+}
 func patternMatch(id string, want string) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 		rs, ok := s.RootModule().Resources[id]
@@ -91,6 +118,15 @@ resource "random_string" "three" {
   lower = false
   upper = false
   number = false
+}
+
+resource "random_string" "min" {
+  length = 12
+  override_special = "!#@"
+  min_lower = 2
+  min_upper = 3
+  min_special = 1
+  min_numeric = 4
 }
 
 `

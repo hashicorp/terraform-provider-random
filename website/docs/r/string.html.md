@@ -9,10 +9,7 @@ description: |-
 # random\_string
 
 The resource `random_string` generates a random permutation of alphanumeric
-characters and optionally special characters.  This resource does not provide
-any guarantee that the random string will contain specific characters.
-ie. if length = 4 and special = true, output could be 'Aa0#' or '1111'
-
+characters and optionally special characters.
 
 ## Example Usage
 
@@ -37,14 +34,26 @@ The following arguments are supported:
 * `upper` - (Optional) (default true) Include uppercase alphabet characters
   in random string.
 
+* `min_upper` - (Optional) (default 0) Minimum number of uppercase alphabet
+  characters in random string.
+
 * `lower` - (Optional) (default true) Include lowercase alphabet characters
   in random string.
+
+* `min_lower` - (Optional) (default 0) Minimum number of lowercase alphabet
+  characters in random string.
 
 * `number` - (Optional) (default true) Include numeric characters in random
   string.
 
+* `min_numeric` - (Optional) (default 0) Minimum number of numeric characters
+  in random string.
+
 * `special` - (Optional) (default true) Include special characters in random
   string. These are '!@#$%&*()-_=+[]{}<>:?'
+
+* `min_special` - (Optional) (default 0) Minimum number of special characters
+  in random string.
 
 * `override_special` - (Optional) Supply your own list of special characters to
   use for string generation.  This overrides characters list in the special
