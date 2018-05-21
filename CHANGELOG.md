@@ -1,12 +1,12 @@
-## 1.3.0 (Unreleased)
+## 1.3.0 (May 21, 2018)
 
 BUG FIXES:
 
-* `random_integer` now supports update [GH-25]
+* `random_integer` now supports update ([#25](https://github.com/terraform-providers/terraform-provider-random/issues/25))
 
 IMPROVEMENTS:
 
-* Add optional minimum character constraints to `random_string` [GH-22]
+* Add optional minimum character constraints to `random_string` ([#22](https://github.com/terraform-providers/terraform-provider-random/issues/22))
 
 ## 1.2.0 (April 03, 2018)
 
