@@ -1,9 +1,12 @@
 ## 1.3.0 (Unreleased)
 
-NEW FEATURES:
+BUG FIXES:
 
-* `random_integer` now supports update ([GH-25])
-* Add optional minimum character constraints to `random_string` ([GH-22])
+* `random_integer` now supports update [GH-25]
+
+IMPROVEMENTS:
+
+* Add optional minimum character constraints to `random_string` [GH-22]
 
 ## 1.2.0 (April 03, 2018)
 
