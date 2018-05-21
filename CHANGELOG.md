@@ -1,4 +1,7 @@
 ## 1.2.1 (Unreleased)
+
+* Add optional minimum character constraints to random_string ([GH-22])
+
 ## 1.2.0 (April 03, 2018)
 
 NEW FEATURES:
