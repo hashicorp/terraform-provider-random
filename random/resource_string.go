@@ -15,6 +15,9 @@ func resourceString() *schema.Resource {
 		Read:   ReadString,
 		Delete: schema.RemoveFromState,
 
+		SchemaVersion: 1,
+		MigrateState:  resourceStringMigrateState,
+
 		Schema: map[string]*schema.Schema{
 			"keepers": {
 				Type:     schema.TypeMap,
