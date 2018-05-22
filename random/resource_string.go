@@ -11,10 +11,11 @@ import (
 
 func resourceString() *schema.Resource {
 	return &schema.Resource{
-		Create: CreateString,
-		Read:   ReadString,
-		Delete: schema.RemoveFromState,
-
+		Create:        CreateString,
+		Read:          ReadString,
+		Delete:        schema.RemoveFromState,
+		MigrateState:  resourceRandomStringMigrateState,
+		SchemaVersion: 1,
 		Schema: map[string]*schema.Schema{
 			"keepers": {
 				Type:     schema.TypeMap,
