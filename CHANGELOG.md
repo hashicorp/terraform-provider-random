@@ -1,4 +1,9 @@
 ## 1.3.1 (Unreleased)
+
+BUG FIXES:
+
+* Add migration and new schema version for `resource_string` [GH-29]
+
 ## 1.3.0 (May 21, 2018)
 
 BUG FIXES:
