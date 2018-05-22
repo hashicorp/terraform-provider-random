@@ -1,8 +1,8 @@
-## 1.3.1 (Unreleased)
+## 1.3.1 (May 22, 2018)
 
 BUG FIXES:
 
-* Add migration and new schema version for `resource_string` [GH-29]
+* Add migration and new schema version for `resource_string` ([#29](https://github.com/terraform-providers/terraform-provider-random/issues/29))
 
 ## 1.3.0 (May 21, 2018)
 
