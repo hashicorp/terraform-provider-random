@@ -1,6 +1,7 @@
 package random
 
 import (
+	"errors"
 	"github.com/hashicorp/terraform/helper/schema"
 )
 
@@ -52,6 +53,10 @@ func resourceShuffle() *schema.Resource {
 func CreateShuffle(d *schema.ResourceData, _ interface{}) error {
 	input := d.Get("input").([]interface{})
 	seed := d.Get("seed").(string)
+
+	if len(input) < 1 {
+		return errors.New("input can't be empty")
+	}
 
 	resultCount := d.Get("result_count").(int)
 	if resultCount == 0 {
