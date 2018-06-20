@@ -11,13 +11,13 @@ description: |-
 The resource `random_id` generates random numbers that are intended to be
 used as unique identifiers for other resources.
 
-Unlike other resources in the "random" provider, this resource *does* use a
-cryptographic random number generator in order to minimize the chance of
-collisions, making the results of this resource when a 32-byte identifier
-is requested of equivalent uniqueness to a type-4 UUID.
+This resource *does* use a cryptographic random number generator in order
+to minimize the chance of collisions, making the results of this resource
+when a 32-byte identifier is requested of equivalent uniqueness to a
+type-4 UUID.
 
-This resource can be used in conjunction with resources that have,
-the `create_before_destroy` lifecycle flag set, to avoid conflicts with
+This resource can be used in conjunction with resources that have
+the `create_before_destroy` lifecycle flag set to avoid conflicts with
 unique names during the brief period where both the old and new resources
 exist concurrently.
 
