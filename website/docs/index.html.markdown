@@ -66,6 +66,15 @@ resource "aws_instance" "server" {
 }
 ```
 
+Security note: if you are using private information such as an SSL certificate in a keeper, make sure to hash it first (or even just a portion of it). This prevents accidental exposure of the certificate when viewing execution plan.  For example:
+
+```hcl
+  keepers {
+    private_key = "${base64sha256(file("my/private_key.pem"))}"
+    certificate = "${base64sha256(file("my/certificate.pem"))}"
+  }
+```
+
 Resource "keepers" are optional. The other arguments to each resource must
 *also* remain constant in order to retain a random result.
 
