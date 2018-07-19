@@ -4,6 +4,10 @@ NEW FEATURES:
 
 * `random_uuid` generates random uuid string that is intended to be used as unique identifiers for other resources [GH-38]
 
+IMPROVEMENTS:
+
+* Replace ReadPet function in `resource_pet` with schema.Noop [GH-34]
+
 ## 1.3.1 (May 22, 2018)
 
 BUG FIXES:
