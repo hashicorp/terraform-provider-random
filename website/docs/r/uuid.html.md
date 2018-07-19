@@ -6,7 +6,7 @@ description: |-
   Generates a random identifier.
 ---
 
-# random\_id
+# random\_uuid
 
 The resource `random_uuid` generates random uuid string that is intended to be
 used as unique identifiers for other resources.
