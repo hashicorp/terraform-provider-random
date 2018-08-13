@@ -1,7 +1,7 @@
 ## 2.0.0 (Unreleased)
 
 BACKWARDS INCOMPATIBILITIES / NOTES:
-* `random_string`: set the ID for random_string resources to "none". Any terraform configuration referring to `random_string.foo.id` will need to be updated to reference `random_string.foo.result`
+* `random_string`: set the ID for random_string resources to "none". Any terraform configuration referring to `random_string.foo.id` will need to be updated to reference `random_string.foo.result` [GH-17]
 
 NEW FEATURES:
 
