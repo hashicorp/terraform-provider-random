@@ -69,5 +69,7 @@ resource "aws_instance" "server" {
 Resource "keepers" are optional. The other arguments to each resource must
 *also* remain constant in order to retain a random result.
 
+`keepers` are *not* treated as sensitive attributes; a value used for `keepers` will be displayed in Terraform UI output as plaintext.
+
 To force a random result to be replaced, the `taint` command can be used to
 produce a new result on the next run.
