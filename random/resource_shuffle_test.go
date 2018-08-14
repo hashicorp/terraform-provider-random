@@ -14,7 +14,7 @@ func TestAccResourceShuffle(t *testing.T) {
 		PreCheck:  func() { testAccPreCheck(t) },
 		Providers: testAccProviders,
 		Steps: []resource.TestStep{
-			resource.TestStep{
+			{
 				Config: testAccResourceShuffleConfig,
 				Check: resource.ComposeTestCheckFunc(
 					// These results are current as of Go 1.6. The Go
@@ -37,6 +37,14 @@ func TestAccResourceShuffle(t *testing.T) {
 					testAccResourceShuffleCheck(
 						"random_shuffle.longer_length",
 						[]string{"a", "c", "b", "e", "d", "a", "e", "d", "c", "b", "a", "b"},
+					),
+					testAccResourceShuffleCheck(
+						"random_shuffle.empty_length",
+						[]string{},
+					),
+					testAccResourceShuffleCheck(
+						"random_shuffle.one_length",
+						[]string{"a"},
 					),
 				),
 			},
@@ -88,4 +96,15 @@ resource "random_shuffle" "longer_length" {
     seed = "-"
     result_count = 12
 }
+resource "random_shuffle" "empty_length" {
+    input = []
+    seed = "-"
+    result_count = 12
+}
+resource "random_shuffle" "one_length" {
+    input = ["a"]
+    seed = "-"
+    result_count = 1
+}
+
 `
