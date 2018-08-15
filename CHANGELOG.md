@@ -1,19 +1,19 @@
-## 2.0.0 (Unreleased)
+## 2.0.0 (August 15, 2018)
 
 BACKWARDS INCOMPATIBILITIES / NOTES:
-* `random_string`: set the ID for random_string resources to "none". Any terraform configuration referring to `random_string.foo.id` will need to be updated to reference `random_string.foo.result` [GH-17]
+* `random_string`: set the ID for random_string resources to "none". Any terraform configuration referring to `random_string.foo.id` will need to be updated to reference `random_string.foo.result` ([#17](https://github.com/terraform-providers/terraform-provider-random/issues/17))
 
 NEW FEATURES:
 
-* `random_uuid` generates random uuid string that is intended to be used as unique identifiers for other resources [GH-38]
+* `random_uuid` generates random uuid string that is intended to be used as unique identifiers for other resources ([#38](https://github.com/terraform-providers/terraform-provider-random/issues/38))
 
 BUG FIXES: 
-* Use UnixNano() instead of Unix() for the current time seed in NewRand() [GH-27]
+* Use UnixNano() instead of Unix() for the current time seed in NewRand() ([#27](https://github.com/terraform-providers/terraform-provider-random/issues/27))
 * `random_shuffle`: if `random_shuffle` is given an empty list, it will return an empty list
 
 IMPROVEMENTS:
 
-* Replace ReadPet function in `resource_pet` with schema.Noop [GH-34]
+* Replace ReadPet function in `resource_pet` with schema.Noop ([#34](https://github.com/terraform-providers/terraform-provider-random/issues/34))
 
 ## 1.3.1 (May 22, 2018)
 
