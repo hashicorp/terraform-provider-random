@@ -9,6 +9,7 @@ NEW FEATURES:
 
 BUG FIXES: 
 * Use UnixNano() instead of Unix() for the current time seed in NewRand() [GH-27]
+* `random_shuffle`: if `random_shuffle` is given an empty list, it will return an empty list
 
 IMPROVEMENTS:
 
