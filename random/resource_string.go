@@ -4,6 +4,7 @@ import (
 	"crypto/rand"
 	"math/big"
 	"sort"
+	"strconv"
 
 	"github.com/hashicorp/errwrap"
 	"github.com/hashicorp/terraform/helper/schema"
@@ -11,9 +12,12 @@ import (
 
 func resourceString() *schema.Resource {
 	return &schema.Resource{
-		Create:        CreateString,
-		Read:          ReadString,
-		Delete:        schema.RemoveFromState,
+		Create: CreateString,
+		Read:   ReadString,
+		Delete: schema.RemoveFromState,
+		Importer: &schema.ResourceImporter{
+			State: ImportString,
+		},
 		MigrateState:  resourceRandomStringMigrateState,
 		SchemaVersion: 1,
 		Schema: map[string]*schema.Schema{
@@ -162,7 +166,8 @@ func CreateString(d *schema.ResourceData, meta interface{}) error {
 	})
 
 	d.Set("result", string(result))
-	d.SetId("none")
+	d.SetId(string(result))
+
 	return nil
 }
 
@@ -179,6 +184,16 @@ func generateRandomBytes(charSet *string, length int) ([]byte, error) {
 	return bytes, nil
 }
 
-func ReadString(d *schema.ResourceData, meta interface{}) error {
+func ReadString(d *schema.ResourceData, _ interface{}) error {
 	return nil
+}
+
+func ImportString(d *schema.ResourceData, _ interface{}) ([]*schema.ResourceData, error) {
+	result := d.Id()
+
+	d.Set("length", strconv.Itoa(len(result)))
+	d.Set("result", result)
+	d.SetId(result)
+
+	return []*schema.ResourceData{d}, nil
 }

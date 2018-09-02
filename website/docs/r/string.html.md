@@ -73,3 +73,13 @@ The following attributes are exported:
 
 * `result` - Random string generated.
 
+## Import
+
+Random strings can be imported using the `result`.  This can be used to
+replace a config value with a value interpolated from the random provider
+without experiencing diffs.
+
+Example:
+```
+$ terraform import random_string.password foobarbaz
+```
