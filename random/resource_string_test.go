@@ -40,6 +40,16 @@ func TestAccResourceString(t *testing.T) {
 					regexMatch("random_string.min", regexp.MustCompile(`([!#@])`), 1),
 				),
 			},
+			{
+				ResourceName:      "random_string.foo",
+				ImportState:       true,
+				ImportStateVerify: true,
+			},
+			{
+				ResourceName:      "random_string.bar",
+				ImportState:       true,
+				ImportStateVerify: true,
+			},
 		},
 	})
 }
@@ -128,6 +138,5 @@ resource "random_string" "min" {
   min_special = 1
   min_numeric = 4
 }
-
 `
 )
