@@ -9,7 +9,7 @@ import (
 func resourceUuid() *schema.Resource {
 	return &schema.Resource{
 		Create: CreateUuid,
-		Read:   RepopulateUuid,
+		Read:   schema.Noop,
 		Delete: schema.RemoveFromState,
 		Importer: &schema.ResourceImporter{
 			State: ImportUuid,
@@ -37,10 +37,6 @@ func CreateUuid(d *schema.ResourceData, meta interface{}) error {
 	}
 	d.Set("result", result)
 	d.SetId(result)
-	return nil
-}
-
-func RepopulateUuid(d *schema.ResourceData, _ interface{}) error {
 	return nil
 }
 
