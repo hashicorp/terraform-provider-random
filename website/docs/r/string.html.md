@@ -19,7 +19,8 @@ This resource *does* use a cryptographic random number generator.
 resource "random_string" "password" {
   length = 16
   special = true
-  override_special = "/@\" "
+  # removing '@' and '$' from the default special character list
+  override_special = '!#%&*()-_=+[]{}<>:?'
 }
 
 resource "aws_db_instance" "example" {
