@@ -162,7 +162,7 @@ func CreateString(d *schema.ResourceData, meta interface{}) error {
 	})
 
 	d.Set("result", string(result))
-	d.SetId("none")
+	d.SetId(string(result))
 	return nil
 }
 
