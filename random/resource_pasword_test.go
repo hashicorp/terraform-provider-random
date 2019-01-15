@@ -8,6 +8,13 @@ import (
 	"github.com/hashicorp/terraform/helper/resource"
 )
 
+/*********************************************************
+  See resource_string_test.go for the additional details.
+  resource_password and resource_string are intended to
+  be identical other than the result of resource_password
+  is treated as sensitive information.
+*********************************************************/
+
 func TestAccResourcePassword(t *testing.T) {
 	resource.UnitTest(t, resource.TestCase{
 		PreCheck:  func() { testAccPreCheck(t) },

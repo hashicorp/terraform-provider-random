@@ -4,6 +4,13 @@ import (
 	"github.com/hashicorp/terraform/helper/schema"
 )
 
+/*********************************************************
+  See resource_string.go for the implementation.
+  resource_password and resource_string are intended to
+  be identical other than the result of resource_password
+  is treated as sensitive information.
+*********************************************************/
+
 func resourcePassword() *schema.Resource {
 	resourcePassword := resourceString()
 	resourcePassword.Create = CreatePassword
