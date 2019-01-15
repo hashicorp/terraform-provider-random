@@ -13,6 +13,8 @@ characters and optionally special characters.
 
 This resource *does* use a cryptographic random number generator.
 
+For generating secret strings, such as passwords, see [random_password](password.html).
+
 ## Example Usage
 
 ```hcl
