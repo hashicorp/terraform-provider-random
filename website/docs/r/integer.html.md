@@ -17,13 +17,13 @@ exist concurrently.
 
 ## Example Usage
 
-The following example shows how to generate a random priority between 1 and 99999 for
+The following example shows how to generate a random priority between 1 and 50000 for
 a `aws_alb_listener_rule` resource:
 
 ```hcl
 resource "random_integer" "priority" {
   min     = 1
-  max     = 99999
+  max     = 50000
   keepers = {
     # Generate a new integer each time we switch to a new listener ARN
     listener_arn = "${var.listener_arn}"
@@ -72,5 +72,5 @@ This can be used to replace a config value with a value interpolated from the ra
 
 Example (values are separated by a `,`):
 ```
-$ terraform import random_integer.priority 15390,1,99999
+$ terraform import random_integer.priority 15390,1,50000
 ```
