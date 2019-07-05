@@ -19,7 +19,7 @@ This resource *does* use a cryptographic random number generator.
 resource "random_string" "password" {
   length = 16
   special = true
-  override_special = "/@\" "
+  override_special = "/@£$"
 }
 
 resource "aws_db_instance" "example" {
@@ -58,7 +58,7 @@ The following arguments are supported:
   in random string.
 
 * `override_special` - (Optional) Supply your own list of special characters to
-  use for string generation.  This overrides characters list in the special
+  use for string generation.  This overrides the default character list in the special
   argument.  The special argument must still be set to true for any overwritten
   characters to be used in generation.
 
