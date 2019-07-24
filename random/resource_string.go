@@ -92,8 +92,9 @@ func resourceString() *schema.Resource {
 			},
 
 			"result": {
-				Type:     schema.TypeString,
-				Computed: true,
+				Type:      schema.TypeString,
+				Computed:  true,
+				Sensitive: true,
 			},
 		},
 	}
