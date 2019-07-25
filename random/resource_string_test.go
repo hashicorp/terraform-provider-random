@@ -9,14 +9,6 @@ import (
 	"github.com/hashicorp/terraform/terraform"
 )
 
-/*********************************************************
-  All changes here must be compatible with and reflected
-  in resource_password_test.go
-  resource_password and resource_string are intended to
-  be identical other than the result of resource_password
-  is treated as sensitive information.
-*********************************************************/
-
 type customLens struct {
 	customLen int
 }

@@ -3,7 +3,7 @@ layout: "random"
 page_title: "Random: random_password"
 sidebar_current: "docs-random-resource-password"
 description: |-
-  Identical to random_string with the exception that the result is treated as sensitive.
+  Produces a random string of a length using alphanumeric characters and optionally special characters. The result will be displayed to console or in any logs.
 ---
 
 # random\_password
