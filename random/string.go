@@ -161,7 +161,7 @@ func createStringFunc(sensitive bool) func(d *schema.ResourceData, meta interfac
 
 		d.Set("result", string(result))
 		if sensitive {
-			d.SetId(string(result))
+			d.SetId("none")
 		} else {
 			d.SetId(string(result))
 		}
