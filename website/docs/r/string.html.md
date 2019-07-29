@@ -15,7 +15,7 @@ This resource *does* use a cryptographic random number generator.
 
 Historically this resource's intended usage has been ambiguous as the original example
 used it in a password. For backwards compatibility it will
-continue to exists. For unique ids please use [random_id](id.html), for console and log safe
+continue to exist. For unique ids please use [random_id](id.html), for console and log safe
 random values please use [random_password](password.html).
 
 ## Example Usage
