@@ -1,4 +1,9 @@
 ## 2.2.0 (Unreleased)
+
+NEW FEATURES:
+
+* `random_password` is similar to `random_string` but is marked sensitive for logs and output [GH-52] 
+
 ## 2.1.2 (April 30, 2019)
 
 * This release includes another Terraform SDK upgrade intended to align with that being used for other providers as we prepare for the Core v0.12.0 release. It should have no significant changes in behavior for this provider.
