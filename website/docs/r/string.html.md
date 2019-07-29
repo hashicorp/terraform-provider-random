@@ -13,17 +13,24 @@ characters and optionally special characters.
 
 This resource *does* use a cryptographic random number generator.
 
+Historically this resource's intended usage has been ambiguous as the original example
+used it in a password. For backwards compatibility it will
+continue to exist. For unique ids please use [random_id](id.html), for console and log safe
+random values please use [random_password](password.html).
+
 ## Example Usage
 
 ```hcl
-resource "random_string" "password" {
+resource "random_string" "random" {
   length = 16
   special = true
   override_special = "/@\" "
 }
 
-resource "aws_db_instance" "example" {
-  password = "${random_string.password.result}"
+resource "aws_instance" "server" {
+  tags = {
+    Deployment = "web-server-${random_string.random.result}"
+  }
 }
 ```
 
