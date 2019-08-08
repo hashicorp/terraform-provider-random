@@ -1,8 +1,8 @@
-## 2.2.0 (Unreleased)
+## 2.2.0 (August 08, 2019)
 
 NEW FEATURES:
 
-* `random_password` is similar to `random_string` but is marked sensitive for logs and output [GH-52] 
+* `random_password` is similar to `random_string` but is marked sensitive for logs and output [[#52](https://github.com/terraform-providers/terraform-provider-random/issues/52)] 
 
 ## 2.1.2 (April 30, 2019)
 
