@@ -8,6 +8,8 @@ description: |-
 
 # random\_password
 
+~> **Note:** Requires random provider version >= 2.2.0
+
 Identical to [random_string](string.html) with the exception that the
 result is treated as sensitive and, thus, not displayed in console output.
 
