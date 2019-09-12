@@ -24,7 +24,7 @@ random values please use [random_password](password.html).
 resource "random_string" "random" {
   length = 16
   special = true
-  override_special = "/@\" "
+  override_special = "/@£$"
 }
 
 resource "aws_instance" "server" {
@@ -65,7 +65,7 @@ The following arguments are supported:
   in random string.
 
 * `override_special` - (Optional) Supply your own list of special characters to
-  use for string generation.  This overrides characters list in the special
+  use for string generation.  This overrides the default character list in the special
   argument.  The special argument must still be set to true for any overwritten
   characters to be used in generation.
 
