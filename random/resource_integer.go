@@ -12,7 +12,7 @@ import (
 func resourceInteger() *schema.Resource {
 	return &schema.Resource{
 		Create: CreateInteger,
-		Read:   RepopulateInteger,
+		Read:   schema.Noop,
 		Delete: schema.RemoveFromState,
 		Importer: &schema.ResourceImporter{
 			State: ImportInteger,
@@ -65,10 +65,6 @@ func CreateInteger(d *schema.ResourceData, meta interface{}) error {
 	d.Set("result", number)
 	d.SetId(strconv.Itoa(number))
 
-	return nil
-}
-
-func RepopulateInteger(d *schema.ResourceData, _ interface{}) error {
 	return nil
 }
 
