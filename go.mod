@@ -5,5 +5,5 @@ require (
 	github.com/hashicorp/errwrap v1.0.0
 	github.com/hashicorp/go-uuid v1.0.1
 	github.com/hashicorp/hcl v1.0.0 // indirect
-	github.com/hashicorp/terraform v0.12.0-alpha4.0.20190424121927-9327eedb0417
+	github.com/hashicorp/terraform v0.12.8
 )
