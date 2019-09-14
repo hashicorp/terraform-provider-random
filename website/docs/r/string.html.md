@@ -15,7 +15,7 @@ This resource *does* use a cryptographic random number generator.
 
 Historically this resource's intended usage has been ambiguous as the original example
 used it in a password. For backwards compatibility it will
-continue to exist. For unique ids please use [random_id](id.html), for console and log safe
+continue to exist. For unique ids please use [random_id](id.html), for sensitive
 random values please use [random_password](password.html).
 
 ## Example Usage
@@ -25,12 +25,6 @@ resource "random_string" "random" {
   length = 16
   special = true
   override_special = "/@£$"
-}
-
-resource "aws_instance" "server" {
-  tags = {
-    Deployment = "web-server-${random_string.random.result}"
-  }
 }
 ```
 
@@ -59,7 +53,7 @@ The following arguments are supported:
   in random string.
 
 * `special` - (Optional) (default true) Include special characters in random
-  string. These are '!@#$%&*()-_=+[]{}<>:?'
+  string. These are `!@#$%&*()-_=+[]{}<>:?`
 
 * `min_special` - (Optional) (default 0) Minimum number of special characters
   in random string.
@@ -73,10 +67,8 @@ The following arguments are supported:
   trigger a new id to be generated. See
   [the main provider documentation](../index.html) for more information.
 
-
 ## Attributes Reference
 
 The following attributes are exported:
 
 * `result` - Random string generated.
-
