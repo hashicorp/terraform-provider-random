@@ -1,8 +1,8 @@
-## 2.2.1 (Unreleased)
+## 2.2.1 (September 25, 2019)
 
 NOTES:
 
-* The provider has switched to the standalone TF SDK, there should be no noticeable impact on compatibility. [GH-76]
+* The provider has switched to the standalone TF SDK, there should be no noticeable impact on compatibility. ([#76](https://github.com/terraform-providers/terraform-provider-random/issues/76))
 
 ## 2.2.0 (August 08, 2019)
 
