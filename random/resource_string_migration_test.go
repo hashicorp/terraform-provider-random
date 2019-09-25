@@ -3,7 +3,7 @@ package random
 import (
 	"testing"
 
-	"github.com/hashicorp/terraform/terraform"
+	"github.com/hashicorp/terraform-plugin-sdk/terraform"
 )
 
 func TestResourceStringMigrateState(t *testing.T) {
