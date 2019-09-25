@@ -1,4 +1,9 @@
 ## 2.3.0 (Unreleased)
+
+NOTES:
+
+* The provider has switched to the standalone TF SDK, there should be no noticeable impact on compatibility. [GH-76]
+
 ## 2.2.0 (August 08, 2019)
 
 NEW FEATURES:
