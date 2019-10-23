@@ -33,6 +33,6 @@ resource "aws_db_instance" "example" {
   allocated_storage = 64
   engine = "mysql"
   username = "someone"
-  password = random_string.password.result
+  password = random_password.password.result
 }
 ```
