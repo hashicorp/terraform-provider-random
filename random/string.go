@@ -185,3 +185,34 @@ func generateRandomBytes(charSet *string, length int) ([]byte, error) {
 func readNil(d *schema.ResourceData, meta interface{}) error {
 	return nil
 }
+
+//ImportString will import string resource and will match the resource criteria
+func ImportString(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
+
+	val := d.Id()
+
+	d.Set("length", len(val))
+	d = UpperCharsInValue(d)
+	d = LowerCharsInValue(d)
+	d = SpecialCharsInValue(d)
+	d = NumbersInValue(d)
+	d.Set("result", val)
+
+	return []*schema.ResourceData{d}, nil
+}
+
+//ImportPassword will import password resource and will match any attributes that are required for the resource change
+func ImportPassword(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
+
+	val := d.Id()
+
+	d.Set("length", len(val))
+	d = UpperCharsInValue(d)
+	d = LowerCharsInValue(d)
+	d = SpecialCharsInValue(d)
+	d = NumbersInValue(d)
+	d.SetId("none")
+	d.Set("result", val)
+
+	return []*schema.ResourceData{d}, nil
+}
