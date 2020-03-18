@@ -35,6 +35,11 @@ func TestAccResourcePassword(t *testing.T) {
 					regexMatch("random_password.min", regexp.MustCompile(`([!#@])`), 1),
 				),
 			},
+			{
+				ResourceName:      "random_password.import",
+				ImportState:       true,
+				ImportStateVerify: false,
+			},
 		},
 	})
 }
