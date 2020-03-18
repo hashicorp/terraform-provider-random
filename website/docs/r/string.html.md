@@ -72,3 +72,11 @@ The following arguments are supported:
 The following attributes are exported:
 
 * `result` - Random string generated.
+
+## Import
+
+Strings can be imported by just specifying the value of the string:
+
+```
+terraform import random_string.test  test
+```

@@ -12,5 +12,8 @@ func resourceString() *schema.Resource {
 		MigrateState:  resourceRandomStringMigrateState,
 		SchemaVersion: 1,
 		Schema:        stringSchemaV1(false),
+		Importer: &schema.ResourceImporter{
+			State: importStringFunc(false),
+		},
 	}
 }

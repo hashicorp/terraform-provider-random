@@ -1,11 +1,13 @@
 package random
 
 import (
+	"fmt"
 	"regexp"
 	"strings"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/terraform"
 )
 
 func TestAccResourcePassword(t *testing.T) {
@@ -34,6 +36,40 @@ func TestAccResourcePassword(t *testing.T) {
 					regexMatch("random_password.min", regexp.MustCompile(`([0-9])`), 4),
 					regexMatch("random_password.min", regexp.MustCompile(`([!#@])`), 1),
 				),
+			},
+			// TODO: for some reason unable to test import of a single resource here, broken out to test below
+		},
+	})
+}
+
+func TestAccResourcePassword_import(t *testing.T) {
+	resource.UnitTest(t, resource.TestCase{
+		PreCheck:  func() { testAccPreCheck(t) },
+		Providers: testAccProviders,
+		Steps: []resource.TestStep{
+			{
+				Config: `
+resource "random_password" "foo" {
+	length = 32
+}`,
+			},
+			{
+				ResourceName: "random_password.foo",
+				ImportStateIdFunc: func(s *terraform.State) (string, error) {
+					id := "random_password.foo"
+					rs, ok := s.RootModule().Resources[id]
+					if !ok {
+						return "", fmt.Errorf("Not found: %s", id)
+					}
+					if rs.Primary.ID == "" {
+						return "", fmt.Errorf("No ID is set")
+					}
+
+					return rs.Primary.Attributes["result"], nil
+				},
+				ImportState:             true,
+				ImportStateVerify:       true,
+				ImportStateVerifyIgnore: []string{"length", "lower", "number", "special", "upper", "min_lower", "min_numeric", "min_special", "min_upper", "override_special"},
 			},
 		},
 	})

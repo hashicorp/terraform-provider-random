@@ -40,6 +40,30 @@ func TestAccResourceString(t *testing.T) {
 					regexMatch("random_string.min", regexp.MustCompile(`([!#@])`), 1),
 				),
 			},
+			{
+				ResourceName:            "random_string.foo",
+				ImportState:             true,
+				ImportStateVerify:       true,
+				ImportStateVerifyIgnore: []string{"length", "lower", "number", "special", "upper", "min_lower", "min_numeric", "min_special", "min_upper", "override_special"},
+			},
+			{
+				ResourceName:            "random_string.bar",
+				ImportState:             true,
+				ImportStateVerify:       true,
+				ImportStateVerifyIgnore: []string{"length", "lower", "number", "special", "upper", "min_lower", "min_numeric", "min_special", "min_upper", "override_special"},
+			},
+			{
+				ResourceName:            "random_string.three",
+				ImportState:             true,
+				ImportStateVerify:       true,
+				ImportStateVerifyIgnore: []string{"length", "lower", "number", "special", "upper", "min_lower", "min_numeric", "min_special", "min_upper", "override_special"},
+			},
+			{
+				ResourceName:            "random_string.min",
+				ImportState:             true,
+				ImportStateVerify:       true,
+				ImportStateVerifyIgnore: []string{"length", "lower", "number", "special", "upper", "min_lower", "min_numeric", "min_special", "min_upper", "override_special"},
+			},
 		},
 	})
 }
@@ -128,6 +152,5 @@ resource "random_string" "min" {
   min_special = 1
   min_numeric = 4
 }
-
 `
 )
