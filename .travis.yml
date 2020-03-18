@@ -6,10 +6,7 @@ language: go
 go:
   - "1.11.x"
 env:
-  - GO111MODULE=on GOFLAGS=-mod=vendor
-
-env:
-  - TF_VERSION=0.12.20
+  - GO111MODULE=on GOFLAGS=-mod=vendor TF_VERSION=0.12.20
 
 install:
 # This script is used by the Travis build to install a cookie for
