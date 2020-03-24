@@ -185,3 +185,14 @@ func generateRandomBytes(charSet *string, length int) ([]byte, error) {
 func readNil(d *schema.ResourceData, meta interface{}) error {
 	return nil
 }
+
+func importStringFunc(sensitive bool) schema.StateFunc {
+	return func(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
+		val := d.Id()
+		if sensitive {
+			d.SetId("none")
+		}
+		d.Set("result", val)
+		return []*schema.ResourceData{d}, nil
+	}
+}

@@ -10,5 +10,8 @@ func resourcePassword() *schema.Resource {
 		Read:   readNil,
 		Delete: schema.RemoveFromState,
 		Schema: stringSchemaV1(true),
+		Importer: &schema.ResourceImporter{
+			State: importStringFunc(true),
+		},
 	}
 }

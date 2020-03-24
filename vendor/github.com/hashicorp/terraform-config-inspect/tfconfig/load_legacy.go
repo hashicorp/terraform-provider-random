@@ -313,7 +313,7 @@ func unwrapLegacyHCLObjectKeysFromJSON(item *legacyast.ObjectItem, depth int) {
 			item.Val = &legacyast.ObjectType{
 				List: &legacyast.ObjectList{
 					Items: []*legacyast.ObjectItem{
-						&legacyast.ObjectItem{
+						{
 							Keys: []*legacyast.ObjectKey{key},
 							Val:  item.Val,
 						},
