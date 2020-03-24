@@ -1,4 +1,9 @@
 ## 2.3.0 (Unreleased)
+
+NEW FEATURES:
+
+* Added import handling for `random_string` and `random_password` [GH-104]
+
 ## 2.2.1 (September 25, 2019)
 
 NOTES:
