@@ -1,5 +1,9 @@
 ## 2.3.0 (Unreleased)
 
+NOTES:
+
+* The provider now uses the binary driver for acceptance tests [GH-99]
+
 NEW FEATURES:
 
 * Added import handling for `random_string` and `random_password` [GH-104]
