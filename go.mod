@@ -1,4 +1,4 @@
-module github.com/terraform-providers/terraform-provider-random
+module github.com/hashicorp/terraform-provider-random
 
 go 1.14
 
