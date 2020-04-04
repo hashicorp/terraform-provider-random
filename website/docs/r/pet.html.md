@@ -53,11 +53,11 @@ The following arguments are supported:
   trigger a new id to be generated. See
   [the main provider documentation](../index.html) for more information.
 
-* `length` - (Optional) The length (in words) of the pet name.
+* `length` - (Optional) (default 2) The length (in words) of the pet name.
 
 * `prefix` - (Optional) A string to prefix the name with.
 
-* `separator` - (Optional) The character to separate words in the pet name.
+* `separator` - (Optional) (default "-") The character to separate words in the pet name.
 
 ## Attribute Reference
 
