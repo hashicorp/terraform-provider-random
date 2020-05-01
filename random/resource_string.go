@@ -1,7 +1,7 @@
 package random
 
 import (
-	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
 func resourceString() *schema.Resource {
@@ -13,7 +13,7 @@ func resourceString() *schema.Resource {
 		SchemaVersion: 1,
 		Schema:        stringSchemaV1(false),
 		Importer: &schema.ResourceImporter{
-			State: importStringFunc(false),
+			StateContext: importStringFunc(false),
 		},
 	}
 }

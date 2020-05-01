@@ -4,12 +4,13 @@
 package random
 
 import (
+	"context"
 	"crypto/rand"
 	"math/big"
 	"sort"
 
 	"github.com/hashicorp/errwrap"
-	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
 func stringSchemaV1(sensitive bool) map[string]*schema.Schema {
@@ -186,8 +187,8 @@ func readNil(d *schema.ResourceData, meta interface{}) error {
 	return nil
 }
 
-func importStringFunc(sensitive bool) schema.StateFunc {
-	return func(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
+func importStringFunc(sensitive bool) schema.StateContextFunc {
+	return func(ctx context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
 		val := d.Id()
 		if sensitive {
 			d.SetId("none")

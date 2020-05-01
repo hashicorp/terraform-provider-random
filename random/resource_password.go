@@ -1,7 +1,7 @@
 package random
 
 import (
-	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
 func resourcePassword() *schema.Resource {
@@ -11,7 +11,7 @@ func resourcePassword() *schema.Resource {
 		Delete: schema.RemoveFromState,
 		Schema: stringSchemaV1(true),
 		Importer: &schema.ResourceImporter{
-			State: importStringFunc(true),
+			StateContext: importStringFunc(true),
 		},
 	}
 }
