@@ -939,7 +939,7 @@ func (s *BlockMapSpec) decode(content *hcl.BodyContent, blockLabels []blockLabel
 
 func (s *BlockMapSpec) impliedType() cty.Type {
 	ret := s.Nested.impliedType()
-	for range s.LabelNames {
+	for _ = range s.LabelNames {
 		ret = cty.Map(ret)
 	}
 	return ret
