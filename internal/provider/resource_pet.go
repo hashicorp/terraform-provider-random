@@ -1,10 +1,10 @@
-package random
+package provider
 
 import (
 	"fmt"
 	"strings"
 
-	"github.com/dustinkirkland/golang-petname"
+	petname "github.com/dustinkirkland/golang-petname"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )

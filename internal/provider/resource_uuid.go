@@ -1,4 +1,4 @@
-package random
+package provider
 
 import (
 	"github.com/hashicorp/errwrap"

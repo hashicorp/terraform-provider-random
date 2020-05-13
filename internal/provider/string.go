@@ -1,7 +1,7 @@
 // This file provides shared functionality between `resource_string` and `resource_password`.
 // There is no intent to permanently couple their implementations
 // Over time they could diverge, or one becomes deprecated
-package random
+package provider
 
 import (
 	"context"

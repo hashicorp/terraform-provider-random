@@ -1,11 +1,11 @@
-package random
+package provider
 
 import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
-// Provider returns a *schema.Provider.
-func Provider() *schema.Provider {
+// New returns a *schema.Provider.
+func New() *schema.Provider {
 	return &schema.Provider{
 		Schema: map[string]*schema.Schema{},
 
