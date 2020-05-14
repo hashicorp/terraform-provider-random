@@ -40,12 +40,6 @@ func resourceId() *schema.Resource {
 				ForceNew: true,
 			},
 
-			"b64": {
-				Type:       schema.TypeString,
-				Computed:   true,
-				Deprecated: "Use b64_url for old behavior, or b64_std for standard base64 encoding",
-			},
-
 			"b64_url": {
 				Type:     schema.TypeString,
 				Computed: true,
@@ -103,7 +97,6 @@ func RepopulateEncodings(d *schema.ResourceData, _ interface{}) error {
 	bigInt.SetBytes(bytes)
 	decStr := bigInt.String()
 
-	d.Set("b64", prefix+base64Str)
 	d.Set("b64_url", prefix+base64Str)
 	d.Set("b64_std", prefix+b64StdStr)
 
