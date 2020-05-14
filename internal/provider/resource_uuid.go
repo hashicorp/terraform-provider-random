@@ -8,6 +8,11 @@ import (
 
 func resourceUuid() *schema.Resource {
 	return &schema.Resource{
+		Description: "The resource `random_uuid` generates random uuid string that is intended to be " +
+			"used as unique identifiers for other resources.\n" +
+			"\n" +
+			"This resource uses [hashicorp/go-uuid](https://github.com/hashicorp/go-uuid) to generate a " +
+			"UUID-formatted string for use with services needed a unique string identifier.",
 		Create: CreateUuid,
 		Read:   schema.Noop,
 		Delete: schema.RemoveFromState,
@@ -17,14 +22,17 @@ func resourceUuid() *schema.Resource {
 
 		Schema: map[string]*schema.Schema{
 			"keepers": {
+				Description: "Arbitrary map of values that, when changed, will trigger recreation of " +
+					"resource. See [the main provider documentation](../index.html) for more information.",
 				Type:     schema.TypeMap,
 				Optional: true,
 				ForceNew: true,
 			},
 
 			"result": {
-				Type:     schema.TypeString,
-				Computed: true,
+				Description: "The generated uuid presented in string format.",
+				Type:        schema.TypeString,
+				Computed:    true,
 			},
 		},
 	}

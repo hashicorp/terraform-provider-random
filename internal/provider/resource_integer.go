@@ -11,6 +11,12 @@ import (
 
 func resourceInteger() *schema.Resource {
 	return &schema.Resource{
+		Description: "The resource `random_integer` generates random values from a given range, described " +
+			"by the `min` and `max` attributes of a given resource.\n" +
+			"\n" +
+			"This resource can be used in conjunction with resources that have the `create_before_destroy` " +
+			"lifecycle flag set, to avoid conflicts with unique names during the brief period where both the " +
+			"old and new resources exist concurrently.",
 		Create: CreateInteger,
 		Read:   schema.Noop,
 		Delete: schema.RemoveFromState,
@@ -20,32 +26,38 @@ func resourceInteger() *schema.Resource {
 
 		Schema: map[string]*schema.Schema{
 			"keepers": {
+				Description: "Arbitrary map of values that, when changed, will trigger recreation of " +
+					"resource. See [the main provider documentation](../index.html) for more information.",
 				Type:     schema.TypeMap,
 				Optional: true,
 				ForceNew: true,
 			},
 
 			"min": {
-				Type:     schema.TypeInt,
-				Required: true,
-				ForceNew: true,
+				Description: "The minimum inclusive value of the range.",
+				Type:        schema.TypeInt,
+				Required:    true,
+				ForceNew:    true,
 			},
 
 			"max": {
-				Type:     schema.TypeInt,
-				Required: true,
-				ForceNew: true,
+				Description: "The maximum inclusive value of the range.",
+				Type:        schema.TypeInt,
+				Required:    true,
+				ForceNew:    true,
 			},
 
 			"seed": {
-				Type:     schema.TypeString,
-				Optional: true,
-				ForceNew: true,
+				Description: "A custom seed to always produce the same value.",
+				Type:        schema.TypeString,
+				Optional:    true,
+				ForceNew:    true,
 			},
 
 			"result": {
-				Type:     schema.TypeInt,
-				Computed: true,
+				Description: "The random integer result.",
+				Type:        schema.TypeInt,
+				Computed:    true,
 			},
 		},
 	}

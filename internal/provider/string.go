@@ -16,83 +16,98 @@ import (
 func stringSchemaV1(sensitive bool) map[string]*schema.Schema {
 	return map[string]*schema.Schema{
 		"keepers": {
+			Description: "Arbitrary map of values that, when changed, will trigger recreation of " +
+				"resource. See [the main provider documentation](../index.html) for more information.",
 			Type:     schema.TypeMap,
 			Optional: true,
 			ForceNew: true,
 		},
 
 		"length": {
-			Type:     schema.TypeInt,
-			Required: true,
-			ForceNew: true,
+			Description: "The length of the string desired.",
+			Type:        schema.TypeInt,
+			Required:    true,
+			ForceNew:    true,
 		},
 
 		"special": {
-			Type:     schema.TypeBool,
-			Optional: true,
-			Default:  true,
-			ForceNew: true,
+			Description: "Include special characters in the result. These are `!@#$%&*()-_=+[]{}<>:?`",
+			Type:        schema.TypeBool,
+			Optional:    true,
+			Default:     true,
+			ForceNew:    true,
 		},
 
 		"upper": {
-			Type:     schema.TypeBool,
-			Optional: true,
-			Default:  true,
-			ForceNew: true,
+			Description: "Include uppercase alphabet characters in the result.",
+			Type:        schema.TypeBool,
+			Optional:    true,
+			Default:     true,
+			ForceNew:    true,
 		},
 
 		"lower": {
-			Type:     schema.TypeBool,
-			Optional: true,
-			Default:  true,
-			ForceNew: true,
+			Description: "Include lowercase alphabet characters in the result.",
+			Type:        schema.TypeBool,
+			Optional:    true,
+			Default:     true,
+			ForceNew:    true,
 		},
 
 		"number": {
-			Type:     schema.TypeBool,
-			Optional: true,
-			Default:  true,
-			ForceNew: true,
+			Description: "Include numeric characters in the result.",
+			Type:        schema.TypeBool,
+			Optional:    true,
+			Default:     true,
+			ForceNew:    true,
 		},
 
 		"min_numeric": {
-			Type:     schema.TypeInt,
-			Optional: true,
-			Default:  0,
-			ForceNew: true,
+			Description: "Minimum number of numeric characters in the result.",
+			Type:        schema.TypeInt,
+			Optional:    true,
+			Default:     0,
+			ForceNew:    true,
 		},
 
 		"min_upper": {
-			Type:     schema.TypeInt,
-			Optional: true,
-			Default:  0,
-			ForceNew: true,
+			Description: "Minimum number of uppercase alphabet characters in the result.",
+			Type:        schema.TypeInt,
+			Optional:    true,
+			Default:     0,
+			ForceNew:    true,
 		},
 
 		"min_lower": {
-			Type:     schema.TypeInt,
-			Optional: true,
-			Default:  0,
-			ForceNew: true,
+			Description: "Minimum number of lowercase alphabet characters in the result.",
+			Type:        schema.TypeInt,
+			Optional:    true,
+			Default:     0,
+			ForceNew:    true,
 		},
 
 		"min_special": {
-			Type:     schema.TypeInt,
-			Optional: true,
-			Default:  0,
-			ForceNew: true,
+			Description: "Minimum number of special characters in the result.",
+			Type:        schema.TypeInt,
+			Optional:    true,
+			Default:     0,
+			ForceNew:    true,
 		},
 
 		"override_special": {
+			Description: "Supply your own list of special characters to use for string generation.  This " +
+				"overrides the default character list in the special argument.  The `special` argument must " +
+				"still be set to true for any overwritten characters to be used in generation.",
 			Type:     schema.TypeString,
 			Optional: true,
 			ForceNew: true,
 		},
 
 		"result": {
-			Type:      schema.TypeString,
-			Computed:  true,
-			Sensitive: sensitive,
+			Description: "The generated random string.",
+			Type:        schema.TypeString,
+			Computed:    true,
+			Sensitive:   sensitive,
 		},
 	}
 }

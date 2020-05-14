@@ -11,35 +11,46 @@ import (
 
 func resourcePet() *schema.Resource {
 	return &schema.Resource{
+		Description: "The resource `random_pet` generates random pet names that are intended to be used as " +
+			"unique identifiers for other resources.\n" +
+			"\n" +
+			"This resource can be used in conjunction with resources that have the `create_before_destroy` " +
+			"lifecycle flag set, to avoid conflicts with unique names during the brief period where both the old " +
+			"and new resources exist concurrently.",
 		Create: CreatePet,
 		Read:   schema.Noop,
 		Delete: schema.RemoveFromState,
 
 		Schema: map[string]*schema.Schema{
 			"keepers": {
+				Description: "Arbitrary map of values that, when changed, will trigger recreation of " +
+					"resource. See [the main provider documentation](../index.html) for more information.",
 				Type:     schema.TypeMap,
 				Optional: true,
 				ForceNew: true,
 			},
 
 			"length": {
-				Type:     schema.TypeInt,
-				Optional: true,
-				Default:  2,
-				ForceNew: true,
+				Description: "The length (in words) of the pet name.",
+				Type:        schema.TypeInt,
+				Optional:    true,
+				Default:     2,
+				ForceNew:    true,
 			},
 
 			"prefix": {
-				Type:     schema.TypeString,
-				Optional: true,
-				ForceNew: true,
+				Description: "A string to prefix the name with.",
+				Type:        schema.TypeString,
+				Optional:    true,
+				ForceNew:    true,
 			},
 
 			"separator": {
-				Type:     schema.TypeString,
-				Optional: true,
-				Default:  "-",
-				ForceNew: true,
+				Description: "The character to separate words in the pet name.",
+				Type:        schema.TypeString,
+				Optional:    true,
+				Default:     "-",
+				ForceNew:    true,
 			},
 		},
 	}
