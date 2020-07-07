@@ -16,19 +16,19 @@ func TestAccResourcePassword(t *testing.T) {
 		Providers: testAccProviders,
 		Steps: []resource.TestStep{
 			{
-				Config: strings.Replace(testAccResourceStringConfig, "random_string", "random_password", -1),
+				Config: strings.ReplaceAll(testAccResourceStringConfig, "random_string", "random_password"),
 				Check: resource.ComposeTestCheckFunc(
-					testAccResourceStringCheck("random_password.foo", &customLens{
+					testAccResourcePasswordCheck("random_password.foo", &customLens{
 						customLen: 12,
 					}),
-					testAccResourceStringCheck("random_password.bar", &customLens{
+					testAccResourcePasswordCheck("random_password.bar", &customLens{
 						customLen: 32,
 					}),
-					testAccResourceStringCheck("random_password.three", &customLens{
+					testAccResourcePasswordCheck("random_password.three", &customLens{
 						customLen: 4,
 					}),
 					patternMatch("random_password.three", "!!!!"),
-					testAccResourceStringCheck("random_password.min", &customLens{
+					testAccResourcePasswordCheck("random_password.min", &customLens{
 						customLen: 12,
 					}),
 					regexMatch("random_password.min", regexp.MustCompile(`([a-z])`), 2),
@@ -41,7 +41,6 @@ func TestAccResourcePassword(t *testing.T) {
 		},
 	})
 }
-
 func TestAccResourcePassword_import(t *testing.T) {
 	resource.UnitTest(t, resource.TestCase{
 		PreCheck:  func() { testAccPreCheck(t) },
@@ -73,4 +72,28 @@ resource "random_password" "foo" {
 			},
 		},
 	})
+}
+
+func testAccResourcePasswordCheck(id string, want *customLens) resource.TestCheckFunc {
+	return func(s *terraform.State) error {
+		rs, ok := s.RootModule().Resources[id]
+		if !ok {
+			return fmt.Errorf("Not found: %s", id)
+		}
+		if rs.Primary.ID == "" {
+			return fmt.Errorf("No ID is set")
+		}
+		customStr := rs.Primary.Attributes["result"]
+
+		if got, want := len(customStr), want.customLen; got != want {
+			return fmt.Errorf("custom string length is %d; want %d", got, want)
+		}
+
+		hash := rs.Primary.Attributes["bcrypt_hash"]
+		if match, err := regexp.MatchString("^\\$2[ayb]\\$.{56}$", hash); !match || err != nil {
+			return fmt.Errorf("Hash does not match regex, error: %v", err)
+		}
+
+		return nil
+	}
 }
