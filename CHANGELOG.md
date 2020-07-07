@@ -1,12 +1,12 @@
-## 2.3.0 (Unreleased)
+## 2.3.0 (July 07, 2020)
 
 NOTES:
 
-* The provider now uses the binary driver for acceptance tests [GH-99]
+* The provider now uses the binary driver for acceptance tests ([#99](https://github.com/terraform-providers/terraform-provider-random/issues/99))
 
 NEW FEATURES:
 
-* Added import handling for `random_string` and `random_password` [GH-104]
+* Added import handling for `random_string` and `random_password` ([#104](https://github.com/terraform-providers/terraform-provider-random/issues/104))
 
 ## 2.2.1 (September 25, 2019)
 
