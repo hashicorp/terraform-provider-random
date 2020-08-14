@@ -62,15 +62,11 @@ func testAccResourceIDCheck(id string, want *idLens) resource.TestCheckFunc {
 			return fmt.Errorf("No ID is set")
 		}
 
-		b64Str := rs.Primary.Attributes["b64"]
 		b64UrlStr := rs.Primary.Attributes["b64_url"]
 		b64StdStr := rs.Primary.Attributes["b64_std"]
 		hexStr := rs.Primary.Attributes["hex"]
 		decStr := rs.Primary.Attributes["dec"]
 
-		if got, want := len(b64Str), want.b64Len; got != want {
-			return fmt.Errorf("base64 string length is %d; want %d", got, want)
-		}
 		if got, want := len(b64UrlStr), want.b64UrlLen; got != want {
 			return fmt.Errorf("base64 URL string length is %d; want %d", got, want)
 		}
