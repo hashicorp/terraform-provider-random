@@ -1,3 +1,25 @@
+# 2.1.2 (September 15, 2020)
+
+BUG FIXES:
+
+ - Fix plan output to be in a human-friendly format ([#40](https://github.com/hashicorp/terraform-plugin-test/pull/40))
+
+# 2.1.1 (September 9, 2020)
+
+BUG FIXES:
+
+ - Fix propagation of plugin reattach information ([#38](https://github.com/hashicorp/terraform-plugin-test/pull/38))
+
+# 2.1.0 (September 2, 2020)
+
+FEATURES:
+
+  - Added the ability to create destroy plans. ([#37](https://github.com/hashicorp/terraform-plugin-test/pull/37))
+  
+ENHANCEMENTS:
+
+  - Normalised internal Terraform CLI commands using github.com/hashicorp/terraform-exec module. ([#35](https://github.com/hashicorp/terraform-plugin-test/pull/35))
+
 # 2.0.0 (August 10, 2020)
 
 FEATURES:
