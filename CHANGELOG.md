@@ -1,4 +1,7 @@
-## 2.4.0 (Unreleased)
+## 3.0.0 (Unreleased)
+
+* Upgrade to version 2 of the Terraform Plugin SDK, which drops support for Terraform 0.11. This provider will continue to work as expected for users of Terraform 0.11, which will not download the new version. [GH-118]
+
 ## 2.3.0 (July 07, 2020)
 
 NOTES:
