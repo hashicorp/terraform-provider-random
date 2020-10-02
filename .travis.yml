@@ -4,10 +4,10 @@ services:
 - docker
 language: go
 go:
-  - "1.14.x"
+  - stable
   - tip
 env:
-  - GO111MODULE=on GOFLAGS=-mod=vendor TF_VERSION=0.12.20
+  - GO111MODULE=on GOFLAGS=-mod=vendor
 
 install:
 # This script is used by the Travis build to install a cookie for
@@ -16,17 +16,10 @@ install:
 # See: https://github.com/golang/go/issues/12933
 - bash scripts/gogetcookie.sh
 
-before_script:
-  - curl -fSL "https://releases.hashicorp.com/terraform/${TF_VERSION}/terraform_${TF_VERSION}_linux_amd64.zip" -o terraform.zip
-  - sudo unzip terraform.zip -d /opt/terraform
-  - sudo ln -s /opt/terraform/terraform /usr/bin/terraform
-  - rm -f terraform.zip
-
 script:
 - make test
 - make testacc
 - make vet
-- make website-test
 
 branches:
   only:
