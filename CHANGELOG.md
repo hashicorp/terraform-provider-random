@@ -5,6 +5,7 @@ Binary releases of this provider will now include the linux-arm64 platform.
 BREAKING CHANGES:
 
 * Upgrade to version 2 of the Terraform Plugin SDK, which drops support for Terraform 0.11. This provider will continue to work as expected for users of Terraform 0.11, which will not download the new version. [GH-118]
+* Remove deprecated `b64` attribute [GH-118]
 
 ## 2.3.0 (July 07, 2020)
 
