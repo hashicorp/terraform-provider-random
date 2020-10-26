@@ -7,6 +7,10 @@ BREAKING CHANGES:
 * Upgrade to version 2 of the Terraform Plugin SDK, which drops support for Terraform 0.11. This provider will continue to work as expected for users of Terraform 0.11, which will not download the new version. ([#118](https://github.com/terraform-providers/terraform-provider-random/issues/118))
 * Remove deprecated `b64` attribute ([#118](https://github.com/terraform-providers/terraform-provider-random/issues/118))
 
+## 2.3.1 (October 26, 2020)
+
+NOTES: This version is identical to v2.3.0, but has been compiled using Go v1.14.5 to fix https://github.com/hashicorp/terraform-provider-random/issues/120.
+
 ## 2.3.0 (July 07, 2020)
 
 NOTES:
