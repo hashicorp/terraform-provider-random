@@ -1,3 +1,7 @@
+## 2.3.1 (Unreleased)
+
+NOTES: This version is identical to v2.3.0, but has been compiled using Go v1.14.5 to fix https://github.com/hashicorp/terraform-provider-random/issues/120.
+
 ## 2.3.0 (July 07, 2020)
 
 NOTES:
