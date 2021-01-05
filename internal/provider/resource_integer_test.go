@@ -96,6 +96,25 @@ func TestAccResourceIntegerSeeded_to_seedless(t *testing.T) {
 	})
 }
 
+func TestAccResourceIntegerBig(t *testing.T) {
+	t.Parallel()
+	resource.UnitTest(t, resource.TestCase{
+		PreCheck:  func() { testAccPreCheck(t) },
+		Providers: testAccProviders,
+		Steps: []resource.TestStep{
+			{
+				Config: testRandomIntegerBig,
+			},
+			{
+				ResourceName:      "random_integer.integer_1",
+				ImportState:       true,
+				ImportStateId:     "7227701560655103598,7227701560655103597,7227701560655103598,12345",
+				ImportStateVerify: true,
+			},
+		},
+	})
+}
+
 func testAccResourceIntegerBasic(id string) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 		rs, ok := s.RootModule().Resources[id]
@@ -186,4 +205,11 @@ resource "random_integer" "integer_1" {
    max  = 3
 }
 `
+
+	testRandomIntegerBig = `
+resource "random_integer" "integer_1" {
+   max  = 7227701560655103598
+   min  = 7227701560655103597
+   seed = 12345
+}`
 )

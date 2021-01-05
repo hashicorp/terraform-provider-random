@@ -60,6 +60,7 @@ func resourceInteger() *schema.Resource {
 				Computed:    true,
 			},
 		},
+		UseJSONNumber: true,
 	}
 }
 
