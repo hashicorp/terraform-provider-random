@@ -1,3 +1,9 @@
+## 3.0.1 (Unreleased)
+
+BUG FIXES:
+
+* `resource_integer`: Integers in state that do not cleanly fit into float64s no longer lose their precision [GH-132]
+
 ## 3.0.0 (October 09, 2020)
 
 Binary releases of this provider will now include the linux-arm64 platform.
