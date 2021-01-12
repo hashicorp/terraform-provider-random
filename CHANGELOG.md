@@ -1,8 +1,8 @@
-## 3.0.1 (Unreleased)
+## 3.0.1 (January 12, 2021)
 
 BUG FIXES:
 
-* `resource_integer`: Integers in state that do not cleanly fit into float64s no longer lose their precision [GH-132]
+* `resource_integer`: Integers in state that do not cleanly fit into float64s no longer lose their precision ([#132](https://github.com/terraform-providers/terraform-provider-random/issues/132))
 
 ## 3.0.0 (October 09, 2020)
 
