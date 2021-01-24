@@ -58,6 +58,15 @@ The following arguments are supported:
 * `min_special` - (Optional) (default 0) Minimum number of special characters
   in random string.
 
+* `override_num` - (Optional) Supply your own list of numeric characters to use
+  for string generation.
+
+* `override_lower` - (Optional) Supply your own list of lowercase alphabet
+  characters to use for string generation.
+
+* `override_upper` (Optional) Supply your own list of uppercase alphabet
+  characters to use for string generation.
+
 * `override_special` - (Optional) Supply your own list of special characters to
   use for string generation.  This overrides the default character list in the special
   argument.  The special argument must still be set to true for any overwritten
