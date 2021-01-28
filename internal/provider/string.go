@@ -6,13 +6,18 @@ package provider
 import (
 	"context"
 	"crypto/rand"
+	"encoding/json"
 	"fmt"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
+	"log"
 	"math/big"
+	"regexp"
 	"sort"
+	"strconv"
+	"strings"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 )
 
 func stringSchemaV1(sensitive bool) map[string]*schema.Schema {
@@ -237,11 +242,96 @@ func importStringFunc(sensitive bool) schema.StateContextFunc {
 		if sensitive {
 			d.SetId("none")
 		}
-
-		if err := d.Set("result", val); err != nil {
-			return nil, fmt.Errorf("error setting result: %w", err)
+		// common string passed to guess parameters based on the schema
+		// "password keepers={\"bla\": \"dibla\",\"key\":\"value\"},length=25,special=true,upper=true,lower=true,number=true,min_numeric=0,min_upper=0,min_lower=0,min_special=0,override_special=_%@"
+		// use a regex to fetch all settings
+		// Note: override_special should be the last specified key if specified
+		settings := map[string]interface{}{
+			// At some point we should use a default value here, why not 16 then.
+			"keepers":          nil,
+			"length":           16,
+			"special":          true,
+			"upper":            true,
+			"lower":            true,
+			"number":           true,
+			"min_numeric":      0,
+			"min_upper":        0,
+			"min_lower":        0,
+			"min_special":      0,
+			"override_special": "",
 		}
 
+		exploded := strings.Fields(val)
+
+		switch len(exploded) {
+		case 1:
+			// Keep default behavior but add default values
+			if err := d.Set("result", val); err != nil {
+				return nil, fmt.Errorf("error setting result: %w", err)
+			}
+			log.Printf("[DEBUG] using default settings: %v\n", settings)
+			for key, value := range settings {
+				if err := d.Set(key, value); err != nil {
+					return nil, fmt.Errorf("error setting %s: %w", key, err)
+				}
+			}
+			if !sensitive {
+				d.SetId(val)
+			}
+		case 2:
+			if err := d.Set("result", exploded[0]); err != nil {
+				return nil, fmt.Errorf("error setting result: %w", err)
+			}
+			if !sensitive {
+				d.SetId(exploded[0])
+			}
+			settingsRegexp := regexp.MustCompile(`(\w+)=({.*}|nil|\d+|true|false|nil|[[:ascii:]]+)`)
+			extractedSettings := settingsRegexp.FindAllStringSubmatch(exploded[1], -1)
+			// Setting might need to be casted to int8, to a map[string]interface{} (from jsonString) or a bool or
+			// a literal nil
+			for _, setting := range extractedSettings {
+				asInt, err := strconv.Atoi(setting[2])
+				if err != nil {
+					// Test for a bool
+					parsedBool, err := strconv.ParseBool(setting[2])
+					if err != nil {
+						// Test for jsonString
+						var jsonMap map[string]interface{}
+						err = json.Unmarshal([]byte(setting[2]), &jsonMap)
+						if err != nil {
+							// it can only be a string then
+							if setting[2] == "nil" {
+								log.Printf("[DEBUG] Adding setting %v with value %v valuetype nil\n", setting[1], nil)
+								settings[setting[1]] = nil
+							} else {
+								log.Printf("[DEBUG] Adding setting %v with value %v valuetype string\n", setting[1], setting[2])
+								settings[setting[1]] = setting[2]
+							}
+						} else {
+							log.Printf("[DEBUG] Adding setting %v with value %v valuetype map[string]interface{}\n", setting[1], jsonMap)
+							settings[setting[1]] = jsonMap
+						}
+					} else {
+						log.Printf("[DEBUG] Adding setting %v with value %v valuetype bool\n", setting[1], parsedBool)
+						settings[setting[1]] = parsedBool
+					}
+				} else {
+					log.Printf("[DEBUG] Adding setting %v with value %v valuetype int8\n", setting[1], asInt)
+					settings[setting[1]] = asInt
+				}
+			}
+			log.Printf("[DEBUG] new settings: %v\n", settings)
+			for key, value := range settings {
+				if err := d.Set(key, value); err != nil {
+					return nil, fmt.Errorf("error setting %s: %w", key, err)
+				}
+			}
+
+		default:
+			return nil, fmt.Errorf("unable to parse string `%s` and extract string or string and settings\n"+
+				"ressource address should be in the following form:\n\"password key=value,key2=value2...\"", val)
+
+		}
 		return []*schema.ResourceData{d}, nil
 	}
 }
