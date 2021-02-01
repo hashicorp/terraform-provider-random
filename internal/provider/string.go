@@ -94,6 +94,27 @@ func stringSchemaV1(sensitive bool) map[string]*schema.Schema {
 			ForceNew:    true,
 		},
 
+		"override_num": {
+			Description: "Supply your own list of numeric characters to use for string generation.",
+			Type:        schema.TypeString,
+			Optional:    true,
+			ForceNew:    true,
+		},
+
+		"override_lower": {
+			Description: "Supply your own list of lowercase alphabet characters to use for string generation.",
+			Type:        schema.TypeString,
+			Optional:    true,
+			ForceNew:    true,
+		},
+
+		"override_upper": {
+			Description: "Supply your own list of uppercase alphabet characters to use for string generation.",
+			Type:        schema.TypeString,
+			Optional:    true,
+			ForceNew:    true,
+		},
+
 		"override_special": {
 			Description: "Supply your own list of special characters to use for string generation.  This " +
 				"overrides the default character list in the special argument.  The `special` argument must " +
@@ -114,9 +135,9 @@ func stringSchemaV1(sensitive bool) map[string]*schema.Schema {
 
 func createStringFunc(sensitive bool) func(d *schema.ResourceData, meta interface{}) error {
 	return func(d *schema.ResourceData, meta interface{}) error {
-		const numChars = "0123456789"
-		const lowerChars = "abcdefghijklmnopqrstuvwxyz"
-		const upperChars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+		var numChars = "0123456789"
+		var lowerChars = "abcdefghijklmnopqrstuvwxyz"
+		var upperChars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
 		var specialChars = "!@#$%&*()-_=+[]{}<>:?"
 
 		length := d.Get("length").(int)
@@ -128,7 +149,22 @@ func createStringFunc(sensitive bool) func(d *schema.ResourceData, meta interfac
 		minNumeric := d.Get("min_numeric").(int)
 		special := d.Get("special").(bool)
 		minSpecial := d.Get("min_special").(int)
+		overrideNum := d.Get("override_num").(string)
+		overrideLower := d.Get("override_lower").(string)
+		overrideUpper := d.Get("override_upper").(string)
 		overrideSpecial := d.Get("override_special").(string)
+
+		if overrideNum != "" {
+			numChars = overrideNum
+		}
+
+		if overrideLower != "" {
+			lowerChars = overrideLower
+		}
+
+		if overrideUpper != "" {
+			upperChars = overrideUpper
+		}
 
 		if overrideSpecial != "" {
 			specialChars = overrideSpecial
