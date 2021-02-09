@@ -59,6 +59,12 @@ func resourceInteger() *schema.Resource {
 				Type:        schema.TypeInt,
 				Computed:    true,
 			},
+
+			"id": {
+				Description: "The string representation of the integer result.",
+				Type:        schema.TypeString,
+				Computed:    true,
+			},
 		},
 		UseJSONNumber: true,
 	}
