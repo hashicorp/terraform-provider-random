@@ -1,7 +1,5 @@
 ---
-layout: "random"
 page_title: "Random: random_password"
-sidebar_current: "docs-random-resource-password"
 description: |-
   Produces a random string of a length using alphanumeric characters and optionally special characters. The result will not be displayed to console.
 ---

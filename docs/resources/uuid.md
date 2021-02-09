@@ -1,7 +1,5 @@
 ---
-layout: "random"
 page_title: "Random: random_uuid"
-sidebar_current: "docs-random-resource-id"
 description: |-
   Generates a random identifier.
 ---

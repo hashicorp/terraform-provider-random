@@ -1,7 +1,5 @@
 ---
-layout: "random"
 page_title: "Random: random_string"
-sidebar_current: "docs-random-resource-string"
 description: |-
   Produces a random string of a length using alphanumeric characters and optionally special characters.
 ---

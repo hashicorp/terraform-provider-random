@@ -1,7 +1,5 @@
 ---
-layout: "random"
 page_title: "Random: random_integer"
-sidebar_current: "docs-random-resource-integer"
 description: |-
   Generates a random integer values.
 ---

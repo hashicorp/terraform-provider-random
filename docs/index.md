@@ -1,7 +1,5 @@
 ---
-layout: "random"
 page_title: "Provider: Random"
-sidebar_current: "docs-random-index"
 description: |-
   The Random provider is used to generate randomness.
 ---

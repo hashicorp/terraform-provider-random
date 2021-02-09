@@ -1,7 +1,5 @@
 ---
-layout: "random"
 page_title: "Random: random_shuffle"
-sidebar_current: "docs-random-resource-shuffle"
 description: |-
   Produces a random permutation of a given list.
 ---

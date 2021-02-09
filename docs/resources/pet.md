@@ -1,7 +1,5 @@
 ---
-layout: "random"
 page_title: "Random: random_pet"
-sidebar_current: "docs-random-resource-pet"
 description: |-
   Generates a random pet.
 ---
