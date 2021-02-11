@@ -34,6 +34,12 @@ func resourceUuid() *schema.Resource {
 				Type:        schema.TypeString,
 				Computed:    true,
 			},
+
+			"id": {
+				Description: "The generated uuid presented in string format.",
+				Type:        schema.TypeString,
+				Computed:    true,
+			},
 		},
 	}
 }

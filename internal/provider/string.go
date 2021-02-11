@@ -14,6 +14,11 @@ import (
 )
 
 func stringSchemaV1(sensitive bool) map[string]*schema.Schema {
+	idDesc := "The generated random string."
+	if sensitive {
+		idDesc = "A static value used internally by Terraform, this should not be referenced in configurations."
+	}
+
 	return map[string]*schema.Schema{
 		"keepers": {
 			Description: "Arbitrary map of values that, when changed, will trigger recreation of " +
@@ -108,6 +113,12 @@ func stringSchemaV1(sensitive bool) map[string]*schema.Schema {
 			Type:        schema.TypeString,
 			Computed:    true,
 			Sensitive:   sensitive,
+		},
+
+		"id": {
+			Description: idDesc,
+			Computed:    true,
+			Type:        schema.TypeString,
 		},
 	}
 }
