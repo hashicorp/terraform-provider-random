@@ -51,9 +51,7 @@ jobs:
       fail-fast: false
       matrix:
         terraform:
-          - '0.12.30'
-          - '0.13.6'
-          - '0.14.5'
+          - '0.15.0-alpha20210127'
     steps:
 
     - name: Set up Go
