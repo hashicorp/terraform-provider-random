@@ -1,3 +1,7 @@
+## 3.1.0 (Unreleased)
+
+Binary releases of this provider now include the darwin-arm64 platform. This version contains no further changes.
+
 ## 3.0.1 (January 12, 2021)
 
 BUG FIXES:
