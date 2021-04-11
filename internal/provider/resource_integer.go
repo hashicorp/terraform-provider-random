@@ -69,8 +69,8 @@ func CreateInteger(d *schema.ResourceData, meta interface{}) error {
 	max := d.Get("max").(int)
 	seed := d.Get("seed").(string)
 
-	if max <= min {
-		return fmt.Errorf("Minimum value needs to be smaller than maximum value")
+	if max < min {
+		return fmt.Errorf("Minimum value needs to be smaller than or equal to maximum value")
 	}
 	rand := NewRand(seed)
 	number := rand.Intn((max+1)-min) + min
