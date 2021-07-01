@@ -10,6 +10,39 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 )
 
+const (
+	testRandomPasswordImportSimple = `
+resource "random_password" "bladibla" {
+  keepers          = {
+	bla = "dibla"
+    key = "value"
+  }
+  length           = 8
+  special          = false
+  upper            = false
+  lower            = true
+  number           = false
+  min_numeric      = 0
+  min_upper        = 0
+  min_lower        = 0
+  min_special      = 0
+  override_special = ""
+}`
+	testRandomPasswordImportStronger = `
+resource "random_password" "bladibla_strong" {
+  length           = 32
+  special          = true
+  upper            = true
+  lower            = true
+  number           = true
+  min_numeric      = 0
+  min_upper        = 0
+  min_lower        = 0
+  min_special      = 32
+  override_special = "_!@#$%^&*()[]{}"
+}`
+)
+
 func TestAccResourcePassword(t *testing.T) {
 	resource.UnitTest(t, resource.TestCase{
 		PreCheck:  func() { testAccPreCheck(t) },
@@ -42,35 +75,56 @@ func TestAccResourcePassword(t *testing.T) {
 	})
 }
 
-func TestAccResourcePassword_import(t *testing.T) {
+func TestAccResourcePassword_import_simple(t *testing.T) {
+	t.Parallel()
 	resource.UnitTest(t, resource.TestCase{
 		PreCheck:  func() { testAccPreCheck(t) },
 		Providers: testAccProviders,
 		Steps: []resource.TestStep{
 			{
-				Config: `
-resource "random_password" "foo" {
-	length = 32
-}`,
+				Config: testRandomPasswordImportSimple,
 			},
 			{
-				ResourceName: "random_password.foo",
-				ImportStateIdFunc: func(s *terraform.State) (string, error) {
-					id := "random_password.foo"
-					rs, ok := s.RootModule().Resources[id]
-					if !ok {
-						return "", fmt.Errorf("Not found: %s", id)
-					}
-					if rs.Primary.ID == "" {
-						return "", fmt.Errorf("No ID is set")
-					}
-
-					return rs.Primary.Attributes["result"], nil
-				},
+				ResourceName:            "random_password.bladibla",
+				ImportStateId:           "password upper=false,length=8,number=false,special=false,keepers={\"bla\":\"dibla\",\"key\":\"value\"}",
 				ImportState:             true,
 				ImportStateVerify:       true,
-				ImportStateVerifyIgnore: []string{"length", "lower", "number", "special", "upper", "min_lower", "min_numeric", "min_special", "min_upper", "override_special"},
+				ImportStateVerifyIgnore: []string{"result"},
+				ImportStateCheck:        testAccResourcePasswordImportCheck("random_password.bladibla", "password"),
 			},
 		},
 	})
+}
+
+func TestAccResourcePassword_import_stronger(t *testing.T) {
+	t.Parallel()
+	resource.UnitTest(t, resource.TestCase{
+		PreCheck:  func() { testAccPreCheck(t) },
+		Providers: testAccProviders,
+		Steps: []resource.TestStep{
+			{
+				Config: testRandomPasswordImportStronger,
+			},
+			{
+				ResourceName:            "random_password.bladibla_strong",
+				ImportStateId:           "{^%^^]!(]&&([{%%&)]!&)][(^^!(&)) length=32,min_special=32,override_special=_!@#$%^&*()[]{}",
+				ImportState:             true,
+				ImportStateVerify:       true,
+				ImportStateVerifyIgnore: []string{"result"},
+				ImportStateCheck:        testAccResourcePasswordImportCheck("random_password.bladibla_strong", "{^%^^]!(]&&([{%%&)]!&)][(^^!(&))"),
+			},
+		},
+	})
+}
+
+func testAccResourcePasswordImportCheck(id string, expected string) resource.ImportStateCheckFunc {
+	return func(instanceSates []*terraform.InstanceState) error {
+		result := instanceSates[0]
+		if val, ok := result.Attributes["result"]; ok {
+			if val != expected {
+				return fmt.Errorf("result %v is not expected. Expecting %v", val, expected)
+			}
+		}
+		return nil
+	}
 }
