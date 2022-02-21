@@ -6,6 +6,7 @@ package provider
 import (
 	"context"
 	"crypto/rand"
+	"fmt"
 	"math/big"
 	"sort"
 
@@ -140,6 +141,10 @@ func createStringFunc(sensitive bool) func(d *schema.ResourceData, meta interfac
 		special := d.Get("special").(bool)
 		minSpecial := d.Get("min_special").(int)
 		overrideSpecial := d.Get("override_special").(string)
+
+		if length < minLower+minUpper+minNumeric+minSpecial {
+			return fmt.Errorf("length must be at least the sum of the minimum values provided: %d", minLower+minUpper+minNumeric+minSpecial)
+		}
 
 		if overrideSpecial != "" {
 			specialChars = overrideSpecial
