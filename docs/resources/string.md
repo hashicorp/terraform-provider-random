@@ -36,15 +36,15 @@ resource "random_string" "random" {
 ### Optional
 
 - **keepers** (Map of String) Arbitrary map of values that, when changed, will trigger recreation of resource. See [the main provider documentation](../index.html) for more information.
-- **lower** (Boolean) Include lowercase alphabet characters in the result.
-- **min_lower** (Number) Minimum number of lowercase alphabet characters in the result.
-- **min_numeric** (Number) Minimum number of numeric characters in the result.
-- **min_special** (Number) Minimum number of special characters in the result.
-- **min_upper** (Number) Minimum number of uppercase alphabet characters in the result.
-- **number** (Boolean) Include numeric characters in the result.
+- **lower** (Boolean) Include lowercase alphabet characters in the result. Default value is `true`.
+- **min_lower** (Number) Minimum number of lowercase alphabet characters in the result. Default value is `true`.
+- **min_numeric** (Number) Minimum number of numeric characters in the result. Default value is `0`.
+- **min_special** (Number) Minimum number of special characters in the result. Default value is `0`.
+- **min_upper** (Number) Minimum number of uppercase alphabet characters in the result. Default value is `0`.
+- **number** (Boolean) Include numeric characters in the result. Default value is `true`.
 - **override_special** (String) Supply your own list of special characters to use for string generation.  This overrides the default character list in the special argument.  The `special` argument must still be set to true for any overwritten characters to be used in generation.
 - **special** (Boolean) Include special characters in the result. These are `!@#$%&*()-_=+[]{}<>:?`
-- **upper** (Boolean) Include uppercase alphabet characters in the result.
+- **upper** (Boolean) Include uppercase alphabet characters in the result. Default value is `true`.
 
 ### Read-Only
 
