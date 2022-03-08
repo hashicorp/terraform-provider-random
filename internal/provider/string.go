@@ -36,7 +36,7 @@ func stringSchemaV1(sensitive bool) map[string]*schema.Schema {
 		},
 
 		"special": {
-			Description: "Include special characters in the result. These are `!@#$%&*()-_=+[]{}<>:?`",
+			Description: "Include special characters in the result. These are `!@#$%&*()-_=+[]{}<>:?`. Default value is `true`.",
 			Type:        schema.TypeBool,
 			Optional:    true,
 			Default:     true,
@@ -44,7 +44,7 @@ func stringSchemaV1(sensitive bool) map[string]*schema.Schema {
 		},
 
 		"upper": {
-			Description: "Include uppercase alphabet characters in the result.",
+			Description: "Include uppercase alphabet characters in the result. Default value is `true`.",
 			Type:        schema.TypeBool,
 			Optional:    true,
 			Default:     true,
@@ -52,7 +52,7 @@ func stringSchemaV1(sensitive bool) map[string]*schema.Schema {
 		},
 
 		"lower": {
-			Description: "Include lowercase alphabet characters in the result.",
+			Description: "Include lowercase alphabet characters in the result. Default value is `true`.",
 			Type:        schema.TypeBool,
 			Optional:    true,
 			Default:     true,
@@ -60,7 +60,7 @@ func stringSchemaV1(sensitive bool) map[string]*schema.Schema {
 		},
 
 		"number": {
-			Description: "Include numeric characters in the result.",
+			Description: "Include numeric characters in the result. Default value is `true`.",
 			Type:        schema.TypeBool,
 			Optional:    true,
 			Default:     true,
@@ -68,7 +68,7 @@ func stringSchemaV1(sensitive bool) map[string]*schema.Schema {
 		},
 
 		"min_numeric": {
-			Description: "Minimum number of numeric characters in the result.",
+			Description: "Minimum number of numeric characters in the result. Default value is `0`.",
 			Type:        schema.TypeInt,
 			Optional:    true,
 			Default:     0,
@@ -76,7 +76,7 @@ func stringSchemaV1(sensitive bool) map[string]*schema.Schema {
 		},
 
 		"min_upper": {
-			Description: "Minimum number of uppercase alphabet characters in the result.",
+			Description: "Minimum number of uppercase alphabet characters in the result. Default value is `0`.",
 			Type:        schema.TypeInt,
 			Optional:    true,
 			Default:     0,
@@ -84,7 +84,7 @@ func stringSchemaV1(sensitive bool) map[string]*schema.Schema {
 		},
 
 		"min_lower": {
-			Description: "Minimum number of lowercase alphabet characters in the result.",
+			Description: "Minimum number of lowercase alphabet characters in the result. Default value is `0`.",
 			Type:        schema.TypeInt,
 			Optional:    true,
 			Default:     0,
@@ -92,7 +92,7 @@ func stringSchemaV1(sensitive bool) map[string]*schema.Schema {
 		},
 
 		"min_special": {
-			Description: "Minimum number of special characters in the result.",
+			Description: "Minimum number of special characters in the result. Default value is `0`.",
 			Type:        schema.TypeInt,
 			Optional:    true,
 			Default:     0,
