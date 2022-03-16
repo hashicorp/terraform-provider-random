@@ -45,18 +45,18 @@ resource "aws_alb_listener_rule" "main" {
 
 ### Required
 
-- **max** (Number) The maximum inclusive value of the range.
-- **min** (Number) The minimum inclusive value of the range.
+- `max` (Number) The maximum inclusive value of the range.
+- `min` (Number) The minimum inclusive value of the range.
 
 ### Optional
 
-- **keepers** (Map of String) Arbitrary map of values that, when changed, will trigger recreation of resource. See [the main provider documentation](../index.html) for more information.
-- **seed** (String) A custom seed to always produce the same value.
+- `keepers` (Map of String) Arbitrary map of values that, when changed, will trigger recreation of resource. See [the main provider documentation](../index.html) for more information.
+- `seed` (String) A custom seed to always produce the same value.
 
 ### Read-Only
 
-- **id** (String) The string representation of the integer result.
-- **result** (Number) The random integer result.
+- `id` (String) The string representation of the integer result.
+- `result` (Number) The random integer result.
 
 ## Import
 

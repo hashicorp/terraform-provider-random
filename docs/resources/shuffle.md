@@ -32,19 +32,19 @@ resource "aws_elb" "example" {
 
 ### Required
 
-- **input** (List of String) The list of strings to shuffle.
+- `input` (List of String) The list of strings to shuffle.
 
 ### Optional
 
-- **keepers** (Map of String) Arbitrary map of values that, when changed, will trigger recreation of resource. See [the main provider documentation](../index.html) for more information.
-- **result_count** (Number) The number of results to return. Defaults to the number of items in the `input` list. If fewer items are requested, some elements will be excluded from the result. If more items are requested, items will be repeated in the result but not more frequently than the number of items in the input list.
-- **seed** (String) Arbitrary string with which to seed the random number generator, in order to produce less-volatile permutations of the list.
+- `keepers` (Map of String) Arbitrary map of values that, when changed, will trigger recreation of resource. See [the main provider documentation](../index.html) for more information.
+- `result_count` (Number) The number of results to return. Defaults to the number of items in the `input` list. If fewer items are requested, some elements will be excluded from the result. If more items are requested, items will be repeated in the result but not more frequently than the number of items in the input list.
+- `seed` (String) Arbitrary string with which to seed the random number generator, in order to produce less-volatile permutations of the list.
 
 **Important:** Even with an identical seed, it is not guaranteed that the same permutation will be produced across different versions of Terraform. This argument causes the result to be *less volatile*, but not fixed for all time.
 
 ### Read-Only
 
-- **id** (String) A static value used internally by Terraform, this should not be referenced in configurations.
-- **result** (List of String) Random permutation of the list of strings given in `input`.
+- `id` (String) A static value used internally by Terraform, this should not be referenced in configurations.
+- `result` (List of String) Random permutation of the list of strings given in `input`.
 
 
