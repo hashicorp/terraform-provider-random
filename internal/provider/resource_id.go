@@ -85,12 +85,6 @@ exist concurrently.
 				Type:        schema.TypeString,
 				Computed:    true,
 			},
-
-			"id": {
-				Description: "The generated id presented in base64 without additional transformations or prefix.",
-				Type:        schema.TypeString,
-				Computed:    true,
-			},
 		},
 	}
 }
