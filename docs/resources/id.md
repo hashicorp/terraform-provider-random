@@ -67,6 +67,7 @@ resource "aws_instance" "server" {
 
 ### Optional
 
+- `id` (String) The ID of this resource.
 - `keepers` (Map of String) Arbitrary map of values that, when changed, will trigger recreation of resource. See [the main provider documentation](../index.html) for more information.
 - `prefix` (String) Arbitrary string to prefix the output value with. This string is supplied as-is, meaning it is not guaranteed to be URL-safe or base64 encoded.
 
@@ -76,7 +77,6 @@ resource "aws_instance" "server" {
 - `b64_url` (String) The generated id presented in base64, using the URL-friendly character set: case-sensitive letters, digits and the characters `_` and `-`.
 - `dec` (String) The generated id presented in non-padded decimal digits.
 - `hex` (String) The generated id presented in padded hexadecimal digits. This result will always be twice as long as the requested byte length.
-- `id` (String) The generated id presented in base64 without additional transformations or prefix.
 
 ## Import
 
