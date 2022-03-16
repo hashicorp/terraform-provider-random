@@ -31,25 +31,25 @@ resource "random_string" "random" {
 
 ### Required
 
-- **length** (Number) The length of the string desired.
+- `length` (Number) The length of the string desired.
 
 ### Optional
 
-- **keepers** (Map of String) Arbitrary map of values that, when changed, will trigger recreation of resource. See [the main provider documentation](../index.html) for more information.
-- **lower** (Boolean) Include lowercase alphabet characters in the result. Default value is `true`.
-- **min_lower** (Number) Minimum number of lowercase alphabet characters in the result. Default value is `0`.
-- **min_numeric** (Number) Minimum number of numeric characters in the result. Default value is `0`.
-- **min_special** (Number) Minimum number of special characters in the result. Default value is `0`.
-- **min_upper** (Number) Minimum number of uppercase alphabet characters in the result. Default value is `0`.
-- **number** (Boolean) Include numeric characters in the result. Default value is `true`.
-- **override_special** (String) Supply your own list of special characters to use for string generation.  This overrides the default character list in the special argument.  The `special` argument must still be set to true for any overwritten characters to be used in generation.
-- **special** (Boolean) Include special characters in the result. These are `!@#$%&*()-_=+[]{}<>:?`. Default value is `true`.
-- **upper** (Boolean) Include uppercase alphabet characters in the result. Default value is `true`.
+- `keepers` (Map of String) Arbitrary map of values that, when changed, will trigger recreation of resource. See [the main provider documentation](../index.html) for more information.
+- `lower` (Boolean) Include lowercase alphabet characters in the result. Default value is `true`.
+- `min_lower` (Number) Minimum number of lowercase alphabet characters in the result. Default value is `0`.
+- `min_numeric` (Number) Minimum number of numeric characters in the result. Default value is `0`.
+- `min_special` (Number) Minimum number of special characters in the result. Default value is `0`.
+- `min_upper` (Number) Minimum number of uppercase alphabet characters in the result. Default value is `0`.
+- `number` (Boolean) Include numeric characters in the result. Default value is `true`.
+- `override_special` (String) Supply your own list of special characters to use for string generation.  This overrides the default character list in the special argument.  The `special` argument must still be set to true for any overwritten characters to be used in generation.
+- `special` (Boolean) Include special characters in the result. These are `!@#$%&*()-_=+[]{}<>:?`. Default value is `true`.
+- `upper` (Boolean) Include uppercase alphabet characters in the result. Default value is `true`.
 
 ### Read-Only
 
-- **id** (String) The generated random string.
-- **result** (String) The generated random string.
+- `id` (String) The generated random string.
+- `result` (String) The generated random string.
 
 ## Import
 
