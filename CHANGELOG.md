@@ -5,7 +5,6 @@ NOTES:
 * Updated [terraform-plugin-docs](https://github.com/hashicorp/terraform-plugin-docs) to `v0.7.0`:
   this improves generated documentation, with attributes now correctly formatted as `code`
   and provided with anchors.
-* Updated use of internal tool to include missing release asset, during release process.
 * Functionally identical to the previous 3.1.0 release.
 
 ## 3.1.0 (February 19, 2021)
