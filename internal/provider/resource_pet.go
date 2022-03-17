@@ -10,6 +10,11 @@ import (
 )
 
 func resourcePet() *schema.Resource {
+	// This is necessary to ensure each call to petname is properly randomised:
+	// the library uses `rand.Intn()` and does NOT seed `rand.Seed()` by default,
+	// so this call takes care of that.
+	petname.NonDeterministicMode()
+
 	return &schema.Resource{
 		Description: "The resource `random_pet` generates random pet names that are intended to be used as " +
 			"unique identifiers for other resources.\n" +
