@@ -1,3 +1,9 @@
+## 3.1.2 (March 17, 2022)
+
+BUG FIXES:
+
+* resource/random_pet: Prevented deterministic results since 3.1.1 ([#217](https://github.com/hashicorp/terraform-provider-random/issues/217). 
+
 ## 3.1.1 (March 16, 2022)
 
 NOTES:
