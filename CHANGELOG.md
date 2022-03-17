@@ -1,3 +1,11 @@
+## 3.1.2 (Match 17, 2022)
+
+BUG FIXES:
+
+* resource/random_pet: Update to dependencies in release 3.1.1 caused a change in behaviour, where
+  at each `terraform apply` resources will receive always the same sequence of IDs, instead of a truly 
+  randomised one ([#217](https://github.com/hashicorp/terraform-provider-random/issues/217). 
+
 ## 3.1.1 (March 16, 2022)
 
 NOTES:
