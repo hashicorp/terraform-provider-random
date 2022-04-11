@@ -22,7 +22,7 @@ jobs:
     - name: Set up Go
       uses: actions/setup-go@v3
       with:
-        go-version: '1.16'
+        go-version: '1.17'
       id: go
 
     - name: Check out code into the Go module directory
@@ -45,7 +45,7 @@ jobs:
     steps:
       - uses: actions/setup-go@v3
         with:
-          go-version: '1.16'
+          go-version: '1.17'
       - uses: actions/checkout@v3
       - run: go generate ./...
       - name: git diff
@@ -73,7 +73,7 @@ jobs:
     - name: Set up Go
       uses: actions/setup-go@v3
       with:
-        go-version: '1.16'
+        go-version: '1.17'
       id: go
 
     - name: Check out code into the Go module directory
