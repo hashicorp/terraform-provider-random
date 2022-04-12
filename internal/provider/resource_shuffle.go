@@ -1,6 +1,8 @@
 package provider
 
 import (
+	"context"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
@@ -8,9 +10,9 @@ func resourceShuffle() *schema.Resource {
 	return &schema.Resource{
 		Description: "The resource `random_shuffle` generates a random permutation of a list of strings " +
 			"given as an argument.",
-		Create: CreateShuffle,
-		Read:   schema.Noop,
-		Delete: schema.RemoveFromState,
+		CreateContext: CreateShuffle,
+		ReadContext:   schema.NoopContext,
+		DeleteContext: DeleteShuffle,
 
 		Schema: map[string]*schema.Schema{
 			"keepers": {
@@ -71,7 +73,7 @@ func resourceShuffle() *schema.Resource {
 	}
 }
 
-func CreateShuffle(d *schema.ResourceData, _ interface{}) error {
+func CreateShuffle(_ context.Context, d *schema.ResourceData, _ interface{}) diag.Diagnostics {
 	input := d.Get("input").([]interface{})
 	seed := d.Get("seed").(string)
 
@@ -103,5 +105,10 @@ func CreateShuffle(d *schema.ResourceData, _ interface{}) error {
 	d.SetId("-")
 	d.Set("result", result)
 
+	return nil
+}
+
+func DeleteShuffle(_ context.Context, d *schema.ResourceData, _ interface{}) diag.Diagnostics {
+	d.SetId("")
 	return nil
 }
