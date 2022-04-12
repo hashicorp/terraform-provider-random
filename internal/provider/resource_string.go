@@ -17,6 +17,8 @@ func resourceString() *schema.Resource {
 		CreateContext: createStringFunc(false),
 		ReadContext:   readNil,
 		DeleteContext: deleteContext,
+		// MigrateState is deprecated but the implementation is being left in place as per the
+		// [SDK documentation](https://github.com/hashicorp/terraform-plugin-sdk/blob/main/helper/schema/resource.go#L91).
 		MigrateState:  resourceRandomStringMigrateState,
 		SchemaVersion: 1,
 		Schema:        stringSchemaV1(false),
