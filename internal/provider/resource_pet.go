@@ -25,7 +25,7 @@ func resourcePet() *schema.Resource {
 			"lifecycle flag set, to avoid conflicts with unique names during the brief period where both the old " +
 			"and new resources exist concurrently.",
 		CreateContext: CreatePet,
-		Read:          schema.Noop,
+		ReadContext:   schema.NoopContext,
 		Delete:        schema.RemoveFromState,
 
 		Schema: map[string]*schema.Schema{
