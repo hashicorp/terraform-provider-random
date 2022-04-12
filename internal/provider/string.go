@@ -212,7 +212,7 @@ func generateRandomBytes(charSet *string, length int) ([]byte, error) {
 	return bytes, nil
 }
 
-func readNil(d *schema.ResourceData, meta interface{}) error {
+func readNil(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	return nil
 }
 
