@@ -23,7 +23,7 @@ func resourceInteger() *schema.Resource {
 		ReadContext:   schema.NoopContext,
 		DeleteContext: DeleteInteger,
 		Importer: &schema.ResourceImporter{
-			State: ImportInteger,
+			StateContext: ImportInteger,
 		},
 
 		Schema: map[string]*schema.Schema{
@@ -98,7 +98,7 @@ func DeleteInteger(_ context.Context, d *schema.ResourceData, _ interface{}) dia
 	return nil
 }
 
-func ImportInteger(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
+func ImportInteger(_ context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
 	parts := strings.Split(d.Id(), ",")
 	if len(parts) != 3 && len(parts) != 4 {
 		return nil, fmt.Errorf("Invalid import usage: expecting {result},{min},{max} or {result},{min},{max},{seed}")
