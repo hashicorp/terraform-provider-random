@@ -1,7 +1,9 @@
 package provider
 
 import (
+	"context"
 	"fmt"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"strconv"
 	"strings"
 
@@ -17,9 +19,9 @@ func resourceInteger() *schema.Resource {
 			"This resource can be used in conjunction with resources that have the `create_before_destroy` " +
 			"lifecycle flag set, to avoid conflicts with unique names during the brief period where both the " +
 			"old and new resources exist concurrently.",
-		Create: CreateInteger,
-		Read:   schema.Noop,
-		Delete: schema.RemoveFromState,
+		CreateContext: CreateInteger,
+		Read:          schema.Noop,
+		Delete:        schema.RemoveFromState,
 		Importer: &schema.ResourceImporter{
 			State: ImportInteger,
 		},
@@ -70,13 +72,17 @@ func resourceInteger() *schema.Resource {
 	}
 }
 
-func CreateInteger(d *schema.ResourceData, meta interface{}) error {
+func CreateInteger(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+	var diags diag.Diagnostics
 	min := d.Get("min").(int)
 	max := d.Get("max").(int)
 	seed := d.Get("seed").(string)
 
 	if max <= min {
-		return fmt.Errorf("Minimum value needs to be smaller than maximum value")
+		return append(diags, diag.Diagnostic{
+			Severity: diag.Error,
+			Summary:  "minimum value needs to be smaller than maximum value",
+		})
 	}
 	rand := NewRand(seed)
 	number := rand.Intn((max+1)-min) + min
