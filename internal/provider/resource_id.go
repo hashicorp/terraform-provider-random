@@ -5,10 +5,10 @@ import (
 	"crypto/rand"
 	"encoding/base64"
 	"encoding/hex"
+	"fmt"
 	"math/big"
 	"strings"
 
-	"github.com/hashicorp/errwrap"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
@@ -33,7 +33,7 @@ exist concurrently.
 		ReadContext:   RepopulateEncodings,
 		DeleteContext: DeleteID,
 		Importer: &schema.ResourceImporter{
-			State: ImportID,
+			StateContext: ImportID,
 		},
 
 		Schema: map[string]*schema.Schema{
@@ -151,7 +151,7 @@ func DeleteID(_ context.Context, d *schema.ResourceData, _ interface{}) diag.Dia
 	return nil
 }
 
-func ImportID(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
+func ImportID(_ context.Context, d *schema.ResourceData, _ interface{}) ([]*schema.ResourceData, error) {
 	id := d.Id()
 
 	sep := strings.LastIndex(id, ",")
@@ -162,7 +162,7 @@ func ImportID(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData,
 
 	bytes, err := base64.RawURLEncoding.DecodeString(id)
 	if err != nil {
-		return nil, errwrap.Wrapf("Error decoding ID: {{err}}", err)
+		return nil, fmt.Errorf("error decoding ID: %w", err)
 	}
 
 	d.Set("byte_length", len(bytes))
