@@ -30,7 +30,7 @@ unique names during the brief period where both the old and new resources
 exist concurrently.
 `,
 		CreateContext: CreateID,
-		Read:          RepopulateEncodings,
+		ReadContext:   RepopulateEncodings,
 		Delete:        schema.RemoveFromState,
 		Importer: &schema.ResourceImporter{
 			State: ImportID,
@@ -112,21 +112,22 @@ func CreateID(ctx context.Context, d *schema.ResourceData, meta interface{}) dia
 	b64Str := base64.RawURLEncoding.EncodeToString(bytes)
 	d.SetId(b64Str)
 
-	err = RepopulateEncodings(d, meta)
-	if err != nil {
-		return append(diags, diag.Errorf("error repopulating encodings: %s", err)...)
+	repopEncsDiags := RepopulateEncodings(ctx, d, meta)
+	if repopEncsDiags != nil {
+		return append(diags, repopEncsDiags...)
 	}
 
 	return diags
 }
 
-func RepopulateEncodings(d *schema.ResourceData, _ interface{}) error {
+func RepopulateEncodings(ctx context.Context, d *schema.ResourceData, _ interface{}) diag.Diagnostics {
+	var diags diag.Diagnostics
 	prefix := d.Get("prefix").(string)
 	base64Str := d.Id()
 
 	bytes, err := base64.RawURLEncoding.DecodeString(base64Str)
 	if err != nil {
-		return errwrap.Wrapf("Error decoding ID: {{err}}", err)
+		return append(diags, diag.Errorf("error decoding ID: %s", err)...)
 	}
 
 	b64StdStr := base64.StdEncoding.EncodeToString(bytes)
