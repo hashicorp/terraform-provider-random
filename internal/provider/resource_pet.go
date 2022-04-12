@@ -1,7 +1,9 @@
 package provider
 
 import (
+	"context"
 	"fmt"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"strings"
 
 	petname "github.com/dustinkirkland/golang-petname"
@@ -22,9 +24,9 @@ func resourcePet() *schema.Resource {
 			"This resource can be used in conjunction with resources that have the `create_before_destroy` " +
 			"lifecycle flag set, to avoid conflicts with unique names during the brief period where both the old " +
 			"and new resources exist concurrently.",
-		Create: CreatePet,
-		Read:   schema.Noop,
-		Delete: schema.RemoveFromState,
+		CreateContext: CreatePet,
+		Read:          schema.Noop,
+		Delete:        schema.RemoveFromState,
 
 		Schema: map[string]*schema.Schema{
 			"keepers": {
@@ -67,7 +69,7 @@ func resourcePet() *schema.Resource {
 	}
 }
 
-func CreatePet(d *schema.ResourceData, meta interface{}) error {
+func CreatePet(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	length := d.Get("length").(int)
 	separator := d.Get("separator").(string)
 	prefix := d.Get("prefix").(string)
