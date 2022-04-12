@@ -120,7 +120,7 @@ func CreateID(ctx context.Context, d *schema.ResourceData, meta interface{}) dia
 	return diags
 }
 
-func RepopulateEncodings(ctx context.Context, d *schema.ResourceData, _ interface{}) diag.Diagnostics {
+func RepopulateEncodings(_ context.Context, d *schema.ResourceData, _ interface{}) diag.Diagnostics {
 	var diags diag.Diagnostics
 	prefix := d.Get("prefix").(string)
 	base64Str := d.Id()
