@@ -14,7 +14,7 @@ func resourceString() *schema.Resource {
 			"Historically this resource's intended usage has been ambiguous as the original example used " +
 			"it in a password. For backwards compatibility it will continue to exist. For unique ids please " +
 			"use [random_id](id.html), for sensitive random values please use [random_password](password.html).",
-		Create:        createStringFunc(false),
+		CreateContext: createStringFunc(false),
 		Read:          readNil,
 		Delete:        schema.RemoveFromState,
 		MigrateState:  resourceRandomStringMigrateState,
