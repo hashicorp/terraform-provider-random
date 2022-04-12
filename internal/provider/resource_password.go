@@ -13,7 +13,7 @@ func resourcePassword() *schema.Resource {
 			"This resource *does* use a cryptographic random number generator.",
 		CreateContext: createStringFunc(true),
 		ReadContext:   readNil,
-		Delete:        schema.RemoveFromState,
+		DeleteContext: deleteContext,
 		Schema:        stringSchemaV1(true),
 		Importer: &schema.ResourceImporter{
 			StateContext: importStringFunc(true),

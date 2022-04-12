@@ -16,7 +16,7 @@ func resourceString() *schema.Resource {
 			"use [random_id](id.html), for sensitive random values please use [random_password](password.html).",
 		CreateContext: createStringFunc(false),
 		ReadContext:   readNil,
-		Delete:        schema.RemoveFromState,
+		DeleteContext: deleteContext,
 		MigrateState:  resourceRandomStringMigrateState,
 		SchemaVersion: 1,
 		Schema:        stringSchemaV1(false),

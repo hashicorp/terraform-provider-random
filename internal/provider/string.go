@@ -216,6 +216,11 @@ func readNil(_ context.Context, d *schema.ResourceData, meta interface{}) diag.D
 	return nil
 }
 
+func deleteContext(_ context.Context, d *schema.ResourceData, _ interface{}) diag.Diagnostics {
+	d.SetId("")
+	return nil
+}
+
 func importStringFunc(sensitive bool) schema.StateContextFunc {
 	return func(ctx context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
 		val := d.Id()
