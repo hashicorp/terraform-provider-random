@@ -31,7 +31,7 @@ exist concurrently.
 `,
 		CreateContext: CreateID,
 		ReadContext:   RepopulateEncodings,
-		DeleteContext: DeleteContext,
+		DeleteContext: RemoveResourceFromState,
 		Importer: &schema.ResourceImporter{
 			StateContext: ImportID,
 		},

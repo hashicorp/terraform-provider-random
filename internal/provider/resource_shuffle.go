@@ -13,7 +13,7 @@ func resourceShuffle() *schema.Resource {
 			"given as an argument.",
 		CreateContext: CreateShuffle,
 		ReadContext:   schema.NoopContext,
-		DeleteContext: DeleteContext,
+		DeleteContext: RemoveResourceFromState,
 
 		Schema: map[string]*schema.Schema{
 			"keepers": {

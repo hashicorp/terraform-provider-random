@@ -18,7 +18,7 @@ func resourceUuid() *schema.Resource {
 			"UUID-formatted string for use with services needed a unique string identifier.",
 		CreateContext: CreateUuid,
 		ReadContext:   schema.NoopContext,
-		DeleteContext: DeleteContext,
+		DeleteContext: RemoveResourceFromState,
 		Importer: &schema.ResourceImporter{
 			StateContext: ImportUuid,
 		},

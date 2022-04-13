@@ -27,7 +27,7 @@ func New() *schema.Provider {
 	}
 }
 
-func DeleteContext(_ context.Context, d *schema.ResourceData, _ interface{}) diag.Diagnostics {
+func RemoveResourceFromState(_ context.Context, d *schema.ResourceData, _ interface{}) diag.Diagnostics {
 	d.SetId("")
 	return nil
 }

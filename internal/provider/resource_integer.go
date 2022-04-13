@@ -21,7 +21,7 @@ func resourceInteger() *schema.Resource {
 			"old and new resources exist concurrently.",
 		CreateContext: CreateInteger,
 		ReadContext:   schema.NoopContext,
-		DeleteContext: DeleteContext,
+		DeleteContext: RemoveResourceFromState,
 		Importer: &schema.ResourceImporter{
 			StateContext: ImportInteger,
 		},
