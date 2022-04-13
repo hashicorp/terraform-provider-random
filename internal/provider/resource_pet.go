@@ -25,7 +25,7 @@ func resourcePet() *schema.Resource {
 			"and new resources exist concurrently.",
 		CreateContext: CreatePet,
 		ReadContext:   schema.NoopContext,
-		DeleteContext: DeletePet,
+		DeleteContext: DeleteContext,
 
 		Schema: map[string]*schema.Schema{
 			"keepers": {
@@ -81,10 +81,5 @@ func CreatePet(_ context.Context, d *schema.ResourceData, meta interface{}) diag
 
 	d.SetId(pet)
 
-	return nil
-}
-
-func DeletePet(_ context.Context, d *schema.ResourceData, _ interface{}) diag.Diagnostics {
-	d.SetId("")
 	return nil
 }

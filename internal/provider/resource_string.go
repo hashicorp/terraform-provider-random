@@ -16,7 +16,7 @@ func resourceString() *schema.Resource {
 			"use [random_id](id.html), for sensitive random values please use [random_password](password.html).",
 		CreateContext: createStringFunc(false),
 		ReadContext:   readNil,
-		DeleteContext: deleteContext,
+		DeleteContext: DeleteContext,
 		// MigrateState is deprecated but the implementation is being left in place as per the
 		// [SDK documentation](https://github.com/hashicorp/terraform-plugin-sdk/blob/main/helper/schema/resource.go#L91).
 		MigrateState:  resourceRandomStringMigrateState,

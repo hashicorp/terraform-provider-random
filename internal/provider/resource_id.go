@@ -31,7 +31,7 @@ exist concurrently.
 `,
 		CreateContext: CreateID,
 		ReadContext:   RepopulateEncodings,
-		DeleteContext: DeleteID,
+		DeleteContext: DeleteContext,
 		Importer: &schema.ResourceImporter{
 			StateContext: ImportID,
 		},
@@ -143,11 +143,6 @@ func RepopulateEncodings(_ context.Context, d *schema.ResourceData, _ interface{
 	d.Set("hex", prefix+hexStr)
 	d.Set("dec", prefix+decStr)
 
-	return nil
-}
-
-func DeleteID(_ context.Context, d *schema.ResourceData, _ interface{}) diag.Diagnostics {
-	d.SetId("")
 	return nil
 }
 
