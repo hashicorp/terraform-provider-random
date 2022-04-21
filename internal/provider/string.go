@@ -129,6 +129,7 @@ func createStringFunc(sensitive bool) func(_ context.Context, d *schema.Resource
 		const numChars = "0123456789"
 		const lowerChars = "abcdefghijklmnopqrstuvwxyz"
 		const upperChars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+		const minLength = 1
 		var (
 			specialChars = "!@#$%&*()-_=+[]{}<>:?"
 			diags        diag.Diagnostics
@@ -144,6 +145,13 @@ func createStringFunc(sensitive bool) func(_ context.Context, d *schema.Resource
 		special := d.Get("special").(bool)
 		minSpecial := d.Get("min_special").(int)
 		overrideSpecial := d.Get("override_special").(string)
+
+		if length < minLength {
+			return append(diags, diag.Diagnostic{
+				Severity: diag.Error,
+				Summary:  fmt.Sprintf("length (%d) must be >= %d", length, minLength),
+			})
+		}
 
 		if length < minUpper+minLower+minNumeric+minSpecial {
 			return append(diags, diag.Diagnostic{

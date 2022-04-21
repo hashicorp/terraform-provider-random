@@ -68,6 +68,10 @@ func TestAccResourceString(t *testing.T) {
 				Config:      testAccResourceStringInvalidConfig,
 				ExpectError: regexp.MustCompile("Error running apply: exit status 1"),
 			},
+			{
+				Config:      testAccResourceStringLengthTooShortConfig,
+				ExpectError: regexp.MustCompile("Error running apply: exit status 1"),
+			},
 		},
 	})
 }
@@ -161,5 +165,9 @@ resource "random_string" "min" {
 resource "random_string" "invalid_length" {
   length = 2
   min_lower = 3
+}`
+	testAccResourceStringLengthTooShortConfig = `
+resource "random_string" "invalid_length" {
+  length = 0
 }`
 )
