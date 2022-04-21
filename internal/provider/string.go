@@ -6,6 +6,7 @@ package provider
 import (
 	"context"
 	"crypto/rand"
+	"fmt"
 	"math/big"
 	"sort"
 
@@ -143,6 +144,13 @@ func createStringFunc(sensitive bool) func(_ context.Context, d *schema.Resource
 		special := d.Get("special").(bool)
 		minSpecial := d.Get("min_special").(int)
 		overrideSpecial := d.Get("override_special").(string)
+
+		if length < minUpper+minLower+minNumeric+minSpecial {
+			return append(diags, diag.Diagnostic{
+				Severity: diag.Error,
+				Summary:  fmt.Sprintf("length (%d) must be >= min_upper + min_lower + min_numeric + min_special (%d)", length, minUpper+minLower+minNumeric+minSpecial),
+			})
+		}
 
 		if overrideSpecial != "" {
 			specialChars = overrideSpecial

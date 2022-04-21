@@ -64,6 +64,10 @@ func TestAccResourceString(t *testing.T) {
 				ImportStateVerify:       true,
 				ImportStateVerifyIgnore: []string{"length", "lower", "number", "special", "upper", "min_lower", "min_numeric", "min_special", "min_upper", "override_special"},
 			},
+			{
+				Config:      testAccResourceStringInvalidConfig,
+				ExpectError: regexp.MustCompile("Error running apply: exit status 1"),
+			},
 		},
 	})
 }
@@ -153,4 +157,9 @@ resource "random_string" "min" {
   min_numeric = 4
 }
 `
+	testAccResourceStringInvalidConfig = `
+resource "random_string" "invalid_length" {
+  length = 2
+  min_lower = 3
+}`
 )
