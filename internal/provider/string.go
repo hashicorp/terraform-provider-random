@@ -32,7 +32,7 @@ func stringSchemaV1(sensitive bool) map[string]*schema.Schema {
 
 		"length": {
 			Description: "The length of the string desired. The minimum value for length is 1 and, length " +
-				"must also be >= (min_upper + min_lower + min_numeric + min_special).",
+				"must also be >= (`min_upper` + `min_lower` + `min_numeric` + `min_special`).",
 			Type:             schema.TypeInt,
 			Required:         true,
 			ForceNew:         true,
