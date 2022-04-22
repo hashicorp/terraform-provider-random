@@ -64,6 +64,14 @@ func TestAccResourceString(t *testing.T) {
 				ImportStateVerify:       true,
 				ImportStateVerifyIgnore: []string{"length", "lower", "number", "special", "upper", "min_lower", "min_numeric", "min_special", "min_upper", "override_special"},
 			},
+			{
+				Config:      testAccResourceStringInvalidConfig,
+				ExpectError: regexp.MustCompile(`.*length \(2\) must be >= min_upper \+ min_lower \+ min_numeric \+ min_special \(3\)`),
+			},
+			{
+				Config:      testAccResourceStringLengthTooShortConfig,
+				ExpectError: regexp.MustCompile(`.*expected length to be at least \(1\), got 0`),
+			},
 		},
 	})
 }
@@ -153,4 +161,13 @@ resource "random_string" "min" {
   min_numeric = 4
 }
 `
+	testAccResourceStringInvalidConfig = `
+resource "random_string" "invalid_length" {
+  length = 2
+  min_lower = 3
+}`
+	testAccResourceStringLengthTooShortConfig = `
+resource "random_string" "invalid_length" {
+  length = 0
+}`
 )
