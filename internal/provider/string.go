@@ -7,6 +7,7 @@ import (
 	"context"
 	"crypto/rand"
 	"fmt"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	"math/big"
 	"sort"
 
@@ -32,9 +33,10 @@ func stringSchemaV1(sensitive bool) map[string]*schema.Schema {
 		"length": {
 			Description: "The length of the string desired. The minimum value for length is 1 and, length " +
 				"must also be >= (min_upper + min_lower + min_numeric + min_special).",
-			Type:     schema.TypeInt,
-			Required: true,
-			ForceNew: true,
+			Type:             schema.TypeInt,
+			Required:         true,
+			ForceNew:         true,
+			ValidateDiagFunc: validation.ToDiagFunc(validation.IntAtLeast(1)),
 		},
 
 		"special": {
@@ -130,7 +132,6 @@ func createStringFunc(sensitive bool) func(_ context.Context, d *schema.Resource
 		const numChars = "0123456789"
 		const lowerChars = "abcdefghijklmnopqrstuvwxyz"
 		const upperChars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
-		const minLength = 1
 		var (
 			specialChars = "!@#$%&*()-_=+[]{}<>:?"
 			diags        diag.Diagnostics
@@ -146,13 +147,6 @@ func createStringFunc(sensitive bool) func(_ context.Context, d *schema.Resource
 		special := d.Get("special").(bool)
 		minSpecial := d.Get("min_special").(int)
 		overrideSpecial := d.Get("override_special").(string)
-
-		if length < minLength {
-			return append(diags, diag.Diagnostic{
-				Severity: diag.Error,
-				Summary:  fmt.Sprintf("length (%d) must be >= %d", length, minLength),
-			})
-		}
 
 		if length < minUpper+minLower+minNumeric+minSpecial {
 			return append(diags, diag.Diagnostic{
