@@ -66,11 +66,11 @@ func TestAccResourceString(t *testing.T) {
 			},
 			{
 				Config:      testAccResourceStringInvalidConfig,
-				ExpectError: regexp.MustCompile(`.+?length \(2\) must be >= min_upper \+ min_lower \+ min_numeric \+ min_special \(3\)`),
+				ExpectError: regexp.MustCompile(`.*length \(2\) must be >= min_upper \+ min_lower \+ min_numeric \+ min_special \(3\)`),
 			},
 			{
 				Config:      testAccResourceStringLengthTooShortConfig,
-				ExpectError: regexp.MustCompile(`.+?length \(0\) must be >= 1`),
+				ExpectError: regexp.MustCompile(`.*expected length to be at least \(1\), got 0`),
 			},
 		},
 	})
