@@ -1,3 +1,15 @@
+## 3.1.3 (April 22, 2022)
+
+BUG FIXES:
+
+* resource/random_password: Prevent crash resulting from negative value for length ([#129](https://github.com/hashicorp/terraform-provider-random/issues/129), [#181](https://github.com/hashicorp/terraform-provider-random/issues/181), [#200](https://github.com/hashicorp/terraform-provider-random/pull/200), [#233](https://github.com/hashicorp/terraform-provider-random/issues/233)).
+* resource/random_string: Prevent crash resulting from negative value for length ([#129](https://github.com/hashicorp/terraform-provider-random/issues/129), [#181](https://github.com/hashicorp/terraform-provider-random/issues/181), [#200](https://github.com/hashicorp/terraform-provider-random/pull/200), [#233](https://github.com/hashicorp/terraform-provider-random/issues/233)).
+
+IMPROVEMENTS:
+
+* resource/random_password: Provide unambiguous error message when zero used for length ([#222](https://github.com/hashicorp/terraform-provider-random/issues/222), [#233](https://github.com/hashicorp/terraform-provider-random/issues/233)).
+* resource/random_string: Provide unambiguous error message when zero used for length ([#222](https://github.com/hashicorp/terraform-provider-random/issues/222), [#233](https://github.com/hashicorp/terraform-provider-random/issues/233)).
+
 ## 3.1.2 (March 17, 2022)
 
 BUG FIXES:
