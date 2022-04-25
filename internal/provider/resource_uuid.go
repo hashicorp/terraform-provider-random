@@ -2,8 +2,8 @@ package provider
 
 import (
 	"context"
+	"fmt"
 
-	"github.com/hashicorp/errwrap"
 	"github.com/hashicorp/go-uuid"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -49,27 +49,38 @@ func resourceUuid() *schema.Resource {
 
 func CreateUuid(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	var diags diag.Diagnostics
+
 	result, err := uuid.GenerateUUID()
 	if err != nil {
 		return append(diags, diag.Errorf("error generating uuid: %s", err)...)
 	}
-	d.Set("result", result)
+
+	if err := d.Set("result", result); err != nil {
+		return append(diags, diag.Errorf("error setting result: %s", err)...)
+	}
+
 	d.SetId(result)
+
 	return nil
 }
 
 func ImportUuid(_ context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
 	id := d.Id()
+
 	bytes, err := uuid.ParseUUID(id)
 	if err != nil {
-		return nil, errwrap.Wrapf("error parsing uuid bytes: {{err}}", err)
-	}
-	result, err2 := uuid.FormatUUID(bytes)
-	if err2 != nil {
-		return nil, errwrap.Wrapf("error formatting uuid bytes: {{err2}}", err2)
+		return nil, fmt.Errorf("error parsing uuid bytes: %w", err)
 	}
 
-	d.Set("result", result)
+	result, err := uuid.FormatUUID(bytes)
+	if err != nil {
+		return nil, fmt.Errorf("error formatting uuid bytes: %w", err)
+	}
+
+	if err := d.Set("result", result); err != nil {
+		return nil, fmt.Errorf("error setting result: %w", err)
+	}
+
 	d.SetId(result)
 
 	return []*schema.ResourceData{d}, nil

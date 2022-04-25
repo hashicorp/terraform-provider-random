@@ -137,11 +137,18 @@ func RepopulateEncodings(_ context.Context, d *schema.ResourceData, _ interface{
 	bigInt.SetBytes(bytes)
 	decStr := bigInt.String()
 
-	d.Set("b64_url", prefix+base64Str)
-	d.Set("b64_std", prefix+b64StdStr)
-
-	d.Set("hex", prefix+hexStr)
-	d.Set("dec", prefix+decStr)
+	if err := d.Set("b64_url", prefix+base64Str); err != nil {
+		return append(diags, diag.Errorf("error setting b64_url: %s", err)...)
+	}
+	if err := d.Set("b64_std", prefix+b64StdStr); err != nil {
+		return append(diags, diag.Errorf("error setting b64_std: %s", err)...)
+	}
+	if err := d.Set("hex", prefix+hexStr); err != nil {
+		return append(diags, diag.Errorf("error setting hex: %s", err)...)
+	}
+	if err := d.Set("dec", prefix+decStr); err != nil {
+		return append(diags, diag.Errorf("error setting dec: %s", err)...)
+	}
 
 	return nil
 }
@@ -151,7 +158,10 @@ func ImportID(_ context.Context, d *schema.ResourceData, _ interface{}) ([]*sche
 
 	sep := strings.LastIndex(id, ",")
 	if sep != -1 {
-		d.Set("prefix", id[:sep])
+		if err := d.Set("prefix", id[:sep]); err != nil {
+			return nil, fmt.Errorf("error setting prefix: %w", err)
+		}
+
 		id = id[sep+1:]
 	}
 
@@ -160,7 +170,10 @@ func ImportID(_ context.Context, d *schema.ResourceData, _ interface{}) ([]*sche
 		return nil, fmt.Errorf("error decoding ID: %w", err)
 	}
 
-	d.Set("byte_length", len(bytes))
+	if err := d.Set("byte_length", len(bytes)); err != nil {
+		return nil, fmt.Errorf("error setting byte_length: %w", err)
+	}
+
 	d.SetId(id)
 
 	return []*schema.ResourceData{d}, nil

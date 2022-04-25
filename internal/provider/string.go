@@ -200,7 +200,10 @@ func createStringFunc(sensitive bool) func(_ context.Context, d *schema.Resource
 			return order[i] < order[j]
 		})
 
-		d.Set("result", string(result))
+		if err := d.Set("result", string(result)); err != nil {
+			return append(diags, diag.Errorf("error setting result: %s", err)...)
+		}
+
 		if sensitive {
 			d.SetId("none")
 		} else {
@@ -230,10 +233,15 @@ func readNil(_ context.Context, d *schema.ResourceData, meta interface{}) diag.D
 func importStringFunc(sensitive bool) schema.StateContextFunc {
 	return func(ctx context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
 		val := d.Id()
+
 		if sensitive {
 			d.SetId("none")
 		}
-		d.Set("result", val)
+
+		if err := d.Set("result", val); err != nil {
+			return nil, fmt.Errorf("error setting result: %w", err)
+		}
+
 		return []*schema.ResourceData{d}, nil
 	}
 }
