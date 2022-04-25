@@ -12,8 +12,8 @@ test: fmtcheck
 	echo $(TEST) | \
 		xargs -t -n4 go test $(TESTARGS) -timeout=120s -parallel=4
 
-testacc: fmtcheck
-	TF_ACC=1 go test $(TEST) -v $(TESTARGS) -timeout 120m
+testacc:
+	TF_ACC=1 go test -v -cover -timeout 120m ./...
 
 # See https://golangci-lint.run/
 lint:
@@ -36,5 +36,8 @@ test-compile:
 		exit 1; \
 	fi
 	go test -c $(TEST) $(TESTARGS)
+
+generate:
+	go generate ./...
 
 .PHONY: build test testacc vet fmt fmtcheck errcheck test-compile
