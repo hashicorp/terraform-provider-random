@@ -6,8 +6,11 @@ See the documentation for this provider on the [Terraform Registry](https://regi
 Requirements
 ------------
 
--	[Terraform](https://www.terraform.io/downloads.html) 0.13.x
--	[Go](https://golang.org/doc/install) 1.17 (to build the provider plugin)
+- [Terraform](https://www.terraform.io/downloads.html) 0.13.x
+- [Go](https://golang.org/doc/install) 1.17 (to build the provider plugin)
+- [GNU Make](https://www.gnu.org/software/make/)
+- [golangci-lint](https://golangci-lint.run/usage/install/#local-installation) (optional)
+
 
 Building The Provider
 ---------------------
