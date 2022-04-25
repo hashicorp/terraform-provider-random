@@ -12,7 +12,7 @@ test: fmtcheck
 	echo $(TEST) | \
 		xargs -t -n4 go test $(TESTARGS) -timeout=120s -parallel=4
 
-testacc: fmtcheck
+testacc:
 	TF_ACC=1 go test -v -cover -timeout 120m ./...
 
 vet:
