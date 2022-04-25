@@ -6,7 +6,6 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/hashicorp/errwrap"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
@@ -87,7 +86,10 @@ func CreateInteger(_ context.Context, d *schema.ResourceData, meta interface{}) 
 	rand := NewRand(seed)
 	number := rand.Intn((max+1)-min) + min
 
-	d.Set("result", number)
+	if err := d.Set("result", number); err != nil {
+		return diag.Errorf("error setting result: %s", err)
+	}
+
 	d.SetId(strconv.Itoa(number))
 
 	return nil
@@ -101,25 +103,37 @@ func ImportInteger(_ context.Context, d *schema.ResourceData, meta interface{}) 
 
 	result, err := strconv.Atoi(parts[0])
 	if err != nil {
-		return nil, errwrap.Wrapf("Error parsing \"result\": {{err}}", err)
+		return nil, fmt.Errorf("error parsing result: %w", err)
 	}
-	d.Set("result", result)
+
+	if err := d.Set("result", result); err != nil {
+		return nil, fmt.Errorf("error setting result: %w", err)
+	}
 
 	min, err := strconv.Atoi(parts[1])
 	if err != nil {
-		return nil, errwrap.Wrapf("Error parsing \"min\": {{err}}", err)
+		return nil, fmt.Errorf("error parsing min: %w", err)
 	}
-	d.Set("min", min)
+
+	if err := d.Set("min", min); err != nil {
+		return nil, fmt.Errorf("error setting min: %w", err)
+	}
 
 	max, err := strconv.Atoi(parts[2])
 	if err != nil {
-		return nil, errwrap.Wrapf("Error parsing \"max\": {{err}}", err)
+		return nil, fmt.Errorf("error parsing max: %w", err)
 	}
-	d.Set("max", max)
+
+	if err := d.Set("max", max); err != nil {
+		return nil, fmt.Errorf("error setting max: %w", err)
+	}
 
 	if len(parts) == 4 {
-		d.Set("seed", parts[3])
+		if err := d.Set("seed", parts[3]); err != nil {
+			return nil, fmt.Errorf("error setting seed: %w", err)
+		}
 	}
+
 	d.SetId(parts[0])
 
 	return []*schema.ResourceData{d}, nil

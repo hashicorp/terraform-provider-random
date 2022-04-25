@@ -104,7 +104,10 @@ func CreateShuffle(_ context.Context, d *schema.ResourceData, _ interface{}) dia
 	}
 
 	d.SetId("-")
-	d.Set("result", result)
+
+	if err := d.Set("result", result); err != nil {
+		return diag.Errorf("error setting result: %s", err)
+	}
 
 	return nil
 }

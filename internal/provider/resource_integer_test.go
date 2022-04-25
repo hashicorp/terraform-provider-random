@@ -140,10 +140,10 @@ func testAccResourceIntegerBasic(id string) resource.TestCheckFunc {
 
 func testAccResourceIntegerUpdate(id string) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
-		rs, _ := s.RootModule().Resources[id]
-		// if !ok {
-		// 	return fmt.Errorf("Not found: %s", id)
-		// }
+		rs, ok := s.RootModule().Resources[id]
+		if !ok {
+			return fmt.Errorf("Not found: %s", id)
+		}
 		result := rs.Primary.Attributes["result"]
 
 		if rs.Primary.ID == "" {

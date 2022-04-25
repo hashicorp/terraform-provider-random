@@ -9,10 +9,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 )
 
-type uuidLens struct {
-	result string
-}
-
 func TestAccResourceUUID(t *testing.T) {
 	resource.UnitTest(t, resource.TestCase{
 		PreCheck:  func() { testAccPreCheck(t) },

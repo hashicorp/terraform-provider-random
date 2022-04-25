@@ -72,6 +72,7 @@ func TestAccResourcePet_separator(t *testing.T) {
 	})
 }
 
+// nolint:unparam
 func testAccResourcePetLength(id string, separator string, length int) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 		rs, ok := s.RootModule().Resources[id]
