@@ -10,7 +10,7 @@ development of this provider. Some are in place, others are ongoing processes, o
 ## Goals
 
 * [_Stability over features_](.github/CONTRIBUTING.md)
-* Provide managed resources to generate random values for use in the configuration of Terraform configurations.
+* Provide managed resources to generate random values for use within Terraform configurations.
 * Support the underlying use of a cryptographic random number generator for
   [id](docs/resources/id.md), [password](docs/resources/id.md) and
   [string](docs/resources/string.md).
