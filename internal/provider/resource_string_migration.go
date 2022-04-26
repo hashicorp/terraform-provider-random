@@ -1,18 +1,21 @@
 package provider
 
 import (
+	"context"
 	"fmt"
-	"log"
-
+	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 )
 
 func resourceRandomStringMigrateState(
 	v int, is *terraform.InstanceState, meta interface{}) (*terraform.InstanceState, error) {
+
+	ctx := context.TODO()
+
 	switch v {
 	case 0:
-		log.Println("[INFO] Found random string state v0; migrating to v1")
-		return migrateStringStateV0toV1(is)
+		tflog.Info(ctx, "Found random string state v0; migrating to v1")
+		return migrateStringStateV0toV1(ctx, is)
 	default:
 		return is, fmt.Errorf("Unexpected schema version: %d", v)
 	}
@@ -29,13 +32,13 @@ func redactAttributes(is *terraform.InstanceState) map[string]string {
 	return redactedAttributes
 }
 
-func migrateStringStateV0toV1(is *terraform.InstanceState) (*terraform.InstanceState, error) {
+func migrateStringStateV0toV1(ctx context.Context, is *terraform.InstanceState) (*terraform.InstanceState, error) {
 	if is.Empty() {
-		log.Println("[DEBUG] Empty InstanceState; nothing to migrate.")
+		tflog.Debug(ctx, "Empty InstanceState; nothing to migrate.")
 		return is, nil
 	}
 
-	log.Printf("[DEBUG] Random String Attributes before Migration: %#v", redactAttributes(is))
+	tflog.Debug(ctx, fmt.Sprintf("Random String Attributes before Migration: %#v", redactAttributes(is)))
 
 	keys := []string{"min_numeric", "min_upper", "min_lower", "min_special"}
 	for _, k := range keys {
@@ -44,7 +47,7 @@ func migrateStringStateV0toV1(is *terraform.InstanceState) (*terraform.InstanceS
 		}
 	}
 
-	log.Printf("[DEBUG] Random String Attributes after State Migration: %#v", redactAttributes(is))
+	tflog.Debug(ctx, fmt.Sprintf("Random String Attributes after State Migration: %#v", redactAttributes(is)))
 
 	return is, nil
 }
