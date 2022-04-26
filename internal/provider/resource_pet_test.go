@@ -12,8 +12,8 @@ import (
 
 func TestAccResourcePet_basic(t *testing.T) {
 	resource.UnitTest(t, resource.TestCase{
-		PreCheck:  func() { testAccPreCheck(t) },
-		Providers: testAccProviders,
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: testAccProviders,
 		Steps: []resource.TestStep{
 			{
 				Config: testAccResourcePet_basic,
@@ -27,8 +27,8 @@ func TestAccResourcePet_basic(t *testing.T) {
 
 func TestAccResourcePet_length(t *testing.T) {
 	resource.UnitTest(t, resource.TestCase{
-		PreCheck:  func() { testAccPreCheck(t) },
-		Providers: testAccProviders,
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: testAccProviders,
 		Steps: []resource.TestStep{
 			{
 				Config: testAccResourcePet_length,
@@ -42,8 +42,8 @@ func TestAccResourcePet_length(t *testing.T) {
 
 func TestAccResourcePet_prefix(t *testing.T) {
 	resource.UnitTest(t, resource.TestCase{
-		PreCheck:  func() { testAccPreCheck(t) },
-		Providers: testAccProviders,
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: testAccProviders,
 		Steps: []resource.TestStep{
 			{
 				Config: testAccResourcePet_prefix,
@@ -59,8 +59,8 @@ func TestAccResourcePet_prefix(t *testing.T) {
 
 func TestAccResourcePet_separator(t *testing.T) {
 	resource.UnitTest(t, resource.TestCase{
-		PreCheck:  func() { testAccPreCheck(t) },
-		Providers: testAccProviders,
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: testAccProviders,
 		Steps: []resource.TestStep{
 			{
 				Config: testAccResourcePet_separator,
