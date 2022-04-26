@@ -11,8 +11,8 @@ import (
 func TestAccResourceIntegerBasic(t *testing.T) {
 	t.Parallel()
 	resource.UnitTest(t, resource.TestCase{
-		PreCheck:  func() { testAccPreCheck(t) },
-		Providers: testAccProviders,
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: testAccProviders,
 		Steps: []resource.TestStep{
 			{
 				Config: testRandomIntegerBasic,
@@ -33,8 +33,8 @@ func TestAccResourceIntegerBasic(t *testing.T) {
 func TestAccResourceIntegerUpdate(t *testing.T) {
 	t.Parallel()
 	resource.UnitTest(t, resource.TestCase{
-		PreCheck:  func() { testAccPreCheck(t) },
-		Providers: testAccProviders,
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: testAccProviders,
 		Steps: []resource.TestStep{
 			{
 				Config: testRandomIntegerBasic,
@@ -55,8 +55,8 @@ func TestAccResourceIntegerUpdate(t *testing.T) {
 func TestAccResourceIntegerSeedless_to_seeded(t *testing.T) {
 	t.Parallel()
 	resource.UnitTest(t, resource.TestCase{
-		PreCheck:  func() { testAccPreCheck(t) },
-		Providers: testAccProviders,
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: testAccProviders,
 		Steps: []resource.TestStep{
 			{
 				Config: testRandomIntegerSeedless,
@@ -77,8 +77,8 @@ func TestAccResourceIntegerSeedless_to_seeded(t *testing.T) {
 func TestAccResourceIntegerSeeded_to_seedless(t *testing.T) {
 	t.Parallel()
 	resource.UnitTest(t, resource.TestCase{
-		PreCheck:  func() { testAccPreCheck(t) },
-		Providers: testAccProviders,
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: testAccProviders,
 		Steps: []resource.TestStep{
 			{
 				Config: testRandomIntegerBasic,
@@ -99,8 +99,8 @@ func TestAccResourceIntegerSeeded_to_seedless(t *testing.T) {
 func TestAccResourceIntegerBig(t *testing.T) {
 	t.Parallel()
 	resource.UnitTest(t, resource.TestCase{
-		PreCheck:  func() { testAccPreCheck(t) },
-		Providers: testAccProviders,
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: testAccProviders,
 		Steps: []resource.TestStep{
 			{
 				Config: testRandomIntegerBig,

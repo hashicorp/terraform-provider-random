@@ -11,8 +11,8 @@ import (
 
 func TestAccResourceShuffle(t *testing.T) {
 	resource.UnitTest(t, resource.TestCase{
-		PreCheck:  func() { testAccPreCheck(t) },
-		Providers: testAccProviders,
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: testAccProviders,
 		Steps: []resource.TestStep{
 			{
 				Config: testAccResourceShuffleConfig,

@@ -12,8 +12,8 @@ import (
 
 func TestAccResourcePassword(t *testing.T) {
 	resource.UnitTest(t, resource.TestCase{
-		PreCheck:  func() { testAccPreCheck(t) },
-		Providers: testAccProviders,
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: testAccProviders,
 		Steps: []resource.TestStep{
 			{
 				Config: strings.Replace(testAccResourceStringConfig, "random_string", "random_password", -1),
@@ -44,8 +44,8 @@ func TestAccResourcePassword(t *testing.T) {
 
 func TestAccResourcePassword_import(t *testing.T) {
 	resource.UnitTest(t, resource.TestCase{
-		PreCheck:  func() { testAccPreCheck(t) },
-		Providers: testAccProviders,
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: testAccProviders,
 		Steps: []resource.TestStep{
 			{
 				Config: `

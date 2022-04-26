@@ -15,8 +15,8 @@ type customLens struct {
 
 func TestAccResourceString(t *testing.T) {
 	resource.UnitTest(t, resource.TestCase{
-		PreCheck:  func() { testAccPreCheck(t) },
-		Providers: testAccProviders,
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: testAccProviders,
 		Steps: []resource.TestStep{
 			{
 				Config: testAccResourceStringConfig,
