@@ -29,7 +29,7 @@ For more information on the specific resources available, see the links in the
 navigation bar. Read on for information on the general patterns that apply
 to this provider's resources.
 
-## Resource "Keepers"<a name="keepers"></a>
+## Resource "Keepers"
 
 As noted above, the random resources generate randomness only when they are
 created; the results produced are stored in the Terraform state and re-used
