@@ -6,7 +6,7 @@ resource "random_shuffle" "az" {
 resource "aws_elb" "example" {
   # Place the ELB in any two of the given availability zones, selected
   # at random.
-  availability_zones = ["${random_shuffle.az.result}"]
+  availability_zones = [random_shuffle.az.result]
 
   # ... and other aws_elb arguments ...
 }
