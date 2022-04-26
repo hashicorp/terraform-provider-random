@@ -11,6 +11,9 @@ development of this provider. Some are in place, others are ongoing processes, o
 
 * [_Stability over features_](.github/CONTRIBUTING.md)
 * Provide managed resources to generate random values for use in the configuration of Terraform configurations.
+* Support the underlying use of a cryptographic random number generator for
+  [id](docs/resources/id.md), [password](docs/resources/id.md) and
+  [string](docs/resources/string.md).
 * Support the use of "[keepers](docs/index.md)" for all resources.
 * Support the use of encoding [id](docs/resources/id.md) as: 
   * [base64](https://www.rfc-editor.org/rfc/rfc4648.html#section-4)
