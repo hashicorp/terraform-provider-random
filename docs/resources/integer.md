@@ -24,7 +24,7 @@ resource "random_integer" "priority" {
   max = 50000
   keepers = {
     # Generate a new integer each time we switch to a new listener ARN
-    listener_arn = "${var.listener_arn}"
+    listener_arn = var.listener_arn
   }
 }
 
