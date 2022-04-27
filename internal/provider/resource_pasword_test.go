@@ -3,7 +3,6 @@ package provider
 import (
 	"fmt"
 	"regexp"
-	"strings"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
@@ -16,7 +15,7 @@ func TestAccResourcePassword(t *testing.T) {
 		ProviderFactories: testAccProviders,
 		Steps: []resource.TestStep{
 			{
-				Config: strings.Replace(testAccResourceStringConfig, "random_string", "random_password", -1),
+				Config: testAccResourcePasswordConfig,
 				Check: resource.ComposeTestCheckFunc(
 					testAccResourceStringCheck("random_password.foo", &customLens{
 						customLen: 12,
@@ -37,7 +36,13 @@ func TestAccResourcePassword(t *testing.T) {
 					regexMatch("random_password.min", regexp.MustCompile(`([!#@])`), 1),
 				),
 			},
-			// TODO: for some reason unable to test import of a single resource here, broken out to test below
+			// Import is tested separately because testAccResourceStringConfig contains 4 resources and during the
+			// execution of testStepNewImportState the order of
+			// [oldResources](https://github.com/hashicorp/terraform-plugin-sdk/blob/main/helper/resource/testing_new_import_state.go#L177)
+			// is non-deterministic. The first resource in oldResources always matches because the check for equality
+			// always passes (i.e., ID, type and provider all match because for all 4 resources the values are "none",
+			// "random_password" and "registry.terraform.io/hashicorp/random", respectively).
+			//
 		},
 	})
 }
@@ -55,6 +60,9 @@ resource "random_password" "foo" {
 			},
 			{
 				ResourceName: "random_password.foo",
+				// Usage of ImportStateIdFunc is required as the value passed to the `terraform import` command needs
+				// to be the password itself, as the password resource sets ID to "none" and "result" to the password
+				// supplied during import.
 				ImportStateIdFunc: func(s *terraform.State) (string, error) {
 					id := "random_password.foo"
 					rs, ok := s.RootModule().Resources[id]
@@ -74,3 +82,30 @@ resource "random_password" "foo" {
 		},
 	})
 }
+
+const testAccResourcePasswordConfig = `
+resource "random_password" "foo" {
+  length = 12
+}
+
+resource "random_password" "bar" {
+  length = 32
+}
+
+resource "random_password" "three" {
+  length = 4
+  override_special = "!"
+  lower = false
+  upper = false
+  number = false
+}
+
+resource "random_password" "min" {
+  length = 12
+  override_special = "!#@"
+  min_lower = 2
+  min_upper = 3
+  min_special = 1
+  min_numeric = 4
+}
+`
