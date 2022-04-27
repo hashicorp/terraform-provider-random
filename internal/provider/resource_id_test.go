@@ -9,7 +9,6 @@ import (
 )
 
 type idLens struct {
-	b64Len    int
 	b64UrlLen int
 	b64StdLen int
 	hexLen    int
@@ -24,13 +23,11 @@ func TestAccResourceID(t *testing.T) {
 				Config: testAccResourceIDConfig,
 				Check: resource.ComposeTestCheckFunc(
 					testAccResourceIDCheck("random_id.foo", &idLens{
-						b64Len:    6,
 						b64UrlLen: 6,
 						b64StdLen: 8,
 						hexLen:    8,
 					}),
 					testAccResourceIDCheck("random_id.bar", &idLens{
-						b64Len:    12,
 						b64UrlLen: 12,
 						b64StdLen: 14,
 						hexLen:    14,
