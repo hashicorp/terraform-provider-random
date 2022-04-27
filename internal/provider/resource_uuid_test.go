@@ -17,16 +17,11 @@ func TestAccResourceUUID(t *testing.T) {
 			{
 				Config: testAccResourceUUIDConfig,
 				Check: resource.ComposeTestCheckFunc(
-					testAccResourceUUIDCheck("random_uuid.foo"),
+					testAccResourceUUIDCheck("random_uuid.basic"),
 				),
 			},
 			{
-				ResourceName:      "random_uuid.foo",
-				ImportState:       true,
-				ImportStateVerify: true,
-			},
-			{
-				ResourceName:      "random_uuid.bar",
+				ResourceName:      "random_uuid.basic",
 				ImportState:       true,
 				ImportStateVerify: true,
 			},
@@ -57,8 +52,6 @@ func testAccResourceUUIDCheck(id string) resource.TestCheckFunc {
 
 const (
 	testAccResourceUUIDConfig = `
-resource "random_uuid" "foo" { }
-
-resource "random_uuid" "bar" { }
+resource "random_uuid" "basic" { }
 `
 )

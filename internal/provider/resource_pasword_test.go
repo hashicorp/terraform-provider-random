@@ -9,68 +9,32 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 )
 
-func TestAccResourcePassword(t *testing.T) {
+func TestAccResourcePasswordBasic(t *testing.T) {
 	resource.UnitTest(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },
 		ProviderFactories: testAccProviders,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccResourcePasswordConfig,
+				Config: testAccResourcePasswordBasic,
 				Check: resource.ComposeTestCheckFunc(
-					testAccResourceStringCheck("random_password.foo", &customLens{
+					testAccResourceStringCheck("random_password.basic", &customLens{
 						customLen: 12,
 					}),
-					testAccResourceStringCheck("random_password.bar", &customLens{
-						customLen: 32,
-					}),
-					testAccResourceStringCheck("random_password.three", &customLens{
-						customLen: 4,
-					}),
-					patternMatch("random_password.three", "!!!!"),
-					testAccResourceStringCheck("random_password.min", &customLens{
-						customLen: 12,
-					}),
-					regexMatch("random_password.min", regexp.MustCompile(`([a-z])`), 2),
-					regexMatch("random_password.min", regexp.MustCompile(`([A-Z])`), 3),
-					regexMatch("random_password.min", regexp.MustCompile(`([0-9])`), 4),
-					regexMatch("random_password.min", regexp.MustCompile(`([!#@])`), 1),
 				),
 			},
-			// Import is tested separately because testAccResourceStringConfig contains 4 resources and during the
-			// execution of testStepNewImportState the order of
-			// [oldResources](https://github.com/hashicorp/terraform-plugin-sdk/blob/main/helper/resource/testing_new_import_state.go#L177)
-			// is non-deterministic. The first resource in oldResources always matches because the check for equality
-			// always passes (i.e., ID, type and provider all match because for all 4 resources the values are "none",
-			// "random_password" and "registry.terraform.io/hashicorp/random", respectively).
-			//
-		},
-	})
-}
-
-func TestAccResourcePassword_import(t *testing.T) {
-	resource.UnitTest(t, resource.TestCase{
-		PreCheck:          func() { testAccPreCheck(t) },
-		ProviderFactories: testAccProviders,
-		Steps: []resource.TestStep{
 			{
-				Config: `
-resource "random_password" "foo" {
-	length = 32
-}`,
-			},
-			{
-				ResourceName: "random_password.foo",
+				ResourceName: "random_password.basic",
 				// Usage of ImportStateIdFunc is required as the value passed to the `terraform import` command needs
 				// to be the password itself, as the password resource sets ID to "none" and "result" to the password
 				// supplied during import.
 				ImportStateIdFunc: func(s *terraform.State) (string, error) {
-					id := "random_password.foo"
+					id := "random_password.basic"
 					rs, ok := s.RootModule().Resources[id]
 					if !ok {
-						return "", fmt.Errorf("Not found: %s", id)
+						return "", fmt.Errorf("not found: %s", id)
 					}
 					if rs.Primary.ID == "" {
-						return "", fmt.Errorf("No ID is set")
+						return "", fmt.Errorf("no ID is set")
 					}
 
 					return rs.Primary.Attributes["result"], nil
@@ -83,29 +47,68 @@ resource "random_password" "foo" {
 	})
 }
 
-const testAccResourcePasswordConfig = `
-resource "random_password" "foo" {
+func TestAccResourcePasswordOverride(t *testing.T) {
+	resource.UnitTest(t, resource.TestCase{
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: testAccProviders,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccResourcePasswordOverride,
+				Check: resource.ComposeTestCheckFunc(
+					testAccResourceStringCheck("random_password.override", &customLens{
+						customLen: 4,
+					}),
+					patternMatch("random_password.override", "!!!!"),
+				),
+			},
+		},
+	})
+}
+
+func TestAccResourcePasswordMin(t *testing.T) {
+	resource.UnitTest(t, resource.TestCase{
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: testAccProviders,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccResourcePasswordMin,
+				Check: resource.ComposeTestCheckFunc(
+					testAccResourceStringCheck("random_password.min", &customLens{
+						customLen: 12,
+					}),
+					regexMatch("random_password.min", regexp.MustCompile(`([a-z])`), 2),
+					regexMatch("random_password.min", regexp.MustCompile(`([A-Z])`), 3),
+					regexMatch("random_password.min", regexp.MustCompile(`([0-9])`), 4),
+					regexMatch("random_password.min", regexp.MustCompile(`([!#@])`), 1),
+				),
+			},
+		},
+	})
+}
+
+const (
+	testAccResourcePasswordBasic = `
+resource "random_password" "basic" {
   length = 12
-}
+}`
 
-resource "random_password" "bar" {
-  length = 32
-}
-
-resource "random_password" "three" {
-  length = 4
-  override_special = "!"
-  lower = false
-  upper = false
-  number = false
-}
-
-resource "random_password" "min" {
-  length = 12
-  override_special = "!#@"
-  min_lower = 2
-  min_upper = 3
-  min_special = 1
-  min_numeric = 4
+	testAccResourcePasswordOverride = `
+resource "random_password" "override" {
+length = 4
+override_special = "!"
+lower = false
+upper = false
+number = false
 }
 `
+
+	testAccResourcePasswordMin = `
+resource "random_password" "min" {
+length = 12
+override_special = "!#@"
+min_lower = 2
+min_upper = 3
+min_special = 1
+min_numeric = 4
+}`
+)

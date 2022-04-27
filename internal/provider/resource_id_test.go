@@ -27,17 +27,31 @@ func TestAccResourceID(t *testing.T) {
 						b64StdLen: 8,
 						hexLen:    8,
 					}),
-					testAccResourceIDCheck("random_id.bar", &idLens{
-						b64UrlLen: 12,
-						b64StdLen: 14,
-						hexLen:    14,
-					}),
 				),
 			},
 			{
 				ResourceName:      "random_id.foo",
 				ImportState:       true,
 				ImportStateVerify: true,
+			},
+		},
+	})
+}
+
+func TestAccResourceID_importWithPrefix(t *testing.T) {
+	resource.UnitTest(t, resource.TestCase{
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: testAccProviders,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccResourceIDConfigWithPrefix,
+				Check: resource.ComposeTestCheckFunc(
+					testAccResourceIDCheck("random_id.bar", &idLens{
+						b64UrlLen: 12,
+						b64StdLen: 14,
+						hexLen:    14,
+					}),
+				),
 			},
 			{
 				ResourceName:        "random_id.bar",
@@ -85,8 +99,9 @@ const (
 	testAccResourceIDConfig = `
 resource "random_id" "foo" {
   byte_length = 4
-}
+}`
 
+	testAccResourceIDConfigWithPrefix = `
 resource "random_id" "bar" {
   byte_length = 4
   prefix      = "cloud-"
