@@ -29,7 +29,7 @@ resource "random_integer" "priority" {
 }
 
 resource "aws_alb_listener_rule" "main" {
-  listener_arn = var.listener_arn
+  listener_arn = random_integer.priority.keepers.listener_arn
   priority     = random_integer.priority.result
 
   action {
