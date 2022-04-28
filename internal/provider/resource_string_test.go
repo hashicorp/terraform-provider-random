@@ -12,7 +12,7 @@ type customLens struct {
 	customLen int
 }
 
-func TestAccResourceStringBasic(t *testing.T) {
+func TestAccResourceString(t *testing.T) {
 	resource.UnitTest(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },
 		ProviderFactories: testAccProviders,
@@ -74,12 +74,28 @@ func TestAccResourceStringMin(t *testing.T) {
 	})
 }
 
+func TestAccResourceStringErrors(t *testing.T) {
+	resource.UnitTest(t, resource.TestCase{
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: testAccProviders,
+		Steps: []resource.TestStep{
+			{
+				Config:      testAccResourceStringInvalidConfig,
+				ExpectError: regexp.MustCompile(`.*length \(2\) must be >= min_upper \+ min_lower \+ min_numeric \+ min_special \(3\)`),
+			},
+			{
+				Config:      testAccResourceStringLengthTooShortConfig,
+				ExpectError: regexp.MustCompile(`.*expected length to be at least \(1\), got 0`),
+			},
+		},
+	})
+}
+
 const (
 	testAccResourceStringBasic = `
 resource "random_string" "basic" {
   length = 12
 }`
-
 	testAccResourceStringOverride = `
 resource "random_string" "override" {
 length = 4
@@ -89,7 +105,6 @@ upper = false
 number = false
 }
 `
-
 	testAccResourceStringMin = `
 resource "random_string" "min" {
 length = 12
@@ -98,6 +113,15 @@ min_lower = 2
 min_upper = 3
 min_special = 1
 min_numeric = 4
+}`
+	testAccResourceStringInvalidConfig = `
+resource "random_string" "invalid_length" {
+  length = 2
+  min_lower = 3
+}`
+	testAccResourceStringLengthTooShortConfig = `
+resource "random_string" "invalid_length" {
+  length = 0
 }`
 )
 
@@ -158,15 +182,3 @@ func patternMatch(id string, want string) resource.TestCheckFunc {
 		return nil
 	}
 }
-
-const (
-	testAccResourceStringInvalidConfig = `
-resource "random_string" "invalid_length" {
-  length = 2
-  min_lower = 3
-}`
-	testAccResourceStringLengthTooShortConfig = `
-resource "random_string" "invalid_length" {
-  length = 0
-}`
-)

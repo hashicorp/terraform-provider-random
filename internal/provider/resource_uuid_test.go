@@ -18,7 +18,7 @@ func TestAccResourceUUID(t *testing.T) {
 					resource.TestMatchResourceAttr(
 						"random_uuid.basic",
 						"result",
-						regexp.MustCompile("[\\da-f]{8}-[\\da-f]{4}-[\\da-f]{4}-[\\da-f]{4}-[\\da-f]{12}"),
+						regexp.MustCompile(`[\da-f]{8}-[\da-f]{4}-[\da-f]{4}-[\da-f]{4}-[\da-f]{12}`),
 					),
 				),
 			},
