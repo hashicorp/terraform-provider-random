@@ -37,7 +37,7 @@ func resourcePet() *schema.Resource {
 			},
 
 			"length": {
-				Description: "The length (in words) of the pet name.",
+				Description: "The length (in words) of the pet name. Defaults to 2",
 				Type:        schema.TypeInt,
 				Optional:    true,
 				Default:     2,
@@ -52,7 +52,7 @@ func resourcePet() *schema.Resource {
 			},
 
 			"separator": {
-				Description: "The character to separate words in the pet name.",
+				Description: "The character to separate words in the pet name. Defaults to \"-\"",
 				Type:        schema.TypeString,
 				Optional:    true,
 				Default:     "-",

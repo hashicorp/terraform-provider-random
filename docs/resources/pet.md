@@ -46,9 +46,9 @@ resource "aws_instance" "server" {
 ### Optional
 
 - `keepers` (Map of String) Arbitrary map of values that, when changed, will trigger recreation of resource. See [the main provider documentation](../index.html) for more information.
-- `length` (Number) The length (in words) of the pet name.
+- `length` (Number) The length (in words) of the pet name. Defaults to 2
 - `prefix` (String) A string to prefix the name with.
-- `separator` (String) The character to separate words in the pet name.
+- `separator` (String) The character to separate words in the pet name. Defaults to "-"
 
 ### Read-Only
 
