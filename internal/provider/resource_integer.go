@@ -77,10 +77,10 @@ func CreateInteger(_ context.Context, d *schema.ResourceData, meta interface{}) 
 	max := d.Get("max").(int)
 	seed := d.Get("seed").(string)
 
-	if max <= min {
+	if max < min {
 		return append(diags, diag.Diagnostic{
 			Severity: diag.Error,
-			Summary:  "minimum value needs to be smaller than maximum value",
+			Summary:  "minimum value needs to be smaller than or equal to maximum value",
 		})
 	}
 	rand := NewRand(seed)
