@@ -22,7 +22,6 @@ func New() *schema.Provider {
 			"random_string":   resourceString(),
 			"random_password": resourcePassword(),
 			"random_integer":  resourceInteger(),
-			"random_uuid":     resourceUuid(),
 		},
 	}
 }
