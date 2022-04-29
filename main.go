@@ -1,9 +1,15 @@
 package main
 
 import (
-	"github.com/hashicorp/terraform-plugin-sdk/v2/plugin"
-
+	"context"
+	"github.com/hashicorp/terraform-plugin-framework/providerserver"
+	"github.com/hashicorp/terraform-plugin-go/tfprotov5"
+	"github.com/hashicorp/terraform-plugin-go/tfprotov5/tf5server"
+	"github.com/hashicorp/terraform-plugin-go/tfprotov6"
+	"github.com/hashicorp/terraform-plugin-mux/tf5muxserver"
+	"github.com/hashicorp/terraform-plugin-mux/tf6to5server"
 	"github.com/terraform-providers/terraform-provider-random/internal/provider"
+	"log"
 )
 
 // Run "go generate" to format example terraform files and generate the docs for the registry/website
@@ -17,5 +23,29 @@ import (
 //go:generate go run github.com/hashicorp/terraform-plugin-docs/cmd/tfplugindocs
 
 func main() {
-	plugin.Serve(&plugin.ServeOpts{ProviderFunc: provider.New})
+	ctx := context.Background()
+
+	downgradedFrameworkProvider, err := tf6to5server.DowngradeServer(ctx, func() tfprotov6.ProviderServer {
+		return providerserver.NewProtocol6(provider.NewFramework())()
+	})
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	providers := []func() tfprotov5.ProviderServer{
+		func() tfprotov5.ProviderServer {
+			return downgradedFrameworkProvider
+		},
+		provider.New().GRPCProvider,
+	}
+
+	muxServer, err := tf5muxserver.NewMuxServer(ctx, providers...)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	err = tf5server.Serve("registry.terraform.io/hashicorp/random", muxServer.ProviderServer)
+	if err != nil {
+		log.Fatal(err)
+	}
 }
