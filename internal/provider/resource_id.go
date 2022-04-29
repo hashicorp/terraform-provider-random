@@ -154,8 +154,9 @@ func RepopulateEncodings(_ context.Context, d *schema.ResourceData, _ interface{
 }
 
 func ImportID(_ context.Context, d *schema.ResourceData, _ interface{}) ([]*schema.ResourceData, error) {
+	var bytes []byte
+	var err error
 	id := d.Id()
-
 	sep := strings.LastIndex(id, ",")
 	if sep != -1 {
 		if err := d.Set("prefix", id[:sep]); err != nil {
@@ -165,9 +166,18 @@ func ImportID(_ context.Context, d *schema.ResourceData, _ interface{}) ([]*sche
 		id = id[sep+1:]
 	}
 
-	bytes, err := base64.RawURLEncoding.DecodeString(id)
-	if err != nil {
-		return nil, fmt.Errorf("error decoding ID: %w", err)
+	if strings.HasPrefix(id, "hex:") {
+		sep := strings.Index(id, ":")
+		bytes, err = hex.DecodeString(id[sep+1:])
+		if err != nil {
+			return nil, fmt.Errorf("error parsing hex value ID: %w", err)
+		}
+		id = base64.RawURLEncoding.EncodeToString(bytes)
+	} else {
+		bytes, err = base64.RawURLEncoding.DecodeString(id)
+		if err != nil {
+			return nil, fmt.Errorf("error decoding ID: %w", err)
+		}
 	}
 
 	if err := d.Set("byte_length", len(bytes)); err != nil {

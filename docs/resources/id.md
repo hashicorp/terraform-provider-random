@@ -83,13 +83,26 @@ resource "aws_instance" "server" {
 Import is supported using the following syntax:
 
 ```shell
-# Random IDs can be imported using the b64_url with an optional prefix. This
+# Random IDs can be imported using the b64_url or a hex value with an optional prefix. This
 # can be used to replace a config value with a value interpolated from the
 # random provider without experiencing diffs.
 
 # Example with no prefix:
-terraform import random_id.server p-9hUg
+$ terraform import random_id.server p-9hUg
+
+# Example importing as hex with no prefix
+$ terraform import random_id.server hex:a7ef6152
 
 # Example with prefix (prefix is separated by a ,):
 $ terraform import random_id.server my-prefix-,p-9hUg
+
+# Example with prefix using hex
+$ terraform import random_id.server my-prefix-,hex:a7ef6152
+
+# Additional notes when importing hex - this will create a 1 byte value as
+# the hex bytes are processed directly to the internal representation
+$ terraform import random_id.server hex:52
+
+# If you wish to create a 4 byte value (for example) to match byte_length = 4 in config then
+$ terraform import random_id.server hex:00000052
 ```
