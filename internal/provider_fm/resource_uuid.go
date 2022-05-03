@@ -26,8 +26,8 @@ func (r resourceUUIDType) GetSchema(context.Context) (tfsdk.Schema, diag.Diagnos
 				Type: types.MapType{
 					ElemType: types.StringType,
 				},
-				Optional: true,
-				//ForceNew: true,
+				Optional:      true,
+				PlanModifiers: []tfsdk.AttributePlanModifier{tfsdk.RequiresReplace()},
 			},
 			"result": {
 				Description: "The generated uuid presented in string format.",
@@ -69,12 +69,20 @@ func (r resourceUUID) Create(ctx context.Context, req tfsdk.CreateResourceReques
 		return
 	}
 
-	u := &UUID{
-		ID:     types.String{Value: result},
-		Result: types.String{Value: result},
+	var plan UUID
+	diags := req.Plan.Get(ctx, &plan)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
 	}
 
-	diags := resp.State.Set(ctx, u)
+	u := &UUID{
+		ID:      types.String{Value: result},
+		Result:  types.String{Value: result},
+		Keepers: plan.Keepers,
+	}
+
+	diags = resp.State.Set(ctx, u)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
 		return
@@ -122,6 +130,7 @@ func (r resourceUUID) ImportState(ctx context.Context, req tfsdk.ImportResourceS
 
 	state.ID.Value = result
 	state.Result.Value = result
+	state.Keepers.ElemType = types.StringType
 
 	diags := resp.State.Set(ctx, &state)
 	resp.Diagnostics.Append(diags...)
