@@ -7,7 +7,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/tfsdk"
 	"github.com/hashicorp/terraform-plugin-framework/types"
-	"github.com/hashicorp/terraform-plugin-go/tftypes"
 )
 
 type resourceUUIDType struct{}
@@ -94,13 +93,7 @@ func (r resourceUUID) Read(ctx context.Context, req tfsdk.ReadResourceRequest, r
 }
 
 func (r resourceUUID) Update(ctx context.Context, req tfsdk.UpdateResourceRequest, resp *tfsdk.UpdateResourceResponse) {
-	var plan UUID
-	diags := req.Plan.Get(ctx, &plan)
-	resp.Diagnostics.Append(diags...)
-	if resp.Diagnostics.HasError() {
-		return
-	}
-
+	// Intentionally left blank.
 }
 
 func (r resourceUUID) Delete(ctx context.Context, req tfsdk.DeleteResourceRequest, resp *tfsdk.DeleteResourceResponse) {
@@ -108,8 +101,6 @@ func (r resourceUUID) Delete(ctx context.Context, req tfsdk.DeleteResourceReques
 }
 
 func (r resourceUUID) ImportState(ctx context.Context, req tfsdk.ImportResourceStateRequest, resp *tfsdk.ImportResourceStateResponse) {
-	tfsdk.ResourceImportStatePassthroughID(ctx, tftypes.NewAttributePath().WithAttributeName("id"), req, resp)
-
 	bytes, err := uuid.ParseUUID(req.ID)
 	if err != nil {
 		resp.Diagnostics.AddError(

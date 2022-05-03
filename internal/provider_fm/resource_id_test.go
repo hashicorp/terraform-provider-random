@@ -1,4 +1,4 @@
-package provider
+package provider_fm
 
 import (
 	"fmt"
@@ -16,8 +16,8 @@ type idLens struct {
 
 func TestAccResourceID(t *testing.T) {
 	resource.UnitTest(t, resource.TestCase{
-		PreCheck:          func() { testAccPreCheck(t) },
-		ProviderFactories: testAccProviders,
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
 			{
 				Config: testAccResourceIDConfig,
@@ -40,8 +40,8 @@ func TestAccResourceID(t *testing.T) {
 
 func TestAccResourceID_importWithPrefix(t *testing.T) {
 	resource.UnitTest(t, resource.TestCase{
-		PreCheck:          func() { testAccPreCheck(t) },
-		ProviderFactories: testAccProviders,
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
 			{
 				Config: testAccResourceIDConfigWithPrefix,
