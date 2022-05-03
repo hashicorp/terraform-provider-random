@@ -9,6 +9,7 @@ import (
 func testAccPreCheck(t *testing.T) {
 }
 
+//nolint:unparam
 var testAccProtoV6ProviderFactories = map[string]func() (tfprotov6.ProviderServer, error){
 	"random": func() (tfprotov6.ProviderServer, error) {
 		return providerserver.NewProtocol6(NewFramework())(), nil
