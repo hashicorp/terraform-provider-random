@@ -20,6 +20,15 @@ func (r resourceUUIDType) GetSchema(context.Context) (tfsdk.Schema, diag.Diagnos
 			"This resource uses [hashicorp/go-uuid](https://github.com/hashicorp/go-uuid) to generate a " +
 			"UUID-formatted string for use with services needed a unique string identifier.",
 		Attributes: map[string]tfsdk.Attribute{
+			"keepers": {
+				Description: "Arbitrary map of values that, when changed, will trigger recreation of " +
+					"resource. See [the main provider documentation](../index.html) for more information.",
+				Type: types.MapType{
+					ElemType: types.StringType,
+				},
+				Optional: true,
+				//ForceNew: true,
+			},
 			"result": {
 				Description: "The generated uuid presented in string format.",
 				Type:        types.StringType,
@@ -77,8 +86,13 @@ func (r resourceUUID) Read(ctx context.Context, req tfsdk.ReadResourceRequest, r
 }
 
 func (r resourceUUID) Update(ctx context.Context, req tfsdk.UpdateResourceRequest, resp *tfsdk.UpdateResourceResponse) {
-	//TODO implement me
-	panic("implement me")
+	var plan UUID
+	diags := req.Plan.Get(ctx, &plan)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
 }
 
 func (r resourceUUID) Delete(ctx context.Context, req tfsdk.DeleteResourceRequest, resp *tfsdk.DeleteResourceResponse) {
