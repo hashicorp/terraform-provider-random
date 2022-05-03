@@ -2,11 +2,10 @@ package provider
 
 import (
 	"fmt"
-	"regexp"
-	"testing"
-
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
+	"regexp"
+	"testing"
 )
 
 type customLens struct {
@@ -19,18 +18,49 @@ func TestAccResourceString(t *testing.T) {
 		ProviderFactories: testAccProviders,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccResourceStringConfig,
+				Config: testAccResourceStringBasic,
 				Check: resource.ComposeTestCheckFunc(
-					testAccResourceStringCheck("random_string.foo", &customLens{
+					testAccResourceStringCheck("random_string.basic", &customLens{
 						customLen: 12,
 					}),
-					testAccResourceStringCheck("random_string.bar", &customLens{
-						customLen: 32,
-					}),
-					testAccResourceStringCheck("random_string.three", &customLens{
+				),
+			},
+			{
+				ResourceName:            "random_string.basic",
+				ImportState:             true,
+				ImportStateVerify:       true,
+				ImportStateVerifyIgnore: []string{"length", "lower", "number", "special", "upper", "min_lower", "min_numeric", "min_special", "min_upper", "override_special"},
+			},
+		},
+	})
+}
+
+func TestAccResourceStringOverride(t *testing.T) {
+	resource.UnitTest(t, resource.TestCase{
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: testAccProviders,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccResourceStringOverride,
+				Check: resource.ComposeTestCheckFunc(
+					testAccResourceStringCheck("random_string.override", &customLens{
 						customLen: 4,
 					}),
-					patternMatch("random_string.three", "!!!!"),
+					patternMatch("random_string.override", "!!!!"),
+				),
+			},
+		},
+	})
+}
+
+func TestAccResourceStringMin(t *testing.T) {
+	resource.UnitTest(t, resource.TestCase{
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: testAccProviders,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccResourceStringMin,
+				Check: resource.ComposeTestCheckFunc(
 					testAccResourceStringCheck("random_string.min", &customLens{
 						customLen: 12,
 					}),
@@ -40,30 +70,15 @@ func TestAccResourceString(t *testing.T) {
 					regexMatch("random_string.min", regexp.MustCompile(`([!#@])`), 1),
 				),
 			},
-			{
-				ResourceName:            "random_string.foo",
-				ImportState:             true,
-				ImportStateVerify:       true,
-				ImportStateVerifyIgnore: []string{"length", "lower", "number", "special", "upper", "min_lower", "min_numeric", "min_special", "min_upper", "override_special"},
-			},
-			{
-				ResourceName:            "random_string.bar",
-				ImportState:             true,
-				ImportStateVerify:       true,
-				ImportStateVerifyIgnore: []string{"length", "lower", "number", "special", "upper", "min_lower", "min_numeric", "min_special", "min_upper", "override_special"},
-			},
-			{
-				ResourceName:            "random_string.three",
-				ImportState:             true,
-				ImportStateVerify:       true,
-				ImportStateVerifyIgnore: []string{"length", "lower", "number", "special", "upper", "min_lower", "min_numeric", "min_special", "min_upper", "override_special"},
-			},
-			{
-				ResourceName:            "random_string.min",
-				ImportState:             true,
-				ImportStateVerify:       true,
-				ImportStateVerifyIgnore: []string{"length", "lower", "number", "special", "upper", "min_lower", "min_numeric", "min_special", "min_upper", "override_special"},
-			},
+		},
+	})
+}
+
+func TestAccResourceStringErrors(t *testing.T) {
+	resource.UnitTest(t, resource.TestCase{
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: testAccProviders,
+		Steps: []resource.TestStep{
 			{
 				Config:      testAccResourceStringInvalidConfig,
 				ExpectError: regexp.MustCompile(`.*length \(2\) must be >= min_upper \+ min_lower \+ min_numeric \+ min_special \(3\)`),
@@ -75,6 +90,40 @@ func TestAccResourceString(t *testing.T) {
 		},
 	})
 }
+
+const (
+	testAccResourceStringBasic = `
+resource "random_string" "basic" {
+  length = 12
+}`
+	testAccResourceStringOverride = `
+resource "random_string" "override" {
+length = 4
+override_special = "!"
+lower = false
+upper = false
+number = false
+}
+`
+	testAccResourceStringMin = `
+resource "random_string" "min" {
+length = 12
+override_special = "!#@"
+min_lower = 2
+min_upper = 3
+min_special = 1
+min_numeric = 4
+}`
+	testAccResourceStringInvalidConfig = `
+resource "random_string" "invalid_length" {
+  length = 2
+  min_lower = 3
+}`
+	testAccResourceStringLengthTooShortConfig = `
+resource "random_string" "invalid_length" {
+  length = 0
+}`
+)
 
 func testAccResourceStringCheck(id string, want *customLens) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
@@ -133,41 +182,3 @@ func patternMatch(id string, want string) resource.TestCheckFunc {
 		return nil
 	}
 }
-
-const (
-	testAccResourceStringConfig = `
-resource "random_string" "foo" {
-  length = 12
-}
-
-resource "random_string" "bar" {
-  length = 32
-}
-
-resource "random_string" "three" {
-  length = 4
-  override_special = "!"
-  lower = false
-  upper = false
-  number = false
-}
-
-resource "random_string" "min" {
-  length = 12
-  override_special = "!#@"
-  min_lower = 2
-  min_upper = 3
-  min_special = 1
-  min_numeric = 4
-}
-`
-	testAccResourceStringInvalidConfig = `
-resource "random_string" "invalid_length" {
-  length = 2
-  min_lower = 3
-}`
-	testAccResourceStringLengthTooShortConfig = `
-resource "random_string" "invalid_length" {
-  length = 0
-}`
-)
