@@ -176,9 +176,9 @@ func (r resourceInteger) ImportState(ctx context.Context, req tfsdk.ImportResour
 
 	state.ID.Value = parts[0]
 	state.Keepers.ElemType = types.StringType
-	state.Result.Value = int64(result)
-	state.Min.Value = int64(min)
-	state.Max.Value = int64(max)
+	state.Result.Value = result
+	state.Min.Value = min
+	state.Max.Value = max
 
 	if len(parts) == 4 {
 		state.Seed.Value = parts[3]
