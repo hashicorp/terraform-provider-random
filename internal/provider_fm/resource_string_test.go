@@ -1,4 +1,4 @@
-package provider
+package provider_fm
 
 import (
 	"fmt"
@@ -14,8 +14,8 @@ type customLens struct {
 
 func TestAccResourceString(t *testing.T) {
 	resource.UnitTest(t, resource.TestCase{
-		PreCheck:          func() { testAccPreCheck(t) },
-		ProviderFactories: testAccProviders,
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
 			{
 				Config: testAccResourceStringBasic,
@@ -37,8 +37,8 @@ func TestAccResourceString(t *testing.T) {
 
 func TestAccResourceStringOverride(t *testing.T) {
 	resource.UnitTest(t, resource.TestCase{
-		PreCheck:          func() { testAccPreCheck(t) },
-		ProviderFactories: testAccProviders,
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
 			{
 				Config: testAccResourceStringOverride,
@@ -55,8 +55,8 @@ func TestAccResourceStringOverride(t *testing.T) {
 
 func TestAccResourceStringMin(t *testing.T) {
 	resource.UnitTest(t, resource.TestCase{
-		PreCheck:          func() { testAccPreCheck(t) },
-		ProviderFactories: testAccProviders,
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
 			{
 				Config: testAccResourceStringMin,
@@ -76,8 +76,8 @@ func TestAccResourceStringMin(t *testing.T) {
 
 func TestAccResourceStringErrors(t *testing.T) {
 	resource.UnitTest(t, resource.TestCase{
-		PreCheck:          func() { testAccPreCheck(t) },
-		ProviderFactories: testAccProviders,
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
 			{
 				Config:      testAccResourceStringInvalidConfig,
@@ -85,7 +85,7 @@ func TestAccResourceStringErrors(t *testing.T) {
 			},
 			{
 				Config:      testAccResourceStringLengthTooShortConfig,
-				ExpectError: regexp.MustCompile(`.*expected length to be at least \(1\), got 0`),
+				ExpectError: regexp.MustCompile(`.*expected length to be at least 1, got 0`),
 			},
 		},
 	})

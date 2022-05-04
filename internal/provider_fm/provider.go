@@ -24,9 +24,11 @@ func (p *provider) Configure(ctx context.Context, req tfsdk.ConfigureProviderReq
 
 func (p *provider) GetResources(ctx context.Context) (map[string]tfsdk.ResourceType, diag.Diagnostics) {
 	return map[string]tfsdk.ResourceType{
-		"random_id":      resourceIDType{},
-		"random_integer": resourceIntegerType{},
-		"random_uuid":    resourceUUIDType{},
+		"random_id":       resourceIDType{},
+		"random_integer":  resourceIntegerType{},
+		"random_password": resourcePasswordType{},
+		"random_string":   resourceStringType{},
+		"random_uuid":     resourceUUIDType{},
 	}, nil
 }
 
