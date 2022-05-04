@@ -13,8 +13,17 @@ type ID struct {
 	Dec        types.String `tfsdk:"dec"`
 }
 
+type Integer struct {
+	ID      types.String `tfsdk:"id"`
+	Keepers types.Map    `tfsdk:"keepers"`
+	Min     types.Int64  `tfsdk:"min"`
+	Max     types.Int64  `tfsdk:"max"`
+	Seed    types.String `tfsdk:"seed"`
+	Result  types.Int64  `tfsdk:"result"`
+}
+
 type UUID struct {
 	ID      types.String `tfsdk:"id"`
-	Result  types.String `tfsdk:"result"`
 	Keepers types.Map    `tfsdk:"keepers"`
+	Result  types.String `tfsdk:"result"`
 }
