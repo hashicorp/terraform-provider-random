@@ -54,7 +54,7 @@ func (r resourceIntegerType) GetSchema(context.Context) (tfsdk.Schema, diag.Diag
 				Computed:    true,
 			},
 			"id": {
-				Description: "The generated uuid presented in string format.",
+				Description: "The string representation of the integer result.",
 				Type:        types.StringType,
 				Computed:    true,
 			},
