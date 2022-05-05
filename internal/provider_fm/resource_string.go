@@ -60,7 +60,7 @@ func (r resourceString) ValidateConfig(ctx context.Context, req tfsdk.ValidateRe
 
 func (r resourceString) UpgradeState(context.Context) map[int64]tfsdk.ResourceStateUpgrader {
 	return map[int64]tfsdk.ResourceStateUpgrader{
-		0: tfsdk.ResourceStateUpgrader{
+		0: {
 			StateUpgrader: migrateStringStateV0toV1,
 		},
 	}
