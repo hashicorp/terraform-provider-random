@@ -45,7 +45,7 @@ func getStringSchemaV1(sensitive bool, description string) tfsdk.Schema {
 				Computed:    true,
 				PlanModifiers: []tfsdk.AttributePlanModifier{
 					tfsdk.RequiresReplace(),
-					defaultBool{},
+					defaultBool{true},
 				},
 			},
 
@@ -56,7 +56,7 @@ func getStringSchemaV1(sensitive bool, description string) tfsdk.Schema {
 				Computed:    true,
 				PlanModifiers: []tfsdk.AttributePlanModifier{
 					tfsdk.RequiresReplace(),
-					defaultBool{},
+					defaultBool{true},
 				},
 			},
 
@@ -67,7 +67,7 @@ func getStringSchemaV1(sensitive bool, description string) tfsdk.Schema {
 				Computed:    true,
 				PlanModifiers: []tfsdk.AttributePlanModifier{
 					tfsdk.RequiresReplace(),
-					defaultBool{},
+					defaultBool{true},
 				},
 			},
 
@@ -78,7 +78,7 @@ func getStringSchemaV1(sensitive bool, description string) tfsdk.Schema {
 				Computed:    true,
 				PlanModifiers: []tfsdk.AttributePlanModifier{
 					tfsdk.RequiresReplace(),
-					defaultBool{},
+					defaultBool{true},
 				},
 			},
 
@@ -89,7 +89,7 @@ func getStringSchemaV1(sensitive bool, description string) tfsdk.Schema {
 				Computed:    true,
 				PlanModifiers: []tfsdk.AttributePlanModifier{
 					tfsdk.RequiresReplace(),
-					defaultInt{},
+					defaultInt{0},
 				},
 			},
 
@@ -100,7 +100,7 @@ func getStringSchemaV1(sensitive bool, description string) tfsdk.Schema {
 				Computed:    true,
 				PlanModifiers: []tfsdk.AttributePlanModifier{
 					tfsdk.RequiresReplace(),
-					defaultInt{},
+					defaultInt{0},
 				},
 			},
 
@@ -111,7 +111,7 @@ func getStringSchemaV1(sensitive bool, description string) tfsdk.Schema {
 				Computed:    true,
 				PlanModifiers: []tfsdk.AttributePlanModifier{
 					tfsdk.RequiresReplace(),
-					defaultInt{},
+					defaultInt{0},
 				},
 			},
 
@@ -122,7 +122,7 @@ func getStringSchemaV1(sensitive bool, description string) tfsdk.Schema {
 				Computed:    true,
 				PlanModifiers: []tfsdk.AttributePlanModifier{
 					tfsdk.RequiresReplace(),
-					defaultInt{},
+					defaultInt{0},
 				},
 			},
 
@@ -135,7 +135,6 @@ func getStringSchemaV1(sensitive bool, description string) tfsdk.Schema {
 				Computed: true,
 				PlanModifiers: []tfsdk.AttributePlanModifier{
 					tfsdk.RequiresReplace(),
-					defaultOverrideSpecial{},
 				},
 			},
 
@@ -176,7 +175,9 @@ func (l lengthValidator) Validate(ctx context.Context, req tfsdk.ValidateAttribu
 	}
 }
 
-type defaultBool struct{}
+type defaultBool struct {
+	val bool
+}
 
 func (d defaultBool) Description(ctx context.Context) string {
 	return "If the plan does not contain a value, a default will be set."
@@ -191,12 +192,14 @@ func (d defaultBool) Modify(ctx context.Context, req tfsdk.ModifyAttributePlanRe
 
 	if t.Null {
 		resp.AttributePlan = types.Bool{
-			Value: true,
+			Value: d.val,
 		}
 	}
 }
 
-type defaultInt struct{}
+type defaultInt struct {
+	val int64
+}
 
 func (d defaultInt) Description(ctx context.Context) string {
 	return "If the plan does not contain a value, a default will be set."
@@ -212,28 +215,30 @@ func (d defaultInt) Modify(ctx context.Context, req tfsdk.ModifyAttributePlanReq
 	if t.Null {
 		resp.AttributePlan = types.Int64{
 			Null:  false,
-			Value: 0,
+			Value: d.val,
 		}
 	}
 }
 
-type defaultOverrideSpecial struct{}
+type defaultString struct {
+	val string
+}
 
-func (d defaultOverrideSpecial) Description(ctx context.Context) string {
+func (d defaultString) Description(ctx context.Context) string {
 	return "If the plan does not contain a value, a default will be set."
 }
 
-func (d defaultOverrideSpecial) MarkdownDescription(ctx context.Context) string {
+func (d defaultString) MarkdownDescription(ctx context.Context) string {
 	return "If the plan does not contain a value, a default will be set."
 }
 
-func (d defaultOverrideSpecial) Modify(ctx context.Context, req tfsdk.ModifyAttributePlanRequest, resp *tfsdk.ModifyAttributePlanResponse) {
+func (d defaultString) Modify(ctx context.Context, req tfsdk.ModifyAttributePlanRequest, resp *tfsdk.ModifyAttributePlanResponse) {
 	t := req.AttributeConfig.(types.String)
 
 	if t.Null {
 		resp.AttributePlan = types.String{
 			Null:  false,
-			Value: "",
+			Value: d.val,
 		}
 	}
 }
