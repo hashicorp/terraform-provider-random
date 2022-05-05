@@ -17,7 +17,6 @@ func New() *schema.Provider {
 
 		ResourcesMap: map[string]*schema.Resource{
 			"random_shuffle": resourceShuffle(),
-			"random_pet":     resourcePet(),
 		},
 	}
 }

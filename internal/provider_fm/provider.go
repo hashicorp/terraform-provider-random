@@ -27,6 +27,7 @@ func (p *provider) GetResources(ctx context.Context) (map[string]tfsdk.ResourceT
 		"random_id":       resourceIDType{},
 		"random_integer":  resourceIntegerType{},
 		"random_password": resourcePasswordType{},
+		"random_pet":      resourcePetType{},
 		"random_string":   resourceStringType{},
 		"random_uuid":     resourceUUIDType{},
 	}, nil
