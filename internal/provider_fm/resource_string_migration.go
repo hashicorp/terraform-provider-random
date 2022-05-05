@@ -26,7 +26,7 @@ import (
 //	}
 //}
 
-//func redactAttributes(s String) String {
+//func redactAttributes(s StringModel) StringModel {
 //	s.ID.Value = "<sensitive>"
 //	s.Result.Value = "<sensitive>"
 //
@@ -34,7 +34,7 @@ import (
 //}
 
 func migrateStringStateV0toV1(ctx context.Context, req tfsdk.UpgradeResourceStateRequest, resp *tfsdk.UpgradeResourceStateResponse) {
-	s := String{}
+	s := StringModel{}
 	req.State.Get(ctx, &s)
 	resp.State.Set(ctx, s)
 	if resp.Diagnostics.HasError() {

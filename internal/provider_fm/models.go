@@ -2,7 +2,7 @@ package provider_fm
 
 import "github.com/hashicorp/terraform-plugin-framework/types"
 
-type ID struct {
+type IDModel struct {
 	ID         types.String `tfsdk:"id"`
 	Keepers    types.Map    `tfsdk:"keepers"`
 	ByteLength types.Int64  `tfsdk:"byte_length"`
@@ -13,7 +13,7 @@ type ID struct {
 	Dec        types.String `tfsdk:"dec"`
 }
 
-type Integer struct {
+type IntegerModel struct {
 	ID      types.String `tfsdk:"id"`
 	Keepers types.Map    `tfsdk:"keepers"`
 	Min     types.Int64  `tfsdk:"min"`
@@ -22,7 +22,15 @@ type Integer struct {
 	Result  types.Int64  `tfsdk:"result"`
 }
 
-type String struct {
+type PetNameModel struct {
+	ID        types.String `tfsdk:"id"`
+	Keepers   types.Map    `tfsdk:"keepers"`
+	Length    types.Int64  `tfsdk:"length"`
+	Prefix    types.String `tfsdk:"prefix"`
+	Separator types.String `tfsdk:"separator"`
+}
+
+type StringModel struct {
 	ID              types.String `tfsdk:"id"`
 	Keepers         types.Map    `tfsdk:"keepers"`
 	Length          types.Int64  `tfsdk:"length"`
@@ -38,7 +46,7 @@ type String struct {
 	Result          types.String `tfsdk:"result"`
 }
 
-type UUID struct {
+type UUIDModel struct {
 	ID      types.String `tfsdk:"id"`
 	Keepers types.Map    `tfsdk:"keepers"`
 	Result  types.String `tfsdk:"result"`

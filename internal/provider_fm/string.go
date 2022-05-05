@@ -248,7 +248,7 @@ func createString(ctx context.Context, req tfsdk.CreateResourceRequest, resp *tf
 	const lowerChars = "abcdefghijklmnopqrstuvwxyz"
 	const upperChars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
 	var specialChars = "!@#$%&*()-_=+[]{}<>:?"
-	var plan String
+	var plan StringModel
 
 	diags := req.Plan.Get(ctx, &plan)
 	resp.Diagnostics.Append(diags...)
@@ -330,7 +330,7 @@ func createString(ctx context.Context, req tfsdk.CreateResourceRequest, resp *tf
 		return order[i] < order[j]
 	})
 
-	str := String{
+	str := StringModel{
 		ID:              types.String{Value: string(result)},
 		Keepers:         plan.Keepers,
 		Length:          types.Int64{Value: length},
@@ -373,7 +373,7 @@ func generateRandomBytes(charSet *string, length int64) ([]byte, error) {
 func importString(ctx context.Context, req tfsdk.ImportResourceStateRequest, resp *tfsdk.ImportResourceStateResponse, sensitive bool) {
 	id := req.ID
 
-	state := String{
+	state := StringModel{
 		ID:     types.String{Value: id},
 		Result: types.String{Value: id},
 	}
@@ -392,7 +392,7 @@ func importString(ctx context.Context, req tfsdk.ImportResourceStateRequest, res
 }
 
 func validateLength(ctx context.Context, req tfsdk.ValidateResourceConfigRequest, resp *tfsdk.ValidateResourceConfigResponse) {
-	var config String
+	var config StringModel
 	req.Config.Get(ctx, &config)
 
 	length := config.Length.Value

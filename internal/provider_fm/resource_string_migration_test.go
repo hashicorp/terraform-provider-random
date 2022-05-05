@@ -2,7 +2,6 @@ package provider_fm
 
 import (
 	"context"
-	"fmt"
 	"github.com/hashicorp/terraform-plugin-framework/tfsdk"
 	"github.com/hashicorp/terraform-plugin-go/tftypes"
 	"testing"
@@ -76,9 +75,8 @@ func TestResourceStringMigrateState(t *testing.T) {
 
 	migrateStringStateV0toV1(context.Background(), req, &resp)
 
-	respState := String{}
+	respState := StringModel{}
 	resp.State.Get(context.Background(), &respState)
-	fmt.Printf("%+v", respState.MinNumeric)
 
 	//if err != nil {
 	//	t.Fatalf("bad: %s, err: %#v", tn, err)
@@ -87,7 +85,7 @@ func TestResourceStringMigrateState(t *testing.T) {
 	//for k, v := range tc.ExpectedAttributes {
 	//	actual := is.Attributes[k]
 	//	if actual != v {
-	//		t.Fatalf("Bad Random String Migration for %q: %q\n\n expected: %q", k, actual, v)
+	//		t.Fatalf("Bad Random StringModel Migration for %q: %q\n\n expected: %q", k, actual, v)
 	//	}
 	//}
 	//}

@@ -80,7 +80,7 @@ func (r resourceInteger) Create(ctx context.Context, req tfsdk.CreateResourceReq
 		)
 	}
 
-	var plan Integer
+	var plan IntegerModel
 	diags := req.Plan.Get(ctx, &plan)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
@@ -102,7 +102,7 @@ func (r resourceInteger) Create(ctx context.Context, req tfsdk.CreateResourceReq
 	rand := NewRand(seed)
 	number := rand.Intn((max+1)-min) + min
 
-	u := &Integer{
+	u := &IntegerModel{
 		ID:      types.String{Value: strconv.Itoa(number)},
 		Keepers: plan.Keepers,
 		Min:     types.Int64{Value: int64(min)},
@@ -172,7 +172,7 @@ func (r resourceInteger) ImportState(ctx context.Context, req tfsdk.ImportResour
 		return
 	}
 
-	var state Integer
+	var state IntegerModel
 
 	state.ID.Value = parts[0]
 	state.Keepers.ElemType = types.StringType

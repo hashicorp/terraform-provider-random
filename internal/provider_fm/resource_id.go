@@ -104,7 +104,7 @@ func (r resourceID) Create(ctx context.Context, req tfsdk.CreateResourceRequest,
 		)
 	}
 
-	var plan ID
+	var plan IDModel
 
 	diags := req.Plan.Get(ctx, &plan)
 	resp.Diagnostics.Append(diags...)
@@ -140,7 +140,7 @@ func (r resourceID) Create(ctx context.Context, req tfsdk.CreateResourceRequest,
 	bigInt.SetBytes(bytes)
 	dec := bigInt.String()
 
-	i := ID{
+	i := IDModel{
 		ID:         types.String{Value: id},
 		Keepers:    plan.Keepers,
 		ByteLength: types.Int64{Value: plan.ByteLength.Value},
@@ -195,7 +195,7 @@ func (r resourceID) ImportState(ctx context.Context, req tfsdk.ImportResourceSta
 	bigInt.SetBytes(bytes)
 	dec := bigInt.String()
 
-	var state ID
+	var state IDModel
 
 	state.ID.Value = id
 	state.ByteLength.Value = int64(len(bytes))

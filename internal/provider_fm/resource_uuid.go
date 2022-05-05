@@ -68,14 +68,14 @@ func (r resourceUUID) Create(ctx context.Context, req tfsdk.CreateResourceReques
 		return
 	}
 
-	var plan UUID
+	var plan UUIDModel
 	diags := req.Plan.Get(ctx, &plan)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
-	u := &UUID{
+	u := &UUIDModel{
 		ID:      types.String{Value: result},
 		Result:  types.String{Value: result},
 		Keepers: plan.Keepers,
@@ -117,7 +117,7 @@ func (r resourceUUID) ImportState(ctx context.Context, req tfsdk.ImportResourceS
 		return
 	}
 
-	var state UUID
+	var state UUIDModel
 
 	state.ID.Value = result
 	state.Result.Value = result
