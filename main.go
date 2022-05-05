@@ -8,7 +8,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-go/tfprotov6"
 	"github.com/hashicorp/terraform-plugin-mux/tf5muxserver"
 	"github.com/hashicorp/terraform-plugin-mux/tf6to5server"
-	"github.com/terraform-providers/terraform-provider-random/internal/provider"
 	"github.com/terraform-providers/terraform-provider-random/internal/provider_fm"
 	"log"
 )
@@ -37,7 +36,6 @@ func main() {
 		func() tfprotov5.ProviderServer {
 			return downgradedFrameworkProvider
 		},
-		provider.New().GRPCProvider,
 	}
 
 	muxServer, err := tf5muxserver.NewMuxServer(ctx, providers...)
