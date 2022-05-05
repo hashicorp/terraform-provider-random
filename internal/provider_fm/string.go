@@ -10,7 +10,7 @@ import (
 	"sort"
 )
 
-func getStringSchema(sensitive bool, description string) tfsdk.Schema {
+func getStringSchemaV1(sensitive bool, description string) tfsdk.Schema {
 	idDesc := "The generated random string."
 	if sensitive {
 		idDesc = "A static value used internally by Terraform, this should not be referenced in configurations."

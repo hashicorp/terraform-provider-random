@@ -17,7 +17,11 @@ func (r resourceStringType) GetSchema(context.Context) (tfsdk.Schema, diag.Diagn
 		"Historically this resource's intended usage has been ambiguous as the original example used " +
 		"it in a password. For backwards compatibility it will continue to exist. For unique ids please " +
 		"use [random_id](id.html), for sensitive random values please use [random_password](password.html)."
-	return getStringSchema(false, description), nil
+
+	schema := getStringSchemaV1(false, description)
+	schema.Version = 1
+
+	return schema, nil
 }
 
 func (r resourceStringType) NewResource(_ context.Context, p tfsdk.Provider) (tfsdk.Resource, diag.Diagnostics) {
@@ -52,4 +56,12 @@ func (r resourceString) ImportState(ctx context.Context, req tfsdk.ImportResourc
 
 func (r resourceString) ValidateConfig(ctx context.Context, req tfsdk.ValidateResourceConfigRequest, resp *tfsdk.ValidateResourceConfigResponse) {
 	validateLength(ctx, req, resp)
+}
+
+func (r resourceString) UpgradeState(context.Context) map[int64]tfsdk.ResourceStateUpgrader {
+	return map[int64]tfsdk.ResourceStateUpgrader{
+		0: tfsdk.ResourceStateUpgrader{
+			StateUpgrader: migrateStringStateV0toV1,
+		},
+	}
 }

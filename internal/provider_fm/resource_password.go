@@ -14,7 +14,7 @@ func (r resourcePasswordType) GetSchema(context.Context) (tfsdk.Schema, diag.Dia
 		"data handling in the [Terraform documentation](https://www.terraform.io/docs/language/state/sensitive-data.html).\n" +
 		"\n" +
 		"This resource *does* use a cryptographic random number generator."
-	return getStringSchema(true, description), nil
+	return getStringSchemaV1(true, description), nil
 }
 
 func (r resourcePasswordType) NewResource(_ context.Context, p tfsdk.Provider) (tfsdk.Resource, diag.Diagnostics) {
