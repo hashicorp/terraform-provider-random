@@ -30,6 +30,15 @@ type PetNameModel struct {
 	Separator types.String `tfsdk:"separator"`
 }
 
+type ShuffleModel struct {
+	ID          types.String `tfsdk:"id"`
+	Keepers     types.Map    `tfsdk:"keepers"`
+	Seed        types.String `tfsdk:"seed"`
+	Input       types.List   `tfsdk:"input"`
+	ResultCount types.Int64  `tfsdk:"result_count"`
+	Result      types.List   `tfsdk:"result"`
+}
+
 type StringModel struct {
 	ID              types.String `tfsdk:"id"`
 	Keepers         types.Map    `tfsdk:"keepers"`

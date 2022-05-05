@@ -1,4 +1,4 @@
-package provider
+package provider_fm
 
 import (
 	"fmt"
@@ -20,8 +20,8 @@ import (
 // guaranteed consistent across Terraform releases.
 func TestAccResourceShuffleDefault(t *testing.T) {
 	resource.UnitTest(t, resource.TestCase{
-		PreCheck:          func() { testAccPreCheck(t) },
-		ProviderFactories: testAccProviders,
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
 			{
 				Config: testAccResourceShuffleConfigDefault,
@@ -38,8 +38,8 @@ func TestAccResourceShuffleDefault(t *testing.T) {
 
 func TestAccResourceShuffleShorter(t *testing.T) {
 	resource.UnitTest(t, resource.TestCase{
-		PreCheck:          func() { testAccPreCheck(t) },
-		ProviderFactories: testAccProviders,
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
 			{
 				Config: testAccResourceShuffleConfigShorter,
@@ -56,8 +56,8 @@ func TestAccResourceShuffleShorter(t *testing.T) {
 
 func TestAccResourceShuffleLonger(t *testing.T) {
 	resource.UnitTest(t, resource.TestCase{
-		PreCheck:          func() { testAccPreCheck(t) },
-		ProviderFactories: testAccProviders,
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
 			{
 				Config: testAccResourceShuffleConfigLonger,
@@ -74,8 +74,8 @@ func TestAccResourceShuffleLonger(t *testing.T) {
 
 func TestAccResourceShuffleEmpty(t *testing.T) {
 	resource.UnitTest(t, resource.TestCase{
-		PreCheck:          func() { testAccPreCheck(t) },
-		ProviderFactories: testAccProviders,
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
 			{
 				Config: testAccResourceShuffleConfigEmpty,
@@ -92,8 +92,8 @@ func TestAccResourceShuffleEmpty(t *testing.T) {
 
 func TestAccResourceShuffleOne(t *testing.T) {
 	resource.UnitTest(t, resource.TestCase{
-		PreCheck:          func() { testAccPreCheck(t) },
-		ProviderFactories: testAccProviders,
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
 			{
 				Config: testAccResourceShuffleConfigOne,

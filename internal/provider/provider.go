@@ -15,9 +15,7 @@ func New() *schema.Provider {
 	return &schema.Provider{
 		Schema: map[string]*schema.Schema{},
 
-		ResourcesMap: map[string]*schema.Resource{
-			"random_shuffle": resourceShuffle(),
-		},
+		ResourcesMap: map[string]*schema.Resource{},
 	}
 }
 
