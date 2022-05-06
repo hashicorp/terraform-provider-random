@@ -35,7 +35,7 @@ func getStringSchemaV1(sensitive bool, description string) tfsdk.Schema {
 				Type:          types.Int64Type,
 				Required:      true,
 				PlanModifiers: []tfsdk.AttributePlanModifier{tfsdk.RequiresReplace()},
-				Validators:    []tfsdk.AttributeValidator{lengthValidator{}},
+				Validators:    []tfsdk.AttributeValidator{validatorMinInt(1)},
 			},
 
 			"special": {
@@ -45,7 +45,7 @@ func getStringSchemaV1(sensitive bool, description string) tfsdk.Schema {
 				Computed:    true,
 				PlanModifiers: []tfsdk.AttributePlanModifier{
 					tfsdk.RequiresReplace(),
-					defaultBool{true},
+					defaultBool(true),
 				},
 			},
 
@@ -56,7 +56,7 @@ func getStringSchemaV1(sensitive bool, description string) tfsdk.Schema {
 				Computed:    true,
 				PlanModifiers: []tfsdk.AttributePlanModifier{
 					tfsdk.RequiresReplace(),
-					defaultBool{true},
+					defaultBool(true),
 				},
 			},
 
@@ -67,7 +67,7 @@ func getStringSchemaV1(sensitive bool, description string) tfsdk.Schema {
 				Computed:    true,
 				PlanModifiers: []tfsdk.AttributePlanModifier{
 					tfsdk.RequiresReplace(),
-					defaultBool{true},
+					defaultBool(true),
 				},
 			},
 
@@ -78,7 +78,7 @@ func getStringSchemaV1(sensitive bool, description string) tfsdk.Schema {
 				Computed:    true,
 				PlanModifiers: []tfsdk.AttributePlanModifier{
 					tfsdk.RequiresReplace(),
-					defaultBool{true},
+					defaultBool(true),
 				},
 			},
 
@@ -89,7 +89,7 @@ func getStringSchemaV1(sensitive bool, description string) tfsdk.Schema {
 				Computed:    true,
 				PlanModifiers: []tfsdk.AttributePlanModifier{
 					tfsdk.RequiresReplace(),
-					defaultInt{0},
+					defaultInt(0),
 				},
 			},
 
@@ -100,7 +100,7 @@ func getStringSchemaV1(sensitive bool, description string) tfsdk.Schema {
 				Computed:    true,
 				PlanModifiers: []tfsdk.AttributePlanModifier{
 					tfsdk.RequiresReplace(),
-					defaultInt{0},
+					defaultInt(0),
 				},
 			},
 
@@ -111,7 +111,7 @@ func getStringSchemaV1(sensitive bool, description string) tfsdk.Schema {
 				Computed:    true,
 				PlanModifiers: []tfsdk.AttributePlanModifier{
 					tfsdk.RequiresReplace(),
-					defaultInt{0},
+					defaultInt(0),
 				},
 			},
 
@@ -122,7 +122,7 @@ func getStringSchemaV1(sensitive bool, description string) tfsdk.Schema {
 				Computed:    true,
 				PlanModifiers: []tfsdk.AttributePlanModifier{
 					tfsdk.RequiresReplace(),
-					defaultInt{0},
+					defaultInt(0),
 				},
 			},
 
@@ -154,40 +154,51 @@ func getStringSchemaV1(sensitive bool, description string) tfsdk.Schema {
 	}
 }
 
-type lengthValidator struct{}
-
-func (l lengthValidator) Description(context.Context) string {
-	return "Length validator ensures that length is at least 1"
+func validatorMinInt(min int64) tfsdk.AttributeValidator {
+	return minIntValidator{min}
 }
 
-func (l lengthValidator) MarkdownDescription(context.Context) string {
-	return "Length validator ensures that `length` is at least 1"
+type minIntValidator struct {
+	val int64
 }
 
-func (l lengthValidator) Validate(ctx context.Context, req tfsdk.ValidateAttributeRequest, resp *tfsdk.ValidateAttributeResponse) {
+func (m minIntValidator) Description(context.Context) string {
+	return "MinInt validator ensures that attribute is at least val"
+}
+
+func (m minIntValidator) MarkdownDescription(context.Context) string {
+	return "MinInt validator ensures that attribute is at least `val`"
+}
+
+func (m minIntValidator) Validate(ctx context.Context, req tfsdk.ValidateAttributeRequest, resp *tfsdk.ValidateAttributeResponse) {
 	t := req.AttributeConfig.(types.Int64)
 
-	if t.Value < 1 {
+	if t.Value < m.val {
 		resp.Diagnostics.AddError(
-			fmt.Sprintf("expected length to be at least 1, got %d", t.Value),
-			fmt.Sprintf("expected length to be at least 1, got %d", t.Value),
+			fmt.Sprintf("expected attribute to be at least %d, got %d", m.val, t.Value),
+			fmt.Sprintf("expected attribute to be at least %d, got %d", m.val, t.Value),
 		)
 	}
 }
 
-type defaultBool struct {
+//nolint:unparam
+func defaultBool(val bool) tfsdk.AttributePlanModifier {
+	return boolDefault{val}
+}
+
+type boolDefault struct {
 	val bool
 }
 
-func (d defaultBool) Description(ctx context.Context) string {
-	return "If the plan does not contain a value, a default will be set."
+func (d boolDefault) Description(ctx context.Context) string {
+	return "If the plan does not contain a value, a default will be set using val."
 }
 
-func (d defaultBool) MarkdownDescription(ctx context.Context) string {
-	return "If the plan does not contain a value, a default will be set."
+func (d boolDefault) MarkdownDescription(ctx context.Context) string {
+	return "If the plan does not contain a value, a default will be set using `val`."
 }
 
-func (d defaultBool) Modify(ctx context.Context, req tfsdk.ModifyAttributePlanRequest, resp *tfsdk.ModifyAttributePlanResponse) {
+func (d boolDefault) Modify(ctx context.Context, req tfsdk.ModifyAttributePlanRequest, resp *tfsdk.ModifyAttributePlanResponse) {
 	t := req.AttributeConfig.(types.Bool)
 
 	if t.Null {
@@ -197,19 +208,23 @@ func (d defaultBool) Modify(ctx context.Context, req tfsdk.ModifyAttributePlanRe
 	}
 }
 
-type defaultInt struct {
+func defaultInt(val int64) tfsdk.AttributePlanModifier {
+	return intDefault{val}
+}
+
+type intDefault struct {
 	val int64
 }
 
-func (d defaultInt) Description(ctx context.Context) string {
-	return "If the plan does not contain a value, a default will be set."
+func (d intDefault) Description(ctx context.Context) string {
+	return "If the plan does not contain a value, a default will be set using val."
 }
 
-func (d defaultInt) MarkdownDescription(ctx context.Context) string {
-	return "If the plan does not contain a value, a default will be set."
+func (d intDefault) MarkdownDescription(ctx context.Context) string {
+	return "If the plan does not contain a value, a default will be set using `val`."
 }
 
-func (d defaultInt) Modify(ctx context.Context, req tfsdk.ModifyAttributePlanRequest, resp *tfsdk.ModifyAttributePlanResponse) {
+func (d intDefault) Modify(ctx context.Context, req tfsdk.ModifyAttributePlanRequest, resp *tfsdk.ModifyAttributePlanResponse) {
 	t := req.AttributeConfig.(types.Int64)
 
 	if t.Null {
@@ -220,19 +235,23 @@ func (d defaultInt) Modify(ctx context.Context, req tfsdk.ModifyAttributePlanReq
 	}
 }
 
-type defaultString struct {
+func defaultString(val string) tfsdk.AttributePlanModifier {
+	return stringDefault{val}
+}
+
+type stringDefault struct {
 	val string
 }
 
-func (d defaultString) Description(ctx context.Context) string {
+func (d stringDefault) Description(ctx context.Context) string {
 	return "If the plan does not contain a value, a default will be set."
 }
 
-func (d defaultString) MarkdownDescription(ctx context.Context) string {
+func (d stringDefault) MarkdownDescription(ctx context.Context) string {
 	return "If the plan does not contain a value, a default will be set."
 }
 
-func (d defaultString) Modify(ctx context.Context, req tfsdk.ModifyAttributePlanRequest, resp *tfsdk.ModifyAttributePlanResponse) {
+func (d stringDefault) Modify(ctx context.Context, req tfsdk.ModifyAttributePlanRequest, resp *tfsdk.ModifyAttributePlanResponse) {
 	t := req.AttributeConfig.(types.String)
 
 	if t.Null {
