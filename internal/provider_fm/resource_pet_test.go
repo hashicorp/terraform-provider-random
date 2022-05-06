@@ -16,7 +16,7 @@ func TestAccResourcePet_basic(t *testing.T) {
 		ProtoV5ProviderFactories: testAccProtoV5ProviderFactories(),
 		Steps: []resource.TestStep{
 			{
-				Config: testAccResourcePet_basic,
+				Config: testAccResourcePetBasic,
 				Check: resource.ComposeTestCheckFunc(
 					testAccResourcePetLength("random_pet.pet_1", "-", 2),
 				),
@@ -31,7 +31,7 @@ func TestAccResourcePet_length(t *testing.T) {
 		ProtoV5ProviderFactories: testAccProtoV5ProviderFactories(),
 		Steps: []resource.TestStep{
 			{
-				Config: testAccResourcePet_length,
+				Config: testAccResourcePetLengthSet,
 				Check: resource.ComposeTestCheckFunc(
 					testAccResourcePetLength("random_pet.pet_1", "-", 4),
 				),
@@ -46,7 +46,7 @@ func TestAccResourcePet_prefix(t *testing.T) {
 		ProtoV5ProviderFactories: testAccProtoV5ProviderFactories(),
 		Steps: []resource.TestStep{
 			{
-				Config: testAccResourcePet_prefix,
+				Config: testAccResourcePetPrefix,
 				Check: resource.ComposeTestCheckFunc(
 					testAccResourcePetLength("random_pet.pet_1", "-", 3),
 					resource.TestMatchResourceAttr(
@@ -63,7 +63,7 @@ func TestAccResourcePet_separator(t *testing.T) {
 		ProtoV5ProviderFactories: testAccProtoV5ProviderFactories(),
 		Steps: []resource.TestStep{
 			{
-				Config: testAccResourcePet_separator,
+				Config: testAccResourcePetSeparator,
 				Check: resource.ComposeTestCheckFunc(
 					testAccResourcePetLength("random_pet.pet_1", "_", 3),
 				),
@@ -92,23 +92,23 @@ func testAccResourcePetLength(id string, separator string, length int) resource.
 	}
 }
 
-const testAccResourcePet_basic = `
+const testAccResourcePetBasic = `
 resource "random_pet" "pet_1" {
 }
 `
 
-const testAccResourcePet_length = `
+const testAccResourcePetLengthSet = `
 resource "random_pet" "pet_1" {
   length = 4
 }
 `
-const testAccResourcePet_prefix = `
+const testAccResourcePetPrefix = `
 resource "random_pet" "pet_1" {
   prefix = "consul"
 }
 `
 
-const testAccResourcePet_separator = `
+const testAccResourcePetSeparator = `
 resource "random_pet" "pet_1" {
   length = 3
   separator = "_"
