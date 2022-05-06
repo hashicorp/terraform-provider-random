@@ -53,13 +53,6 @@ type resourceUUID struct {
 }
 
 func (r resourceUUID) Create(ctx context.Context, req tfsdk.CreateResourceRequest, resp *tfsdk.CreateResourceResponse) {
-	if !r.p.configured {
-		resp.Diagnostics.AddError(
-			"provider not configured",
-			"provider not configured",
-		)
-	}
-
 	result, err := uuid.GenerateUUID()
 	if err != nil {
 		resp.Diagnostics.AddError(
@@ -69,6 +62,7 @@ func (r resourceUUID) Create(ctx context.Context, req tfsdk.CreateResourceReques
 	}
 
 	var plan UUIDModel
+
 	diags := req.Plan.Get(ctx, &plan)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {

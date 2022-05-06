@@ -97,13 +97,6 @@ type resourceID struct {
 }
 
 func (r resourceID) Create(ctx context.Context, req tfsdk.CreateResourceRequest, resp *tfsdk.CreateResourceResponse) {
-	if !r.p.configured {
-		resp.Diagnostics.AddError(
-			"provider not configured",
-			"provider not configured",
-		)
-	}
-
 	var plan IDModel
 
 	diags := req.Plan.Get(ctx, &plan)

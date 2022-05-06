@@ -73,14 +73,8 @@ type resourceInteger struct {
 }
 
 func (r resourceInteger) Create(ctx context.Context, req tfsdk.CreateResourceRequest, resp *tfsdk.CreateResourceResponse) {
-	if !r.p.configured {
-		resp.Diagnostics.AddError(
-			"provider not configured",
-			"provider not configured",
-		)
-	}
-
 	var plan IntegerModel
+
 	diags := req.Plan.Get(ctx, &plan)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
