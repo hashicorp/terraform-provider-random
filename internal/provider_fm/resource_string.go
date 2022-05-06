@@ -57,11 +57,3 @@ func (r resourceString) ImportState(ctx context.Context, req tfsdk.ImportResourc
 func (r resourceString) ValidateConfig(ctx context.Context, req tfsdk.ValidateResourceConfigRequest, resp *tfsdk.ValidateResourceConfigResponse) {
 	validateLength(ctx, req, resp)
 }
-
-func (r resourceString) UpgradeState(context.Context) map[int64]tfsdk.ResourceStateUpgrader {
-	return map[int64]tfsdk.ResourceStateUpgrader{
-		0: {
-			StateUpgrader: migrateStringStateV0toV1,
-		},
-	}
-}
