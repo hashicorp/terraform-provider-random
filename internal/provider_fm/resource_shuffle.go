@@ -60,7 +60,7 @@ func (r resourceShuffleType) GetSchema(context.Context) (tfsdk.Schema, diag.Diag
 				Computed: true,
 			},
 			"id": {
-				Description: "The generated uuid presented in string format.",
+				Description: "A static value used internally by Terraform, this should not be referenced in configurations.",
 				Type:        types.StringType,
 				Computed:    true,
 			},

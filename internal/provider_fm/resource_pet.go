@@ -62,7 +62,7 @@ func (r resourcePetType) GetSchema(context.Context) (tfsdk.Schema, diag.Diagnost
 				},
 			},
 			"id": {
-				Description: "The generated uuid presented in string format.",
+				Description: "The random pet name.",
 				Type:        types.StringType,
 				Computed:    true,
 			},
