@@ -34,6 +34,7 @@ jobs:
       uses: golangci/golangci-lint-action@v3
       with:
         version: latest
+        skip-cache: true
 
     - name: Generate
       run: make generate
