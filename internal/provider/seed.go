@@ -1,4 +1,4 @@
-package provider_fm
+package provider
 
 import (
 	"hash/crc64"
