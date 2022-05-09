@@ -8,7 +8,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-go/tfprotov6"
 	"github.com/hashicorp/terraform-plugin-mux/tf5muxserver"
 	"github.com/hashicorp/terraform-plugin-mux/tf6to5server"
-	"github.com/terraform-providers/terraform-provider-random/internal/provider_fm"
+	"github.com/terraform-providers/terraform-provider-random/internal/provider"
 	"log"
 )
 
@@ -26,7 +26,7 @@ func main() {
 	ctx := context.Background()
 
 	downgradedFrameworkProvider, err := tf6to5server.DowngradeServer(ctx, func() tfprotov6.ProviderServer {
-		return providerserver.NewProtocol6(provider_fm.NewFramework())()
+		return providerserver.NewProtocol6(provider.NewFramework())()
 	})
 	if err != nil {
 		log.Fatal(err)
