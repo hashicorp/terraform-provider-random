@@ -28,12 +28,18 @@ func (m minIntValidator) MarkdownDescription(context.Context) string {
 // Validate checks that the value of the attribute in the configuration is greater than or, equal to the value supplied
 // when the minIntValidator struct was initialised.
 func (m minIntValidator) Validate(ctx context.Context, req tfsdk.ValidateAttributeRequest, resp *tfsdk.ValidateAttributeResponse) {
-	t := req.AttributeConfig.(types.Int64)
+	var t types.Int64
+	diags := tfsdk.ValueAs(ctx, req.AttributeConfig, &t)
+	resp.Diagnostics.Append(diags...)
+
+	if resp.Diagnostics.HasError() {
+		return
+	}
 
 	if t.Value < m.val {
 		resp.Diagnostics.AddError(
-			fmt.Sprintf("expected attribute to be at least %d, got %d", m.val, t.Value),
-			fmt.Sprintf("expected attribute to be at least %d, got %d", m.val, t.Value),
+			"Validating Min Int Error",
+			fmt.Sprintf("Expected attribute at %s to be at least %d, got %d", req.AttributePath.String(), m.val, t.Value),
 		)
 	}
 }

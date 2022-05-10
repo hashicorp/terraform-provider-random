@@ -28,7 +28,13 @@ func (d boolDefault) MarkdownDescription(ctx context.Context) string {
 // Modify checks that the value of the attribute in the configuration and, if the attribute is Null, assigns the value
 // supplied to the boolDefault struct when it was initialised.
 func (d boolDefault) Modify(ctx context.Context, req tfsdk.ModifyAttributePlanRequest, resp *tfsdk.ModifyAttributePlanResponse) {
-	t := req.AttributeConfig.(types.Bool)
+	var t types.Bool
+	diags := tfsdk.ValueAs(ctx, req.AttributeConfig, &t)
+	resp.Diagnostics.Append(diags...)
+
+	if resp.Diagnostics.HasError() {
+		return
+	}
 
 	if t.Null {
 		resp.AttributePlan = types.Bool{
@@ -57,7 +63,13 @@ func (d intDefault) MarkdownDescription(ctx context.Context) string {
 // Modify checks that the value of the attribute in the configuration and, if the attribute is Null, assigns the value
 // supplied to the intDefault struct when it was initialised.
 func (d intDefault) Modify(ctx context.Context, req tfsdk.ModifyAttributePlanRequest, resp *tfsdk.ModifyAttributePlanResponse) {
-	t := req.AttributeConfig.(types.Int64)
+	var t types.Int64
+	diags := tfsdk.ValueAs(ctx, req.AttributeConfig, &t)
+	resp.Diagnostics.Append(diags...)
+
+	if resp.Diagnostics.HasError() {
+		return
+	}
 
 	if t.Null {
 		resp.AttributePlan = types.Int64{
@@ -87,7 +99,13 @@ func (d stringDefault) MarkdownDescription(ctx context.Context) string {
 // Modify checks that the value of the attribute in the configuration and, if the attribute is Null, assigns the value
 // supplied to the stringDefault struct when it was initialised.
 func (d stringDefault) Modify(ctx context.Context, req tfsdk.ModifyAttributePlanRequest, resp *tfsdk.ModifyAttributePlanResponse) {
-	t := req.AttributeConfig.(types.String)
+	var t types.String
+	diags := tfsdk.ValueAs(ctx, req.AttributeConfig, &t)
+	resp.Diagnostics.Append(diags...)
+
+	if resp.Diagnostics.HasError() {
+		return
+	}
 
 	if t.Null {
 		resp.AttributePlan = types.String{
