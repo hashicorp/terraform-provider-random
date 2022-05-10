@@ -4,7 +4,7 @@ import (
 	"context"
 	"crypto/rand"
 	"encoding/base64"
-	hex2 "encoding/hex"
+	"encoding/hex"
 	"fmt"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/tfsdk"
@@ -126,7 +126,7 @@ func (r resourceID) Create(ctx context.Context, req tfsdk.CreateResourceRequest,
 	id := base64.RawURLEncoding.EncodeToString(bytes)
 	prefix := plan.Prefix.Value
 	b64Std := base64.StdEncoding.EncodeToString(bytes)
-	hex := hex2.EncodeToString(bytes)
+	hexStr := hex.EncodeToString(bytes)
 
 	bigInt := big.Int{}
 	bigInt.SetBytes(bytes)
@@ -139,7 +139,7 @@ func (r resourceID) Create(ctx context.Context, req tfsdk.CreateResourceRequest,
 		Prefix:     plan.Prefix,
 		B64URL:     types.String{Value: prefix + id},
 		B64Std:     types.String{Value: prefix + b64Std},
-		Hex:        types.String{Value: prefix + hex},
+		Hex:        types.String{Value: prefix + hexStr},
 		Dec:        types.String{Value: prefix + dec},
 	}
 
@@ -187,7 +187,7 @@ func (r resourceID) ImportState(ctx context.Context, req tfsdk.ImportResourceSta
 	}
 
 	b64Std := base64.StdEncoding.EncodeToString(bytes)
-	hex := hex2.EncodeToString(bytes)
+	hexStr := hex.EncodeToString(bytes)
 
 	bigInt := big.Int{}
 	bigInt.SetBytes(bytes)
@@ -200,7 +200,7 @@ func (r resourceID) ImportState(ctx context.Context, req tfsdk.ImportResourceSta
 	state.Keepers.ElemType = types.StringType
 	state.B64Std.Value = prefix + b64Std
 	state.B64URL.Value = prefix + id
-	state.Hex.Value = prefix + hex
+	state.Hex.Value = prefix + hexStr
 	state.Dec.Value = prefix + dec
 
 	if prefix == "" {
