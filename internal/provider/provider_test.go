@@ -2,12 +2,13 @@ package provider
 
 import (
 	"context"
+	"log"
+	"testing"
+
 	"github.com/hashicorp/terraform-plugin-framework/providerserver"
 	"github.com/hashicorp/terraform-plugin-go/tfprotov5"
 	"github.com/hashicorp/terraform-plugin-go/tfprotov6"
 	"github.com/hashicorp/terraform-plugin-mux/tf6to5server"
-	"log"
-	"testing"
 )
 
 func testAccPreCheck(t *testing.T) {
