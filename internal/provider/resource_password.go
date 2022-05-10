@@ -31,12 +31,13 @@ func (r resourcePassword) Create(ctx context.Context, req tfsdk.CreateResourceRe
 	createString(ctx, req, resp, true)
 }
 
+// Read does not need to perform any operations as the state in ReadResourceResponse is already populated.
 func (r resourcePassword) Read(ctx context.Context, req tfsdk.ReadResourceRequest, resp *tfsdk.ReadResourceResponse) {
-	// Intentionally left blank.
 }
 
+// Update is intentionally left blank as all required and optional attributes force replacement of the resource
+// through the RequiresReplace AttributePlanModifier.
 func (r resourcePassword) Update(ctx context.Context, req tfsdk.UpdateResourceRequest, resp *tfsdk.UpdateResourceResponse) {
-	// Intentionally left blank.
 }
 
 // Delete does not need to explicitly call resp.State.RemoveResource() as this is automatically handled by the

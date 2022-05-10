@@ -117,12 +117,13 @@ func (r resourceInteger) Create(ctx context.Context, req tfsdk.CreateResourceReq
 	}
 }
 
+// Read does not need to perform any operations as the state in ReadResourceResponse is already populated.
 func (r resourceInteger) Read(ctx context.Context, req tfsdk.ReadResourceRequest, resp *tfsdk.ReadResourceResponse) {
-	// Intentionally left blank.
 }
 
+// Update is intentionally left blank as all required and optional attributes force replacement of the resource
+// through the RequiresReplace AttributePlanModifier.
 func (r resourceInteger) Update(ctx context.Context, req tfsdk.UpdateResourceRequest, resp *tfsdk.UpdateResourceResponse) {
-	// Intentionally left blank.
 }
 
 // Delete does not need to explicitly call resp.State.RemoveResource() as this is automatically handled by the
