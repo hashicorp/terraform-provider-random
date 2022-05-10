@@ -154,33 +154,6 @@ func getStringSchemaV1(sensitive bool, description string) tfsdk.Schema {
 	}
 }
 
-func validatorMinInt(min int64) tfsdk.AttributeValidator {
-	return minIntValidator{min}
-}
-
-type minIntValidator struct {
-	val int64
-}
-
-func (m minIntValidator) Description(context.Context) string {
-	return "MinInt validator ensures that attribute is at least val"
-}
-
-func (m minIntValidator) MarkdownDescription(context.Context) string {
-	return "MinInt validator ensures that attribute is at least `val`"
-}
-
-func (m minIntValidator) Validate(ctx context.Context, req tfsdk.ValidateAttributeRequest, resp *tfsdk.ValidateAttributeResponse) {
-	t := req.AttributeConfig.(types.Int64)
-
-	if t.Value < m.val {
-		resp.Diagnostics.AddError(
-			fmt.Sprintf("expected attribute to be at least %d, got %d", m.val, t.Value),
-			fmt.Sprintf("expected attribute to be at least %d, got %d", m.val, t.Value),
-		)
-	}
-}
-
 //nolint:unparam
 func defaultBool(val bool) tfsdk.AttributePlanModifier {
 	return boolDefault{val}
