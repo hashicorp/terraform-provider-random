@@ -208,10 +208,7 @@ func createString(ctx context.Context, req tfsdk.CreateResourceRequest, resp *tf
 	for k, v := range minMapping {
 		s, err := generateRandomBytes(&k, v)
 		if err != nil {
-			resp.Diagnostics.AddError(
-				"error generating random bytes",
-				fmt.Sprintf("error generating random bytes: %s", err),
-			)
+			resp.Diagnostics.Append(randomReadError(err.Error())...)
 			return
 		}
 		result = append(result, s...)
@@ -219,10 +216,7 @@ func createString(ctx context.Context, req tfsdk.CreateResourceRequest, resp *tf
 
 	s, err := generateRandomBytes(&chars, length-int64(len(result)))
 	if err != nil {
-		resp.Diagnostics.AddError(
-			"error generating random bytes",
-			fmt.Sprintf("error generating random bytes: %s", err),
-		)
+		resp.Diagnostics.Append(randomReadError(err.Error())...)
 		return
 	}
 
@@ -230,10 +224,7 @@ func createString(ctx context.Context, req tfsdk.CreateResourceRequest, resp *tf
 
 	order := make([]byte, len(result))
 	if _, err := rand.Read(order); err != nil {
-		resp.Diagnostics.AddError(
-			"error generating random bytes",
-			fmt.Sprintf("error generating random bytes: %s", err),
-		)
+		resp.Diagnostics.Append(randomReadError(err.Error())...)
 		return
 	}
 
@@ -314,8 +305,8 @@ func validateLength(ctx context.Context, req tfsdk.ValidateResourceConfigRequest
 
 	if length < minUpper+minLower+minNumeric+minSpecial {
 		resp.Diagnostics.AddError(
-			fmt.Sprintf("length (%d) must be >= min_upper + min_lower + min_numeric + min_special (%d)", length, minUpper+minLower+minNumeric+minSpecial),
-			fmt.Sprintf("length (%d) must be >= min_upper + min_lower + min_numeric + min_special (%d)", length, minUpper+minLower+minNumeric+minSpecial),
+			"Validate Password/String Error",
+			fmt.Sprintf("The password/string length (%d) must be >= min_upper + min_lower + min_numeric + min_special (%d)", length, minUpper+minLower+minNumeric+minSpecial),
 		)
 	}
 }

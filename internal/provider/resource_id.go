@@ -111,16 +111,15 @@ func (r resourceID) Create(ctx context.Context, req tfsdk.CreateResourceRequest,
 	n, err := rand.Reader.Read(bytes)
 	if int64(n) != byteLength {
 		resp.Diagnostics.AddError(
-			"generated insufficient random bytes: %s",
-			fmt.Sprintf("generated insufficient random bytes: %s", err),
+			"Randomness Generation Error",
+			"While attempting to generate a random value for this resource, an insufficient number of random bytes were generated. Most commonly, this is a hardware or operating system issue where their random number generator does not provide a sufficient randomness source. Otherwise, it may represent an issue in the randomness handling of the provider.\n\n"+
+				"Retry the Terraform operation. If the error still occurs or happens regularly, please contact the provider developer with hardware and operating system information.\n\n"+
+				fmt.Sprintf("Original Error: %s", err),
 		)
 		return
 	}
 	if err != nil {
-		resp.Diagnostics.AddError(
-			"error generating random bytes",
-			fmt.Sprintf("error generating random bytes: %s", err),
-		)
+		resp.Diagnostics.Append(randomReadError(err.Error())...)
 		return
 	}
 
@@ -179,8 +178,11 @@ func (r resourceID) ImportState(ctx context.Context, req tfsdk.ImportResourceSta
 	bytes, err := base64.RawURLEncoding.DecodeString(id)
 	if err != nil {
 		resp.Diagnostics.AddError(
-			"error decoding ID",
-			fmt.Sprintf("error decoding ID: %s", err))
+			"Import Random ID Error",
+			"While attempting to import a random id there was a decoding error.\n\n+"+
+				retryMsg+
+				fmt.Sprintf("Original Error: %s", err),
+		)
 		return
 	}
 

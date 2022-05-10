@@ -56,8 +56,11 @@ func (r resourceUUID) Create(ctx context.Context, req tfsdk.CreateResourceReques
 	result, err := uuid.GenerateUUID()
 	if err != nil {
 		resp.Diagnostics.AddError(
-			"error generating uuid",
-			fmt.Sprintf("could not generate uuid: %s", err))
+			"Create Random UUID error",
+			"There was an error during generation of a UUID.\n\n"+
+				retryMsg+
+				fmt.Sprintf("Original Error: %s", err),
+		)
 		return
 	}
 
@@ -100,16 +103,22 @@ func (r resourceUUID) ImportState(ctx context.Context, req tfsdk.ImportResourceS
 	bytes, err := uuid.ParseUUID(req.ID)
 	if err != nil {
 		resp.Diagnostics.AddError(
-			"error parsing uuid bytes",
-			fmt.Sprintf("error parsing uuid bytes: %s", err))
+			"Import Random UUID Error",
+			"There was an error during the parsing of the UUID.\n\n"+
+				retryMsg+
+				fmt.Sprintf("Original Error: %s", err),
+		)
 		return
 	}
 
 	result, err := uuid.FormatUUID(bytes)
 	if err != nil {
 		resp.Diagnostics.AddError(
-			"error formatting uuid bytes",
-			fmt.Sprintf("error formatting uuid bytes: %s", err))
+			"Import Random UUID Error",
+			"There was an error during the formatting of the UUID.\n\n"+
+				retryMsg+
+				fmt.Sprintf("Original Error: %s", err),
+		)
 		return
 	}
 

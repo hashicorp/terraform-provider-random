@@ -87,8 +87,8 @@ func (r resourceInteger) Create(ctx context.Context, req tfsdk.CreateResourceReq
 
 	if max < min {
 		resp.Diagnostics.AddError(
-			"minimum value needs to be smaller than or equal to maximum value",
-			"minimum value needs to be smaller than or equal to maximum value",
+			"Create Random Integer Error",
+			"The minimum (min) value needs to be smaller than or equal to maximum (max) value.",
 		)
 		return
 	}
@@ -135,7 +135,7 @@ func (r resourceInteger) ImportState(ctx context.Context, req tfsdk.ImportResour
 	parts := strings.Split(req.ID, ",")
 	if len(parts) != 3 && len(parts) != 4 {
 		resp.Diagnostics.AddError(
-			"Invalid import usage: expecting {result},{min},{max} or {result},{min},{max},{seed}",
+			"Import Random Integer Error",
 			"Invalid import usage: expecting {result},{min},{max} or {result},{min},{max},{seed}",
 		)
 		return
@@ -144,8 +144,9 @@ func (r resourceInteger) ImportState(ctx context.Context, req tfsdk.ImportResour
 	result, err := strconv.ParseInt(parts[0], 10, 64)
 	if err != nil {
 		resp.Diagnostics.AddError(
-			"error parsing result",
-			fmt.Sprintf("error parsing result: %s", err),
+			"Import Random Integer Error",
+			"The value supplied could not be parsed as an integer.\n\n"+
+				fmt.Sprintf("Original Error: %s", err),
 		)
 		return
 	}
@@ -153,8 +154,9 @@ func (r resourceInteger) ImportState(ctx context.Context, req tfsdk.ImportResour
 	min, err := strconv.ParseInt(parts[1], 10, 64)
 	if err != nil {
 		resp.Diagnostics.AddError(
-			"error parsing min",
-			fmt.Sprintf("error parsing min: %s", err),
+			"Import Random Integer Error",
+			"The min value supplied could not be parsed as an integer.\n\n"+
+				fmt.Sprintf("Original Error: %s", err),
 		)
 		return
 	}
@@ -162,8 +164,9 @@ func (r resourceInteger) ImportState(ctx context.Context, req tfsdk.ImportResour
 	max, err := strconv.ParseInt(parts[2], 10, 64)
 	if err != nil {
 		resp.Diagnostics.AddError(
-			"error parsing max",
-			fmt.Sprintf("error parsing max: %s", err),
+			"Import Random Integer Error",
+			"The max value supplied could not be parsed as an integer.\n\n"+
+				fmt.Sprintf("Original Error: %s", err),
 		)
 		return
 	}
