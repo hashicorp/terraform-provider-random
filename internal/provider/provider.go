@@ -7,7 +7,6 @@ import (
 )
 
 type provider struct {
-	configured bool
 }
 
 func NewFramework() tfsdk.Provider {
@@ -19,7 +18,6 @@ func (p *provider) GetSchema(ctx context.Context) (tfsdk.Schema, diag.Diagnostic
 }
 
 func (p *provider) Configure(ctx context.Context, req tfsdk.ConfigureProviderRequest, resp *tfsdk.ConfigureProviderResponse) {
-	p.configured = true
 }
 
 func (p *provider) GetResources(ctx context.Context) (map[string]tfsdk.ResourceType, diag.Diagnostics) {
