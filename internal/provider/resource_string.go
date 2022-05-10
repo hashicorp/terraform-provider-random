@@ -46,8 +46,9 @@ func (r resourceString) Update(ctx context.Context, req tfsdk.UpdateResourceRequ
 	// Intentionally left blank.
 }
 
+// Delete does not need to explicitly call resp.State.RemoveResource() as this is automatically handled by the
+// [framework](https://github.com/hashicorp/terraform-plugin-framework/pull/301).
 func (r resourceString) Delete(ctx context.Context, req tfsdk.DeleteResourceRequest, resp *tfsdk.DeleteResourceResponse) {
-	resp.State.RemoveResource(ctx)
 }
 
 func (r resourceString) ImportState(ctx context.Context, req tfsdk.ImportResourceStateRequest, resp *tfsdk.ImportResourceStateResponse) {
