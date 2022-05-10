@@ -82,11 +82,11 @@ func TestAccResourceStringErrors(t *testing.T) {
 		Steps: []resource.TestStep{
 			{
 				Config:      testAccResourceStringInvalidConfig,
-				ExpectError: regexp.MustCompile(`.*length \(2\) must be >= min_upper \+ min_lower \+ min_numeric \+ min_special \(3\)`),
+				ExpectError: regexp.MustCompile(`.*The password/string length \(2\) must be >= min_upper \+ min_lower \+ min_numeric\n\+ min_special \(3\)`),
 			},
 			{
 				Config:      testAccResourceStringLengthTooShortConfig,
-				ExpectError: regexp.MustCompile(`.*expected attribute to be at least 1, got 0`),
+				ExpectError: regexp.MustCompile(`.*Expected attribute at AttributeName\("length"\) to be at least 1, got 0`),
 			},
 		},
 	})
