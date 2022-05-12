@@ -21,7 +21,7 @@ import (
 func TestAccResourceShuffleDefault(t *testing.T) {
 	resource.UnitTest(t, resource.TestCase{
 		PreCheck:                 func() { testAccPreCheck(t) },
-		ProtoV5ProviderFactories: testAccProtoV5ProviderFactories(),
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories(),
 		Steps: []resource.TestStep{
 			{
 				Config: testAccResourceShuffleConfigDefault,
@@ -39,7 +39,7 @@ func TestAccResourceShuffleDefault(t *testing.T) {
 func TestAccResourceShuffleShorter(t *testing.T) {
 	resource.UnitTest(t, resource.TestCase{
 		PreCheck:                 func() { testAccPreCheck(t) },
-		ProtoV5ProviderFactories: testAccProtoV5ProviderFactories(),
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories(),
 		Steps: []resource.TestStep{
 			{
 				Config: testAccResourceShuffleConfigShorter,
@@ -57,7 +57,7 @@ func TestAccResourceShuffleShorter(t *testing.T) {
 func TestAccResourceShuffleLonger(t *testing.T) {
 	resource.UnitTest(t, resource.TestCase{
 		PreCheck:                 func() { testAccPreCheck(t) },
-		ProtoV5ProviderFactories: testAccProtoV5ProviderFactories(),
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories(),
 		Steps: []resource.TestStep{
 			{
 				Config: testAccResourceShuffleConfigLonger,
@@ -75,7 +75,7 @@ func TestAccResourceShuffleLonger(t *testing.T) {
 func TestAccResourceShuffleEmpty(t *testing.T) {
 	resource.UnitTest(t, resource.TestCase{
 		PreCheck:                 func() { testAccPreCheck(t) },
-		ProtoV5ProviderFactories: testAccProtoV5ProviderFactories(),
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories(),
 		Steps: []resource.TestStep{
 			{
 				Config: testAccResourceShuffleConfigEmpty,
@@ -93,7 +93,7 @@ func TestAccResourceShuffleEmpty(t *testing.T) {
 func TestAccResourceShuffleOne(t *testing.T) {
 	resource.UnitTest(t, resource.TestCase{
 		PreCheck:                 func() { testAccPreCheck(t) },
-		ProtoV5ProviderFactories: testAccProtoV5ProviderFactories(),
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories(),
 		Steps: []resource.TestStep{
 			{
 				Config: testAccResourceShuffleConfigOne,

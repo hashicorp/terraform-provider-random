@@ -17,7 +17,7 @@ type idLens struct {
 func TestAccResourceID(t *testing.T) {
 	resource.UnitTest(t, resource.TestCase{
 		PreCheck:                 func() { testAccPreCheck(t) },
-		ProtoV5ProviderFactories: testAccProtoV5ProviderFactories(),
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories(),
 		Steps: []resource.TestStep{
 			{
 				Config: testAccResourceIDConfig,
@@ -41,7 +41,7 @@ func TestAccResourceID(t *testing.T) {
 func TestAccResourceID_importWithPrefix(t *testing.T) {
 	resource.UnitTest(t, resource.TestCase{
 		PreCheck:                 func() { testAccPreCheck(t) },
-		ProtoV5ProviderFactories: testAccProtoV5ProviderFactories(),
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories(),
 		Steps: []resource.TestStep{
 			{
 				Config: testAccResourceIDConfigWithPrefix,

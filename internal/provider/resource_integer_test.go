@@ -12,7 +12,7 @@ func TestAccResourceIntegerBasic(t *testing.T) {
 	t.Parallel()
 	resource.UnitTest(t, resource.TestCase{
 		PreCheck:                 func() { testAccPreCheck(t) },
-		ProtoV5ProviderFactories: testAccProtoV5ProviderFactories(),
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories(),
 		Steps: []resource.TestStep{
 			{
 				Config: testRandomIntegerBasic,
@@ -34,7 +34,7 @@ func TestAccResourceIntegerUpdate(t *testing.T) {
 	t.Parallel()
 	resource.UnitTest(t, resource.TestCase{
 		PreCheck:                 func() { testAccPreCheck(t) },
-		ProtoV5ProviderFactories: testAccProtoV5ProviderFactories(),
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories(),
 		Steps: []resource.TestStep{
 			{
 				Config: testRandomIntegerBasic,
@@ -56,7 +56,7 @@ func TestAccResourceIntegerSeedless_to_seeded(t *testing.T) {
 	t.Parallel()
 	resource.UnitTest(t, resource.TestCase{
 		PreCheck:                 func() { testAccPreCheck(t) },
-		ProtoV5ProviderFactories: testAccProtoV5ProviderFactories(),
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories(),
 		Steps: []resource.TestStep{
 			{
 				Config: testRandomIntegerSeedless,
@@ -78,7 +78,7 @@ func TestAccResourceIntegerSeeded_to_seedless(t *testing.T) {
 	t.Parallel()
 	resource.UnitTest(t, resource.TestCase{
 		PreCheck:                 func() { testAccPreCheck(t) },
-		ProtoV5ProviderFactories: testAccProtoV5ProviderFactories(),
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories(),
 		Steps: []resource.TestStep{
 			{
 				Config: testRandomIntegerBasic,
@@ -100,7 +100,7 @@ func TestAccResourceIntegerBig(t *testing.T) {
 	t.Parallel()
 	resource.UnitTest(t, resource.TestCase{
 		PreCheck:                 func() { testAccPreCheck(t) },
-		ProtoV5ProviderFactories: testAccProtoV5ProviderFactories(),
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories(),
 		Steps: []resource.TestStep{
 			{
 				Config: testRandomIntegerBig,
