@@ -155,9 +155,14 @@ github.com/hashicorp/terraform-plugin-docs v0.8.0/go.mod h1:MjeyK5CEI/jZbTQXq1Ay
 github.com/hashicorp/terraform-plugin-framework v0.8.0 h1:2nxk+5qAKlGWOrpWZbAZNkO+AoC87l4+9d/rjtQd6Wo=
 github.com/hashicorp/terraform-plugin-framework v0.8.0/go.mod h1:jUhqrbeI48gAleP8LXzg9jtRH07EAcpwEGQlYmKNIVg=
 github.com/hashicorp/terraform-plugin-go v0.8.0/go.mod h1:E3GuvfX0Pz2Azcl6BegD6t51StXsVZMOYQoGO8mkHM0=
+<<<<<<< HEAD
 >>>>>>> 37128b5 (Configuring muxing (#177))
 github.com/hashicorp/terraform-plugin-go v0.9.0 h1:FvLY/3z4SNVatPZdoFcyrlNbCar+WyyOTv5X4Tp+WZc=
+=======
+>>>>>>> 94dbddb (Bumping terraform-plugin-go v0.9.1 (#177))
 github.com/hashicorp/terraform-plugin-go v0.9.0/go.mod h1:EawBkgjBWNf7jiKnVoyDyF39OSV+u6KUX+Y73EPj3oM=
+github.com/hashicorp/terraform-plugin-go v0.9.1 h1:vXdHaQ6aqL+OF076nMSBV+JKPdmXlzG5mzVDD04WyPs=
+github.com/hashicorp/terraform-plugin-go v0.9.1/go.mod h1:ItjVSlQs70otlzcCwlPcU8FRXLdO973oYFRZwAOxy8M=
 github.com/hashicorp/terraform-plugin-log v0.3.0/go.mod h1:EjueSP/HjlyFAsDqt+okpCPjkT4NDynAe32AeDC4vps=
 github.com/hashicorp/terraform-plugin-log v0.4.0 h1:F3eVnm8r2EfQCe2k9blPIiF/r2TT01SHijXnS7bujvc=
 github.com/hashicorp/terraform-plugin-log v0.4.0/go.mod h1:9KclxdunFownr4pIm1jdmwKRmE4d6HVG2c9XDq47rpg=
