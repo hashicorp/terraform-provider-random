@@ -5,6 +5,8 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/tfsdk"
+	"github.com/hashicorp/terraform-plugin-framework/types"
+	"golang.org/x/crypto/bcrypt"
 )
 
 type resourcePasswordType struct{}
@@ -15,7 +17,17 @@ func (r resourcePasswordType) GetSchema(context.Context) (tfsdk.Schema, diag.Dia
 		"data handling in the [Terraform documentation](https://www.terraform.io/docs/language/state/sensitive-data.html).\n" +
 		"\n" +
 		"This resource *does* use a cryptographic random number generator."
-	return getStringSchemaV1(true, description), nil
+
+	schema := getStringSchemaV1(true, description)
+	schema.Version = 1
+	schema.Attributes["bcrypt_hash"] = tfsdk.Attribute{
+		Description: "A bcrypt hash of the generated random string.",
+		Type:        types.StringType,
+		Computed:    true,
+		Sensitive:   true,
+	}
+
+	return schema, nil
 }
 
 func (r resourcePasswordType) NewResource(_ context.Context, p tfsdk.Provider) (tfsdk.Resource, diag.Diagnostics) {
@@ -29,7 +41,7 @@ type resourcePassword struct {
 }
 
 func (r resourcePassword) Create(ctx context.Context, req tfsdk.CreateResourceRequest, resp *tfsdk.CreateResourceResponse) {
-	createString(ctx, req, resp, true)
+	createPassword(ctx, req, resp)
 }
 
 // Read does not need to perform any operations as the state in ReadResourceResponse is already populated.
@@ -47,9 +59,41 @@ func (r resourcePassword) Delete(ctx context.Context, req tfsdk.DeleteResourceRe
 }
 
 func (r resourcePassword) ImportState(ctx context.Context, req tfsdk.ImportResourceStateRequest, resp *tfsdk.ImportResourceStateResponse) {
-	importString(ctx, req, resp, true)
+	importPassword(ctx, req, resp)
 }
 
 func (r resourcePassword) ValidateConfig(ctx context.Context, req tfsdk.ValidateResourceConfigRequest, resp *tfsdk.ValidateResourceConfigResponse) {
 	validateLength(ctx, req, resp)
+}
+
+func (r resourcePassword) UpgradeState(context.Context) map[int64]tfsdk.ResourceStateUpgrader {
+	return map[int64]tfsdk.ResourceStateUpgrader{
+		0: {
+			StateUpgrader: migratePasswordStateV0toV1,
+		},
+	}
+}
+
+func migratePasswordStateV0toV1(ctx context.Context, req tfsdk.UpgradeResourceStateRequest, resp *tfsdk.UpgradeResourceStateResponse) {
+	p := PasswordModel{}
+	req.State.Get(ctx, &p)
+
+	hash, err := generateHash(p.Result.Value)
+	if err != nil {
+		resp.Diagnostics.Append(hashGenerationError(err.Error())...)
+		return
+	}
+
+	p.BcryptHash = types.String{Value: hash}
+
+	resp.State.Set(ctx, p)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+}
+
+func generateHash(toHash string) (string, error) {
+	hash, err := bcrypt.GenerateFromPassword([]byte(toHash), bcrypt.DefaultCost)
+
+	return string(hash), err
 }

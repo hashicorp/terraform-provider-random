@@ -155,11 +155,139 @@ func getStringSchemaV1(sensitive bool, description string) tfsdk.Schema {
 	}
 }
 
-func createString(ctx context.Context, req tfsdk.CreateResourceRequest, resp *tfsdk.CreateResourceResponse, sensitive bool) {
+type randomStringParams struct {
+	length          int64
+	upper           bool
+	minUpper        int64
+	lower           bool
+	minLower        int64
+	number          bool
+	minNumeric      int64
+	special         bool
+	minSpecial      int64
+	overrideSpecial string
+}
+
+func createRandomString(input randomStringParams) ([]byte, error) {
 	const numChars = "0123456789"
 	const lowerChars = "abcdefghijklmnopqrstuvwxyz"
 	const upperChars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
 	var specialChars = "!@#$%&*()-_=+[]{}<>:?"
+	var result []byte
+
+	if input.overrideSpecial != "" {
+		specialChars = input.overrideSpecial
+	}
+
+	var chars = string("")
+	if input.upper {
+		chars += upperChars
+	}
+	if input.lower {
+		chars += lowerChars
+	}
+	if input.number {
+		chars += numChars
+	}
+	if input.special {
+		chars += specialChars
+	}
+
+	minMapping := map[string]int64{
+		numChars:     input.minNumeric,
+		lowerChars:   input.minLower,
+		upperChars:   input.minUpper,
+		specialChars: input.minSpecial,
+	}
+
+	result = make([]byte, 0, input.length)
+
+	for k, v := range minMapping {
+		s, err := generateRandomBytes(&k, v)
+		if err != nil {
+			return nil, err
+		}
+		result = append(result, s...)
+	}
+
+	s, err := generateRandomBytes(&chars, input.length-int64(len(result)))
+	if err != nil {
+		return nil, err
+	}
+
+	result = append(result, s...)
+
+	order := make([]byte, len(result))
+	if _, err := rand.Read(order); err != nil {
+		return nil, err
+	}
+
+	sort.Slice(result, func(i, j int) bool {
+		return order[i] < order[j]
+	})
+
+	return result, nil
+}
+
+func createPassword(ctx context.Context, req tfsdk.CreateResourceRequest, resp *tfsdk.CreateResourceResponse) {
+	var plan PasswordModel
+
+	diags := req.Plan.Get(ctx, &plan)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	params := randomStringParams{
+		length:          plan.Length.Value,
+		upper:           plan.Upper.Value,
+		minUpper:        plan.MinUpper.Value,
+		lower:           plan.Lower.Value,
+		minLower:        plan.MinLower.Value,
+		number:          plan.Number.Value,
+		minNumeric:      plan.MinNumeric.Value,
+		special:         plan.Special.Value,
+		minSpecial:      plan.MinSpecial.Value,
+		overrideSpecial: plan.OverrideSpecial.Value,
+	}
+
+	result, err := createRandomString(params)
+	if err != nil {
+		resp.Diagnostics.Append(randomReadError(err.Error())...)
+		return
+	}
+
+	state := PasswordModel{
+		ID:              types.String{Value: "none"},
+		Keepers:         plan.Keepers,
+		Length:          types.Int64{Value: plan.Length.Value},
+		Special:         types.Bool{Value: plan.Special.Value},
+		Upper:           types.Bool{Value: plan.Upper.Value},
+		Lower:           types.Bool{Value: plan.Lower.Value},
+		Number:          types.Bool{Value: plan.Number.Value},
+		MinNumeric:      types.Int64{Value: plan.MinNumeric.Value},
+		MinUpper:        types.Int64{Value: plan.MinUpper.Value},
+		MinLower:        types.Int64{Value: plan.MinLower.Value},
+		MinSpecial:      types.Int64{Value: plan.MinSpecial.Value},
+		OverrideSpecial: types.String{Value: plan.OverrideSpecial.Value},
+		Result:          types.String{Value: string(result)},
+	}
+
+	hash, err := generateHash(plan.Result.Value)
+	if err != nil {
+		resp.Diagnostics.Append(hashGenerationError(err.Error())...)
+	}
+
+	state.BcryptHash = types.String{Value: hash}
+
+	diags = resp.State.Set(ctx, state)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+}
+
+func createString(ctx context.Context, req tfsdk.CreateResourceRequest, resp *tfsdk.CreateResourceResponse) {
 	var plan StringModel
 
 	diags := req.Plan.Get(ctx, &plan)
@@ -168,92 +296,42 @@ func createString(ctx context.Context, req tfsdk.CreateResourceRequest, resp *tf
 		return
 	}
 
-	length := plan.Length.Value
-	upper := plan.Upper.Value
-	minUpper := plan.MinUpper.Value
-	lower := plan.Lower.Value
-	minLower := plan.MinLower.Value
-	number := plan.Number.Value
-	minNumeric := plan.MinNumeric.Value
-	special := plan.Special.Value
-	minSpecial := plan.MinSpecial.Value
-	overrideSpecial := plan.OverrideSpecial.Value
-
-	if overrideSpecial != "" {
-		specialChars = overrideSpecial
+	params := randomStringParams{
+		length:          plan.Length.Value,
+		upper:           plan.Upper.Value,
+		minUpper:        plan.MinUpper.Value,
+		lower:           plan.Lower.Value,
+		minLower:        plan.MinLower.Value,
+		number:          plan.Number.Value,
+		minNumeric:      plan.MinNumeric.Value,
+		special:         plan.Special.Value,
+		minSpecial:      plan.MinSpecial.Value,
+		overrideSpecial: plan.OverrideSpecial.Value,
 	}
 
-	var chars = string("")
-	if upper {
-		chars += upperChars
-	}
-	if lower {
-		chars += lowerChars
-	}
-	if number {
-		chars += numChars
-	}
-	if special {
-		chars += specialChars
-	}
-
-	minMapping := map[string]int64{
-		numChars:     minNumeric,
-		lowerChars:   minLower,
-		upperChars:   minUpper,
-		specialChars: minSpecial,
-	}
-
-	var result = make([]byte, 0, length)
-
-	for k, v := range minMapping {
-		s, err := generateRandomBytes(&k, v)
-		if err != nil {
-			resp.Diagnostics.Append(randomReadError(err.Error())...)
-			return
-		}
-		result = append(result, s...)
-	}
-
-	s, err := generateRandomBytes(&chars, length-int64(len(result)))
+	result, err := createRandomString(params)
 	if err != nil {
 		resp.Diagnostics.Append(randomReadError(err.Error())...)
 		return
 	}
 
-	result = append(result, s...)
-
-	order := make([]byte, len(result))
-	if _, err := rand.Read(order); err != nil {
-		resp.Diagnostics.Append(randomReadError(err.Error())...)
-		return
-	}
-
-	sort.Slice(result, func(i, j int) bool {
-		return order[i] < order[j]
-	})
-
-	str := StringModel{
+	state := StringModel{
 		ID:              types.String{Value: string(result)},
 		Keepers:         plan.Keepers,
-		Length:          types.Int64{Value: length},
-		Special:         types.Bool{Value: special},
-		Upper:           types.Bool{Value: upper},
-		Lower:           types.Bool{Value: lower},
-		Number:          types.Bool{Value: number},
-		MinNumeric:      types.Int64{Value: minNumeric},
-		MinUpper:        types.Int64{Value: minUpper},
-		MinLower:        types.Int64{Value: minLower},
-		MinSpecial:      types.Int64{Value: minSpecial},
-		OverrideSpecial: types.String{Value: overrideSpecial},
+		Length:          types.Int64{Value: plan.Length.Value},
+		Special:         types.Bool{Value: plan.Special.Value},
+		Upper:           types.Bool{Value: plan.Upper.Value},
+		Lower:           types.Bool{Value: plan.Lower.Value},
+		Number:          types.Bool{Value: plan.Number.Value},
+		MinNumeric:      types.Int64{Value: plan.MinNumeric.Value},
+		MinUpper:        types.Int64{Value: plan.MinUpper.Value},
+		MinLower:        types.Int64{Value: plan.MinLower.Value},
+		MinSpecial:      types.Int64{Value: plan.MinSpecial.Value},
+		OverrideSpecial: types.String{Value: plan.OverrideSpecial.Value},
 		Result:          types.String{Value: string(result)},
 	}
 
-	if sensitive {
-		str.ID.Value = "none"
-	}
-
-	diags = resp.State.Set(ctx, str)
+	diags = resp.State.Set(ctx, state)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
 		return
@@ -273,7 +351,7 @@ func generateRandomBytes(charSet *string, length int64) ([]byte, error) {
 	return bytes, nil
 }
 
-func importString(ctx context.Context, req tfsdk.ImportResourceStateRequest, resp *tfsdk.ImportResourceStateResponse, sensitive bool) {
+func importString(ctx context.Context, req tfsdk.ImportResourceStateRequest, resp *tfsdk.ImportResourceStateResponse) {
 	id := req.ID
 
 	state := StringModel{
@@ -283,9 +361,22 @@ func importString(ctx context.Context, req tfsdk.ImportResourceStateRequest, res
 
 	state.Keepers.ElemType = types.StringType
 
-	if sensitive {
-		state.ID.Value = "none"
+	diags := resp.State.Set(ctx, &state)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
 	}
+}
+
+func importPassword(ctx context.Context, req tfsdk.ImportResourceStateRequest, resp *tfsdk.ImportResourceStateResponse) {
+	id := req.ID
+
+	state := PasswordModel{
+		ID:     types.String{Value: "none"},
+		Result: types.String{Value: id},
+	}
+
+	state.Keepers.ElemType = types.StringType
 
 	diags := resp.State.Set(ctx, &state)
 	resp.Diagnostics.Append(diags...)

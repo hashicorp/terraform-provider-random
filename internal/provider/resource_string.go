@@ -36,7 +36,7 @@ type resourceString struct {
 }
 
 func (r resourceString) Create(ctx context.Context, req tfsdk.CreateResourceRequest, resp *tfsdk.CreateResourceResponse) {
-	createString(ctx, req, resp, false)
+	createString(ctx, req, resp)
 }
 
 // Read does not need to perform any operations as the state in ReadResourceResponse is already populated.
@@ -54,7 +54,7 @@ func (r resourceString) Delete(ctx context.Context, req tfsdk.DeleteResourceRequ
 }
 
 func (r resourceString) ImportState(ctx context.Context, req tfsdk.ImportResourceStateRequest, resp *tfsdk.ImportResourceStateResponse) {
-	importString(ctx, req, resp, false)
+	importString(ctx, req, resp)
 }
 
 func (r resourceString) ValidateConfig(ctx context.Context, req tfsdk.ValidateResourceConfigRequest, resp *tfsdk.ValidateResourceConfigResponse) {
