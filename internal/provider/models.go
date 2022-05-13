@@ -39,10 +39,6 @@ type PasswordModel struct {
 	BcryptHash      types.String `tfsdk:"bcrypt_hash"`
 }
 
-func (pm PasswordModel) LengthValue() int64 {
-	return pm.Length.Value
-}
-
 type PetNameModel struct {
 	ID        types.String `tfsdk:"id"`
 	Keepers   types.Map    `tfsdk:"keepers"`
