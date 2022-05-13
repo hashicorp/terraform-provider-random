@@ -12,9 +12,10 @@ import (
 func resourcePassword() *schema.Resource {
 	passwordSchema := stringSchemaV1(true)
 	passwordSchema["bcrypt_hash"] = &schema.Schema{
-		Type:      schema.TypeString,
-		Computed:  true,
-		Sensitive: true,
+		Description: "A bcrypt hash of the generated random string.",
+		Type:        schema.TypeString,
+		Computed:    true,
+		Sensitive:   true,
 	}
 
 	create := func(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
