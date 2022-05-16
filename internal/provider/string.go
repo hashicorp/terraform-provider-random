@@ -229,19 +229,3 @@ func generateRandomBytes(charSet *string, length int) ([]byte, error) {
 func readNil(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	return nil
 }
-
-func importStringFunc(sensitive bool) schema.StateContextFunc {
-	return func(ctx context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
-		val := d.Id()
-
-		if sensitive {
-			d.SetId("none")
-		}
-
-		if err := d.Set("result", val); err != nil {
-			return nil, fmt.Errorf("error setting result: %w", err)
-		}
-
-		return []*schema.ResourceData{d}, nil
-	}
-}

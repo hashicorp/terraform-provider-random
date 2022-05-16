@@ -49,7 +49,7 @@ func resourcePassword() *schema.Resource {
 		DeleteContext: RemoveResourceFromState,
 		Schema:        passwordSchema,
 		Importer: &schema.ResourceImporter{
-			StateContext: importStringFunc(true),
+			StateContext: importPasswordFunc(),
 		},
 		SchemaVersion: 1,
 		StateUpgraders: []schema.StateUpgrader{
@@ -59,6 +59,28 @@ func resourcePassword() *schema.Resource {
 				Upgrade: resourcePasswordStateUpgradeV0,
 			},
 		},
+	}
+}
+
+func importPasswordFunc() schema.StateContextFunc {
+	return func(ctx context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
+		val := d.Id()
+		d.SetId("none")
+
+		if err := d.Set("result", val); err != nil {
+			return nil, fmt.Errorf("resource password import failed, error setting result: %w", err)
+		}
+
+		hash, err := generateHash(val)
+		if err != nil {
+			return nil, fmt.Errorf("resource password import failed, generate hash error: %w", err)
+		}
+
+		if err := d.Set("bcrypt_hash", hash); err != nil {
+			return nil, fmt.Errorf("resource password import failed, error setting bcrypt_hash: %w", err)
+		}
+
+		return []*schema.ResourceData{d}, nil
 	}
 }
 
