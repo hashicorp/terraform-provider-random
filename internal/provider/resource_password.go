@@ -69,6 +69,10 @@ func resourcePasswordV0() *schema.Resource {
 }
 
 func resourcePasswordStateUpgradeV0(_ context.Context, rawState map[string]interface{}, _ interface{}) (map[string]interface{}, error) {
+	if rawState == nil {
+		return nil, fmt.Errorf("resource password state upgrade failed, state is nil")
+	}
+
 	result, ok := rawState["result"].(string)
 	if !ok {
 		return nil, fmt.Errorf("resource password state upgrade failed, result could not be asserted as string: %T", rawState["result"])
