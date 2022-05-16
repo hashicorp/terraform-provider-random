@@ -24,7 +24,7 @@ func resourceString() *schema.Resource {
 		// [SDK documentation](https://github.com/hashicorp/terraform-plugin-sdk/blob/main/helper/schema/resource.go#L91).
 		MigrateState:  resourceRandomStringMigrateState,
 		SchemaVersion: 1,
-		Schema:        stringSchemaV1(false),
+		Schema:        stringSchemaV1(),
 		Importer: &schema.ResourceImporter{
 			StateContext: importStringFunc(),
 		},

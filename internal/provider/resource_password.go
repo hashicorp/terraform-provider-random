@@ -10,14 +10,6 @@ import (
 )
 
 func resourcePassword() *schema.Resource {
-	passwordSchema := stringSchemaV1(true)
-	passwordSchema["bcrypt_hash"] = &schema.Schema{
-		Description: "A bcrypt hash of the generated random string.",
-		Type:        schema.TypeString,
-		Computed:    true,
-		Sensitive:   true,
-	}
-
 	create := func(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 		diags := createStringFunc(true)(ctx, d, meta)
 		if diags.HasError() {
@@ -47,7 +39,7 @@ func resourcePassword() *schema.Resource {
 		CreateContext: create,
 		ReadContext:   readNil,
 		DeleteContext: RemoveResourceFromState,
-		Schema:        passwordSchema,
+		Schema:        passwordSchemaV1(),
 		Importer: &schema.ResourceImporter{
 			StateContext: importPasswordFunc(),
 		},
@@ -86,7 +78,7 @@ func importPasswordFunc() schema.StateContextFunc {
 
 func resourcePasswordV0() *schema.Resource {
 	return &schema.Resource{
-		Schema: stringSchemaV1(true),
+		Schema: passwordSchemaV0(),
 	}
 }
 
