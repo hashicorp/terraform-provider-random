@@ -11,14 +11,11 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types"
 )
 
-func getStringSchemaV1(sensitive bool, description string) tfsdk.Schema {
-	idDesc := "The generated random string."
-	if sensitive {
-		idDesc = "A static value used internally by Terraform, this should not be referenced in configurations."
-	}
-
+// passwordStringSchema contains the common set of Attributes for both password and string resources.
+// Specific Schema descriptions, result sensitive, id descriptions and additional attributes (e.g., bcrypt_hash)
+// are added in getStringSchemaV1 and getPasswordSchemaV1.
+func passwordStringSchema() tfsdk.Schema {
 	return tfsdk.Schema{
-		Description: description,
 		Attributes: map[string]tfsdk.Attribute{
 			"keepers": {
 				Description: "Arbitrary map of values that, when changed, will trigger recreation of " +
@@ -143,13 +140,11 @@ func getStringSchemaV1(sensitive bool, description string) tfsdk.Schema {
 				Description: "The generated random string.",
 				Type:        types.StringType,
 				Computed:    true,
-				Sensitive:   sensitive,
 			},
 
 			"id": {
-				Description: idDesc,
-				Computed:    true,
-				Type:        types.StringType,
+				Computed: true,
+				Type:     types.StringType,
 			},
 		},
 	}
@@ -229,115 +224,6 @@ func createRandomString(input randomStringParams) ([]byte, error) {
 	return result, nil
 }
 
-func createPassword(ctx context.Context, req tfsdk.CreateResourceRequest, resp *tfsdk.CreateResourceResponse) {
-	var plan PasswordModel
-
-	diags := req.Plan.Get(ctx, &plan)
-	resp.Diagnostics.Append(diags...)
-	if resp.Diagnostics.HasError() {
-		return
-	}
-
-	params := randomStringParams{
-		length:          plan.Length.Value,
-		upper:           plan.Upper.Value,
-		minUpper:        plan.MinUpper.Value,
-		lower:           plan.Lower.Value,
-		minLower:        plan.MinLower.Value,
-		number:          plan.Number.Value,
-		minNumeric:      plan.MinNumeric.Value,
-		special:         plan.Special.Value,
-		minSpecial:      plan.MinSpecial.Value,
-		overrideSpecial: plan.OverrideSpecial.Value,
-	}
-
-	result, err := createRandomString(params)
-	if err != nil {
-		resp.Diagnostics.Append(randomReadError(err.Error())...)
-		return
-	}
-
-	state := PasswordModel{
-		ID:              types.String{Value: "none"},
-		Keepers:         plan.Keepers,
-		Length:          types.Int64{Value: plan.Length.Value},
-		Special:         types.Bool{Value: plan.Special.Value},
-		Upper:           types.Bool{Value: plan.Upper.Value},
-		Lower:           types.Bool{Value: plan.Lower.Value},
-		Number:          types.Bool{Value: plan.Number.Value},
-		MinNumeric:      types.Int64{Value: plan.MinNumeric.Value},
-		MinUpper:        types.Int64{Value: plan.MinUpper.Value},
-		MinLower:        types.Int64{Value: plan.MinLower.Value},
-		MinSpecial:      types.Int64{Value: plan.MinSpecial.Value},
-		OverrideSpecial: types.String{Value: plan.OverrideSpecial.Value},
-		Result:          types.String{Value: string(result)},
-	}
-
-	hash, err := generateHash(plan.Result.Value)
-	if err != nil {
-		resp.Diagnostics.Append(hashGenerationError(err.Error())...)
-	}
-
-	state.BcryptHash = types.String{Value: hash}
-
-	diags = resp.State.Set(ctx, state)
-	resp.Diagnostics.Append(diags...)
-	if resp.Diagnostics.HasError() {
-		return
-	}
-}
-
-func createString(ctx context.Context, req tfsdk.CreateResourceRequest, resp *tfsdk.CreateResourceResponse) {
-	var plan StringModel
-
-	diags := req.Plan.Get(ctx, &plan)
-	resp.Diagnostics.Append(diags...)
-	if resp.Diagnostics.HasError() {
-		return
-	}
-
-	params := randomStringParams{
-		length:          plan.Length.Value,
-		upper:           plan.Upper.Value,
-		minUpper:        plan.MinUpper.Value,
-		lower:           plan.Lower.Value,
-		minLower:        plan.MinLower.Value,
-		number:          plan.Number.Value,
-		minNumeric:      plan.MinNumeric.Value,
-		special:         plan.Special.Value,
-		minSpecial:      plan.MinSpecial.Value,
-		overrideSpecial: plan.OverrideSpecial.Value,
-	}
-
-	result, err := createRandomString(params)
-	if err != nil {
-		resp.Diagnostics.Append(randomReadError(err.Error())...)
-		return
-	}
-
-	state := StringModel{
-		ID:              types.String{Value: string(result)},
-		Keepers:         plan.Keepers,
-		Length:          types.Int64{Value: plan.Length.Value},
-		Special:         types.Bool{Value: plan.Special.Value},
-		Upper:           types.Bool{Value: plan.Upper.Value},
-		Lower:           types.Bool{Value: plan.Lower.Value},
-		Number:          types.Bool{Value: plan.Number.Value},
-		MinNumeric:      types.Int64{Value: plan.MinNumeric.Value},
-		MinUpper:        types.Int64{Value: plan.MinUpper.Value},
-		MinLower:        types.Int64{Value: plan.MinLower.Value},
-		MinSpecial:      types.Int64{Value: plan.MinSpecial.Value},
-		OverrideSpecial: types.String{Value: plan.OverrideSpecial.Value},
-		Result:          types.String{Value: string(result)},
-	}
-
-	diags = resp.State.Set(ctx, state)
-	resp.Diagnostics.Append(diags...)
-	if resp.Diagnostics.HasError() {
-		return
-	}
-}
-
 func generateRandomBytes(charSet *string, length int64) ([]byte, error) {
 	bytes := make([]byte, length)
 	setLen := big.NewInt(int64(len(*charSet)))
@@ -349,40 +235,6 @@ func generateRandomBytes(charSet *string, length int64) ([]byte, error) {
 		bytes[i] = (*charSet)[idx.Int64()]
 	}
 	return bytes, nil
-}
-
-func importString(ctx context.Context, req tfsdk.ImportResourceStateRequest, resp *tfsdk.ImportResourceStateResponse) {
-	id := req.ID
-
-	state := StringModel{
-		ID:     types.String{Value: id},
-		Result: types.String{Value: id},
-	}
-
-	state.Keepers.ElemType = types.StringType
-
-	diags := resp.State.Set(ctx, &state)
-	resp.Diagnostics.Append(diags...)
-	if resp.Diagnostics.HasError() {
-		return
-	}
-}
-
-func importPassword(ctx context.Context, req tfsdk.ImportResourceStateRequest, resp *tfsdk.ImportResourceStateResponse) {
-	id := req.ID
-
-	state := PasswordModel{
-		ID:     types.String{Value: "none"},
-		Result: types.String{Value: id},
-	}
-
-	state.Keepers.ElemType = types.StringType
-
-	diags := resp.State.Set(ctx, &state)
-	resp.Diagnostics.Append(diags...)
-	if resp.Diagnostics.HasError() {
-		return
-	}
 }
 
 func validateLength(ctx context.Context, req tfsdk.ValidateResourceConfigRequest, resp *tfsdk.ValidateResourceConfigResponse) {

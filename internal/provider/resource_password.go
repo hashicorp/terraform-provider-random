@@ -12,22 +12,7 @@ import (
 type resourcePasswordType struct{}
 
 func (r resourcePasswordType) GetSchema(context.Context) (tfsdk.Schema, diag.Diagnostics) {
-	description := "Identical to [random_string](string.html) with the exception that the result is " +
-		"treated as sensitive and, thus, _not_ displayed in console output. Read more about sensitive " +
-		"data handling in the [Terraform documentation](https://www.terraform.io/docs/language/state/sensitive-data.html).\n" +
-		"\n" +
-		"This resource *does* use a cryptographic random number generator."
-
-	schema := getStringSchemaV1(true, description)
-	schema.Version = 1
-	schema.Attributes["bcrypt_hash"] = tfsdk.Attribute{
-		Description: "A bcrypt hash of the generated random string.",
-		Type:        types.StringType,
-		Computed:    true,
-		Sensitive:   true,
-	}
-
-	return schema, nil
+	return getPasswordSchemaV1(), nil
 }
 
 func (r resourcePasswordType) NewResource(_ context.Context, p tfsdk.Provider) (tfsdk.Resource, diag.Diagnostics) {
@@ -71,6 +56,119 @@ func (r resourcePassword) UpgradeState(context.Context) map[int64]tfsdk.Resource
 		0: {
 			StateUpgrader: migratePasswordStateV0toV1,
 		},
+	}
+}
+
+func getPasswordSchemaV1() tfsdk.Schema {
+	passwordSchema := passwordStringSchema()
+
+	passwordSchema.Description = "Identical to [random_string](string.html) with the exception that the result is " +
+		"treated as sensitive and, thus, _not_ displayed in console output. Read more about sensitive " +
+		"data handling in the " +
+		"[Terraform documentation](https://www.terraform.io/docs/language/state/sensitive-data.html).\n\n" +
+		"This resource *does* use a cryptographic random number generator."
+
+	id, ok := passwordSchema.Attributes["id"]
+	if ok {
+		id.Description = "A static value used internally by Terraform, this should not be referenced in configurations."
+	}
+
+	result, ok := passwordSchema.Attributes["result"]
+	if ok {
+		result.Sensitive = true
+	}
+
+	passwordSchema.Attributes["bcrypt_hash"] = tfsdk.Attribute{
+		Description: "A bcrypt hash of the generated random string.",
+		Type:        types.StringType,
+		Computed:    true,
+		Sensitive:   true,
+	}
+
+	passwordSchema.Version = 1
+
+	return passwordSchema
+}
+
+func createPassword(ctx context.Context, req tfsdk.CreateResourceRequest, resp *tfsdk.CreateResourceResponse) {
+	var plan PasswordModel
+
+	diags := req.Plan.Get(ctx, &plan)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	params := randomStringParams{
+		length:          plan.Length.Value,
+		upper:           plan.Upper.Value,
+		minUpper:        plan.MinUpper.Value,
+		lower:           plan.Lower.Value,
+		minLower:        plan.MinLower.Value,
+		number:          plan.Number.Value,
+		minNumeric:      plan.MinNumeric.Value,
+		special:         plan.Special.Value,
+		minSpecial:      plan.MinSpecial.Value,
+		overrideSpecial: plan.OverrideSpecial.Value,
+	}
+
+	result, err := createRandomString(params)
+	if err != nil {
+		resp.Diagnostics.Append(randomReadError(err.Error())...)
+		return
+	}
+
+	state := PasswordModel{
+		ID:              types.String{Value: "none"},
+		Keepers:         plan.Keepers,
+		Length:          types.Int64{Value: plan.Length.Value},
+		Special:         types.Bool{Value: plan.Special.Value},
+		Upper:           types.Bool{Value: plan.Upper.Value},
+		Lower:           types.Bool{Value: plan.Lower.Value},
+		Number:          types.Bool{Value: plan.Number.Value},
+		MinNumeric:      types.Int64{Value: plan.MinNumeric.Value},
+		MinUpper:        types.Int64{Value: plan.MinUpper.Value},
+		MinLower:        types.Int64{Value: plan.MinLower.Value},
+		MinSpecial:      types.Int64{Value: plan.MinSpecial.Value},
+		OverrideSpecial: types.String{Value: plan.OverrideSpecial.Value},
+		Result:          types.String{Value: string(result)},
+	}
+
+	hash, err := generateHash(plan.Result.Value)
+	if err != nil {
+		resp.Diagnostics.Append(hashGenerationError(err.Error())...)
+	}
+
+	state.BcryptHash = types.String{Value: hash}
+
+	diags = resp.State.Set(ctx, state)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+}
+
+func importPassword(ctx context.Context, req tfsdk.ImportResourceStateRequest, resp *tfsdk.ImportResourceStateResponse) {
+	id := req.ID
+
+	state := PasswordModel{
+		ID:     types.String{Value: "none"},
+		Result: types.String{Value: id},
+	}
+
+	state.Keepers.ElemType = types.StringType
+
+	hash, err := generateHash(id)
+	if err != nil {
+		resp.Diagnostics.Append(hashGenerationError(err.Error())...)
+	}
+
+	state.BcryptHash = types.String{Value: hash}
+
+	diags := resp.State.Set(ctx, &state)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
 	}
 }
 
