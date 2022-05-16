@@ -80,7 +80,7 @@ func resourcePasswordStateUpgradeV0(_ context.Context, rawState map[string]inter
 
 	hash, err := generateHash(result)
 	if err != nil {
-		return nil, fmt.Errorf("resource password state upgrade failed, generate hash error: %v", err)
+		return nil, fmt.Errorf("resource password state upgrade failed, generate hash error: %w", err)
 	}
 
 	rawState["bcrypt_hash"] = hash
