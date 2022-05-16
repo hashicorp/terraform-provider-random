@@ -24,17 +24,15 @@ func resourcePassword() *schema.Resource {
 			return diags
 		}
 
-		if d.Get("bcrypt_hash") == "" {
-			hash, err := generateHash(d.Get("result").(string))
-			if err != nil {
-				diags = append(diags, diag.Errorf("err: %s", err)...)
-				return diags
-			}
+		hash, err := generateHash(d.Get("result").(string))
+		if err != nil {
+			diags = append(diags, diag.Errorf("err: %s", err)...)
+			return diags
+		}
 
-			if err := d.Set("bcrypt_hash", hash); err != nil {
-				diags = append(diags, diag.Errorf("err: %s", err)...)
-				return diags
-			}
+		if err := d.Set("bcrypt_hash", hash); err != nil {
+			diags = append(diags, diag.Errorf("err: %s", err)...)
+			return diags
 		}
 
 		return nil
@@ -70,7 +68,7 @@ func resourcePasswordV0() *schema.Resource {
 	}
 }
 
-func resourcePasswordStateUpgradeV0(ctx context.Context, rawState map[string]interface{}, meta interface{}) (map[string]interface{}, error) {
+func resourcePasswordStateUpgradeV0(_ context.Context, rawState map[string]interface{}, _ interface{}) (map[string]interface{}, error) {
 	result, ok := rawState["result"].(string)
 	if !ok {
 		return nil, fmt.Errorf("resource password state upgrade failed, result could not be asserted as string: %T", rawState["result"])
