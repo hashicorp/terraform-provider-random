@@ -15,7 +15,9 @@ func TestAccResourcePasswordBasic(t *testing.T) {
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories(),
 		Steps: []resource.TestStep{
 			{
-				Config: testAccResourcePasswordBasic,
+				Config: `resource "random_password" "basic" {
+  							length = 12
+						}`,
 				Check: resource.ComposeTestCheckFunc(
 					testAccResourceStringCheck("random_password.basic", &customLens{
 						customLen: 12,
@@ -53,7 +55,13 @@ func TestAccResourcePasswordOverride(t *testing.T) {
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories(),
 		Steps: []resource.TestStep{
 			{
-				Config: testAccResourcePasswordOverride,
+				Config: `resource "random_password" "override" {
+							length = 4
+							override_special = "!"
+							lower = false
+							upper = false
+							number = false
+						}`,
 				Check: resource.ComposeTestCheckFunc(
 					testAccResourceStringCheck("random_password.override", &customLens{
 						customLen: 4,
@@ -71,7 +79,14 @@ func TestAccResourcePasswordMin(t *testing.T) {
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories(),
 		Steps: []resource.TestStep{
 			{
-				Config: testAccResourcePasswordMin,
+				Config: `resource "random_password" "min" {
+							length = 12
+							override_special = "!#@"
+							min_lower = 2
+							min_upper = 3
+							min_special = 1
+							min_numeric = 4
+						}`,
 				Check: resource.ComposeTestCheckFunc(
 					testAccResourceStringCheck("random_password.min", &customLens{
 						customLen: 12,
@@ -85,30 +100,3 @@ func TestAccResourcePasswordMin(t *testing.T) {
 		},
 	})
 }
-
-const (
-	testAccResourcePasswordBasic = `
-resource "random_password" "basic" {
-  length = 12
-}`
-
-	testAccResourcePasswordOverride = `
-resource "random_password" "override" {
-length = 4
-override_special = "!"
-lower = false
-upper = false
-number = false
-}
-`
-
-	testAccResourcePasswordMin = `
-resource "random_password" "min" {
-length = 12
-override_special = "!#@"
-min_lower = 2
-min_upper = 3
-min_special = 1
-min_numeric = 4
-}`
-)
