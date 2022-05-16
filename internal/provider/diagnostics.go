@@ -27,7 +27,7 @@ func hashGenerationError(errMsg string) diag.Diagnostics {
 	diags.AddError(
 		"Hash Generation Error",
 		"While attempting to generate a hash from of the password an error occurred.\n\n"+
-			"Verify that the state contains a populated 'result' field and retry the operation\n\n"+
+			"Verify that the state contains a populated 'result' field, using 'terraform state show', and retry the operation\n\n"+
 			fmt.Sprintf("Original Error: %s", errMsg),
 	)
 
