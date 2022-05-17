@@ -2,10 +2,13 @@ package provider
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/tfsdk"
 	"github.com/hashicorp/terraform-plugin-framework/types"
+	"github.com/hashicorp/terraform-plugin-go/tfprotov6"
+	"github.com/hashicorp/terraform-plugin-go/tftypes"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -71,11 +74,13 @@ func getPasswordSchemaV1() tfsdk.Schema {
 	id, ok := passwordSchema.Attributes["id"]
 	if ok {
 		id.Description = "A static value used internally by Terraform, this should not be referenced in configurations."
+		passwordSchema.Attributes["id"] = id
 	}
 
 	result, ok := passwordSchema.Attributes["result"]
 	if ok {
 		result.Sensitive = true
+		passwordSchema.Attributes["result"] = result
 	}
 
 	passwordSchema.Attributes["bcrypt_hash"] = tfsdk.Attribute{
@@ -172,22 +177,118 @@ func importPassword(ctx context.Context, req tfsdk.ImportResourceStateRequest, r
 	}
 }
 
-func migratePasswordStateV0toV1(ctx context.Context, req tfsdk.UpgradeResourceStateRequest, resp *tfsdk.UpgradeResourceStateResponse) {
-	p := PasswordModel{}
-	req.State.Get(ctx, &p)
+var passwordDataV0 = tftypes.Object{
+	AttributeTypes: map[string]tftypes.Type{
+		"keepers": tftypes.Map{
+			ElementType: tftypes.String,
+		},
+		"length":           tftypes.Number,
+		"special":          tftypes.Bool,
+		"upper":            tftypes.Bool,
+		"lower":            tftypes.Bool,
+		"number":           tftypes.Bool,
+		"min_numeric":      tftypes.Number,
+		"min_upper":        tftypes.Number,
+		"min_lower":        tftypes.Number,
+		"min_special":      tftypes.Number,
+		"override_special": tftypes.String,
+		"result":           tftypes.String,
+		"id":               tftypes.String,
+	},
+}
 
-	hash, err := generateHash(p.Result.Value)
+var passwordDataV1 = tftypes.Object{
+	AttributeTypes: map[string]tftypes.Type{
+		"bcrypt_hash": tftypes.String,
+		"keepers": tftypes.Map{
+			ElementType: tftypes.String,
+		},
+		"length":           tftypes.Number,
+		"special":          tftypes.Bool,
+		"upper":            tftypes.Bool,
+		"lower":            tftypes.Bool,
+		"number":           tftypes.Bool,
+		"min_numeric":      tftypes.Number,
+		"min_upper":        tftypes.Number,
+		"min_lower":        tftypes.Number,
+		"min_special":      tftypes.Number,
+		"override_special": tftypes.String,
+		"result":           tftypes.String,
+		"id":               tftypes.String,
+	},
+}
+
+func migratePasswordStateV0toV1(ctx context.Context, req tfsdk.UpgradeResourceStateRequest, resp *tfsdk.UpgradeResourceStateResponse) {
+	rawStateValue, err := req.RawState.Unmarshal(passwordDataV0)
+	if err != nil {
+		resp.Diagnostics.AddError(
+			"Unable to migrate password state from v0 to v1",
+			fmt.Sprintf("Unmarshalling prior state failed: %s", err),
+		)
+		return
+	}
+
+	var rawState map[string]tftypes.Value
+	if err := rawStateValue.As(&rawState); err != nil {
+		resp.Diagnostics.AddError(
+			"Unable to migrate password state from v0 to v1",
+			fmt.Sprintf("Unable to convert prior state: %s", err),
+		)
+		return
+	}
+
+	if _, ok := rawState["result"]; !ok {
+		resp.Diagnostics.AddError(
+			"Unable to migrate password state from v0 to v1",
+			"Prior state does not contain result.",
+		)
+		return
+	}
+
+	var result string
+	if err := rawState["result"].As(&result); err != nil {
+		resp.Diagnostics.AddError(
+			"Unable to migrate password state from v0 to v1",
+			"Result from prior state could not be converted to string.\n\n"+
+				"As result is a sensitive value you will need to inspect it by looking\n"+
+				"at the state file directly as 'terraform state show' will display (sensitive value).",
+		)
+		return
+	}
+
+	hash, err := generateHash(result)
 	if err != nil {
 		resp.Diagnostics.Append(hashGenerationError(err.Error())...)
 		return
 	}
 
-	p.BcryptHash = types.String{Value: hash}
-
-	resp.State.Set(ctx, p)
-	if resp.Diagnostics.HasError() {
+	dynamicValue, err := tfprotov6.NewDynamicValue(
+		passwordDataV1,
+		tftypes.NewValue(passwordDataV1, map[string]tftypes.Value{
+			"bcrypt_hash":      tftypes.NewValue(tftypes.String, hash),
+			"keepers":          rawState["keepers"],
+			"length":           rawState["length"],
+			"special":          rawState["special"],
+			"upper":            rawState["upper"],
+			"lower":            rawState["lower"],
+			"number":           rawState["number"],
+			"min_numeric":      rawState["min_numeric"],
+			"min_upper":        rawState["min_upper"],
+			"min_lower":        rawState["min_lower"],
+			"min_special":      rawState["min_special"],
+			"override_special": rawState["override_special"],
+			"result":           rawState["result"],
+			"id":               rawState["id"],
+		}))
+	if err != nil {
+		resp.Diagnostics.AddError(
+			"Unable to migrate password state from v0 to v1",
+			fmt.Sprintf("Failed to generate new dynamic value: %s", err),
+		)
 		return
 	}
+
+	resp.DynamicValue = &dynamicValue
 }
 
 func generateHash(toHash string) (string, error) {

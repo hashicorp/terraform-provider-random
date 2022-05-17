@@ -65,6 +65,7 @@ func getStringSchemaV1() tfsdk.Schema {
 	id, ok := stringSchema.Attributes["id"]
 	if ok {
 		id.Description = "The generated random string."
+		stringSchema.Attributes["id"] = id
 	}
 
 	return stringSchema
