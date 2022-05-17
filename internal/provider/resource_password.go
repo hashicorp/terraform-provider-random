@@ -10,38 +10,18 @@ import (
 )
 
 func resourcePassword() *schema.Resource {
-	create := func(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-		diags := createStringFunc(true)(ctx, d, meta)
-		if diags.HasError() {
-			return diags
-		}
-
-		hash, err := generateHash(d.Get("result").(string))
-		if err != nil {
-			diags = append(diags, diag.Errorf("err: %s", err)...)
-			return diags
-		}
-
-		if err := d.Set("bcrypt_hash", hash); err != nil {
-			diags = append(diags, diag.Errorf("err: %s", err)...)
-			return diags
-		}
-
-		return nil
-	}
-
 	return &schema.Resource{
 		Description: "Identical to [random_string](string.html) with the exception that the result is " +
 			"treated as sensitive and, thus, _not_ displayed in console output. Read more about sensitive " +
 			"data handling in the [Terraform documentation](https://www.terraform.io/docs/language/state/sensitive-data.html).\n" +
 			"\n" +
 			"This resource *does* use a cryptographic random number generator.",
-		CreateContext: create,
+		CreateContext: createPassword,
 		ReadContext:   readNil,
 		DeleteContext: RemoveResourceFromState,
 		Schema:        passwordSchemaV1(),
 		Importer: &schema.ResourceImporter{
-			StateContext: importPasswordFunc(),
+			StateContext: importPasswordFunc,
 		},
 		SchemaVersion: 1,
 		StateUpgraders: []schema.StateUpgrader{
@@ -54,26 +34,44 @@ func resourcePassword() *schema.Resource {
 	}
 }
 
-func importPasswordFunc() schema.StateContextFunc {
-	return func(ctx context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
-		val := d.Id()
-		d.SetId("none")
-
-		if err := d.Set("result", val); err != nil {
-			return nil, fmt.Errorf("resource password import failed, error setting result: %w", err)
-		}
-
-		hash, err := generateHash(val)
-		if err != nil {
-			return nil, fmt.Errorf("resource password import failed, generate hash error: %w", err)
-		}
-
-		if err := d.Set("bcrypt_hash", hash); err != nil {
-			return nil, fmt.Errorf("resource password import failed, error setting bcrypt_hash: %w", err)
-		}
-
-		return []*schema.ResourceData{d}, nil
+func createPassword(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+	diags := createStringFunc(true)(ctx, d, meta)
+	if diags.HasError() {
+		return diags
 	}
+
+	hash, err := generateHash(d.Get("result").(string))
+	if err != nil {
+		diags = append(diags, diag.Errorf("err: %s", err)...)
+		return diags
+	}
+
+	if err := d.Set("bcrypt_hash", hash); err != nil {
+		diags = append(diags, diag.Errorf("err: %s", err)...)
+		return diags
+	}
+
+	return nil
+}
+
+func importPasswordFunc(ctx context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
+	val := d.Id()
+	d.SetId("none")
+
+	if err := d.Set("result", val); err != nil {
+		return nil, fmt.Errorf("resource password import failed, error setting result: %w", err)
+	}
+
+	hash, err := generateHash(val)
+	if err != nil {
+		return nil, fmt.Errorf("resource password import failed, generate hash error: %w", err)
+	}
+
+	if err := d.Set("bcrypt_hash", hash); err != nil {
+		return nil, fmt.Errorf("resource password import failed, error setting bcrypt_hash: %w", err)
+	}
+
+	return []*schema.ResourceData{d}, nil
 }
 
 func resourcePasswordV0() *schema.Resource {

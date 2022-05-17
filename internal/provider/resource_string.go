@@ -26,19 +26,17 @@ func resourceString() *schema.Resource {
 		SchemaVersion: 1,
 		Schema:        stringSchemaV1(),
 		Importer: &schema.ResourceImporter{
-			StateContext: importStringFunc(),
+			StateContext: importStringFunc,
 		},
 	}
 }
 
-func importStringFunc() schema.StateContextFunc {
-	return func(ctx context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
-		val := d.Id()
+func importStringFunc(ctx context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
+	val := d.Id()
 
-		if err := d.Set("result", val); err != nil {
-			return nil, fmt.Errorf("error setting result: %w", err)
-		}
-
-		return []*schema.ResourceData{d}, nil
+	if err := d.Set("result", val); err != nil {
+		return nil, fmt.Errorf("error setting result: %w", err)
 	}
+
+	return []*schema.ResourceData{d}, nil
 }
