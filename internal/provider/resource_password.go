@@ -177,49 +177,53 @@ func importPassword(ctx context.Context, req tfsdk.ImportResourceStateRequest, r
 	}
 }
 
-var passwordDataV0 = tftypes.Object{
-	AttributeTypes: map[string]tftypes.Type{
-		"keepers": tftypes.Map{
-			ElementType: tftypes.String,
+func passwordDataTftypesV0() tftypes.Object {
+	return tftypes.Object{
+		AttributeTypes: map[string]tftypes.Type{
+			"keepers": tftypes.Map{
+				ElementType: tftypes.String,
+			},
+			"length":           tftypes.Number,
+			"special":          tftypes.Bool,
+			"upper":            tftypes.Bool,
+			"lower":            tftypes.Bool,
+			"number":           tftypes.Bool,
+			"min_numeric":      tftypes.Number,
+			"min_upper":        tftypes.Number,
+			"min_lower":        tftypes.Number,
+			"min_special":      tftypes.Number,
+			"override_special": tftypes.String,
+			"result":           tftypes.String,
+			"id":               tftypes.String,
 		},
-		"length":           tftypes.Number,
-		"special":          tftypes.Bool,
-		"upper":            tftypes.Bool,
-		"lower":            tftypes.Bool,
-		"number":           tftypes.Bool,
-		"min_numeric":      tftypes.Number,
-		"min_upper":        tftypes.Number,
-		"min_lower":        tftypes.Number,
-		"min_special":      tftypes.Number,
-		"override_special": tftypes.String,
-		"result":           tftypes.String,
-		"id":               tftypes.String,
-	},
+	}
 }
 
-var passwordDataV1 = tftypes.Object{
-	AttributeTypes: map[string]tftypes.Type{
-		"bcrypt_hash": tftypes.String,
-		"keepers": tftypes.Map{
-			ElementType: tftypes.String,
+func passwordDataTftypesV1() tftypes.Object {
+	return tftypes.Object{
+		AttributeTypes: map[string]tftypes.Type{
+			"bcrypt_hash": tftypes.String,
+			"keepers": tftypes.Map{
+				ElementType: tftypes.String,
+			},
+			"length":           tftypes.Number,
+			"special":          tftypes.Bool,
+			"upper":            tftypes.Bool,
+			"lower":            tftypes.Bool,
+			"number":           tftypes.Bool,
+			"min_numeric":      tftypes.Number,
+			"min_upper":        tftypes.Number,
+			"min_lower":        tftypes.Number,
+			"min_special":      tftypes.Number,
+			"override_special": tftypes.String,
+			"result":           tftypes.String,
+			"id":               tftypes.String,
 		},
-		"length":           tftypes.Number,
-		"special":          tftypes.Bool,
-		"upper":            tftypes.Bool,
-		"lower":            tftypes.Bool,
-		"number":           tftypes.Bool,
-		"min_numeric":      tftypes.Number,
-		"min_upper":        tftypes.Number,
-		"min_lower":        tftypes.Number,
-		"min_special":      tftypes.Number,
-		"override_special": tftypes.String,
-		"result":           tftypes.String,
-		"id":               tftypes.String,
-	},
+	}
 }
 
 func migratePasswordStateV0toV1(ctx context.Context, req tfsdk.UpgradeResourceStateRequest, resp *tfsdk.UpgradeResourceStateResponse) {
-	rawStateValue, err := req.RawState.Unmarshal(passwordDataV0)
+	rawStateValue, err := req.RawState.Unmarshal(passwordDataTftypesV0())
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Unable to migrate password state from v0 to v1",
@@ -263,8 +267,8 @@ func migratePasswordStateV0toV1(ctx context.Context, req tfsdk.UpgradeResourceSt
 	}
 
 	dynamicValue, err := tfprotov6.NewDynamicValue(
-		passwordDataV1,
-		tftypes.NewValue(passwordDataV1, map[string]tftypes.Value{
+		passwordDataTftypesV1(),
+		tftypes.NewValue(passwordDataTftypesV1(), map[string]tftypes.Value{
 			"bcrypt_hash":      tftypes.NewValue(tftypes.String, hash),
 			"keepers":          rawState["keepers"],
 			"length":           rawState["length"],
