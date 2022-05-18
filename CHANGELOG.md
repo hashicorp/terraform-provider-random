@@ -1,3 +1,16 @@
+## 3.2.0 (May 18, 2022)
+
+NEW FEATURES:
+
+* resource/random_password: New attribute `bcrypt_hash`, which is the hashed password ([73](https://github.com/hashicorp/terraform-provider-random/pull/73), [102](https://github.com/hashicorp/terraform-provider-random/issues/102), [254](https://github.com/hashicorp/terraform-provider-random/pull/254))
+
+NOTES:
+
+* Adds or updates DESIGN.md, README.md, CONTRIBUTING.md and SUPPORT.md docs ([176](https://github.com/hashicorp/terraform-provider-random/issues/176), [235](https://github.com/hashicorp/terraform-provider-random/issues/235), [242](https://github.com/hashicorp/terraform-provider-random/pull/242)).
+* Removes usage of deprecated fields, types and functions ([243](https://github.com/hashicorp/terraform-provider-random/issues/243), [244](https://github.com/hashicorp/terraform-provider-random/pull/244)).
+* Tests all minor Terraform versions ([238](https://github.com/hashicorp/terraform-provider-random/issues/238), [241](https://github.com/hashicorp/terraform-provider-random/pull/241))
+* Switches to linting with golangci-lint ([237](https://github.com/hashicorp/terraform-provider-random/issues/237), [240](https://github.com/hashicorp/terraform-provider-random/pull/240)).
+
 ## 3.1.3 (April 22, 2022)
 
 BUG FIXES:

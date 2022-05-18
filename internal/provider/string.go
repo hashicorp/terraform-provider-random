@@ -1,26 +1,56 @@
-// This file provides shared functionality between `resource_string` and `resource_password`.
-// There is no intent to permanently couple their implementations
-// Over time they could diverge, or one becomes deprecated
+// Package provider string.go provides shared functionality between `resource_string` and `resource_password`.
+// There is no intent to permanently couple their implementations.
+// Over time, they could diverge, or one becomes deprecated.
 package provider
 
 import (
 	"context"
 	"crypto/rand"
 	"fmt"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	"math/big"
 	"sort"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 )
 
-func stringSchemaV1(sensitive bool) map[string]*schema.Schema {
-	idDesc := "The generated random string."
-	if sensitive {
-		idDesc = "A static value used internally by Terraform, this should not be referenced in configurations."
+// passwordSchemaV1 uses passwordSchemaV0 to obtain the V0 version of the Schema key-value entries but requires that
+// the bcrypt_hash entry be configured.
+func passwordSchemaV1() map[string]*schema.Schema {
+	passwordSchema := passwordSchemaV0()
+	passwordSchema["bcrypt_hash"] = &schema.Schema{
+		Description: "A bcrypt hash of the generated random string.",
+		Type:        schema.TypeString,
+		Computed:    true,
+		Sensitive:   true,
 	}
 
+	return passwordSchema
+}
+
+// passwordSchemaV0 uses passwordStringSchema to obtain the default Schema key-value entries but requires that the id
+// description, result sensitive and bcrypt_hash entries be configured.
+func passwordSchemaV0() map[string]*schema.Schema {
+	passwordSchema := passwordStringSchema()
+	passwordSchema["id"].Description = "A static value used internally by Terraform, this should not be referenced in configurations."
+	passwordSchema["result"].Sensitive = true
+
+	return passwordSchema
+}
+
+// stringSchemaV1 uses passwordStringSchema to obtain the default Schema key-value entries but requires that the id
+// description be configured.
+func stringSchemaV1() map[string]*schema.Schema {
+	stringSchema := passwordStringSchema()
+	stringSchema["id"].Description = "The generated random string."
+
+	return stringSchema
+}
+
+// passwordStringSchema returns map[string]*schema.Schema with all keys and values that are common to both the
+// password and string resources.
+func passwordStringSchema() map[string]*schema.Schema {
 	return map[string]*schema.Schema{
 		"keepers": {
 			Description: "Arbitrary map of values that, when changed, will trigger recreation of " +
@@ -116,13 +146,11 @@ func stringSchemaV1(sensitive bool) map[string]*schema.Schema {
 			Description: "The generated random string.",
 			Type:        schema.TypeString,
 			Computed:    true,
-			Sensitive:   sensitive,
 		},
 
 		"id": {
-			Description: idDesc,
-			Computed:    true,
-			Type:        schema.TypeString,
+			Computed: true,
+			Type:     schema.TypeString,
 		},
 	}
 }
@@ -228,20 +256,4 @@ func generateRandomBytes(charSet *string, length int) ([]byte, error) {
 
 func readNil(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	return nil
-}
-
-func importStringFunc(sensitive bool) schema.StateContextFunc {
-	return func(ctx context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
-		val := d.Id()
-
-		if sensitive {
-			d.SetId("none")
-		}
-
-		if err := d.Set("result", val); err != nil {
-			return nil, fmt.Errorf("error setting result: %w", err)
-		}
-
-		return []*schema.ResourceData{d}, nil
-	}
 }

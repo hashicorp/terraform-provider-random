@@ -1,6 +1,9 @@
 package provider
 
 import (
+	"context"
+	"fmt"
+
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
@@ -21,9 +24,19 @@ func resourceString() *schema.Resource {
 		// [SDK documentation](https://github.com/hashicorp/terraform-plugin-sdk/blob/main/helper/schema/resource.go#L91).
 		MigrateState:  resourceRandomStringMigrateState,
 		SchemaVersion: 1,
-		Schema:        stringSchemaV1(false),
+		Schema:        stringSchemaV1(),
 		Importer: &schema.ResourceImporter{
-			StateContext: importStringFunc(false),
+			StateContext: importStringFunc,
 		},
 	}
+}
+
+func importStringFunc(ctx context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
+	val := d.Id()
+
+	if err := d.Set("result", val); err != nil {
+		return nil, fmt.Errorf("error setting result: %w", err)
+	}
+
+	return []*schema.ResourceData{d}, nil
 }
