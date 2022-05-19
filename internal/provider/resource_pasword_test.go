@@ -6,11 +6,13 @@ import (
 	"regexp"
 	"testing"
 
+	"github.com/google/go-cmp/cmp"
 	"github.com/hashicorp/terraform-plugin-framework/tfsdk"
-	"github.com/hashicorp/terraform-plugin-go/tfprotov6"
+	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-go/tftypes"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
+	"golang.org/x/crypto/bcrypt"
 )
 
 func TestAccResourcePasswordBasic(t *testing.T) {
@@ -106,49 +108,7 @@ func TestAccResourcePasswordMin(t *testing.T) {
 }
 
 func TestMigratePasswordStateV0toV1(t *testing.T) {
-	rawStateJSON := `{
-            "id": "none",
-            "keepers": null,
-            "length": 16,
-            "lower": true,
-            "min_lower": 0,
-            "min_numeric": 0,
-            "min_special": 0,
-            "min_upper": 0,
-            "number": true,
-            "override_special": "!#$%\u0026*()-_=+[]{}\u003c\u003e:?",
-            "result": "DZy_3*tnonj%Q%Yx",
-            "special": true,
-            "upper": true
-          }`
-
-	req := tfsdk.UpgradeResourceStateRequest{
-		RawState: &tfprotov6.RawState{
-			JSON: []byte(rawStateJSON),
-		},
-	}
-
-	resp := &tfsdk.UpgradeResourceStateResponse{
-		State: tfsdk.State{
-			Schema: getPasswordSchemaV1(),
-		},
-	}
-
-	migratePasswordStateV0toV1(context.Background(), req, resp)
-
-	val, err := resp.DynamicValue.Unmarshal(passwordDataTftypesV1())
-	if err != nil {
-		t.Error(err)
-	}
-
-	data := map[string]tftypes.Value{}
-
-	err = val.As(&data)
-	if err != nil {
-		t.Error(err)
-	}
-
-	expectedValues := map[string]tftypes.Value{
+	raw := tftypes.NewValue(tftypes.Object{}, map[string]tftypes.Value{
 		"id":               tftypes.NewValue(tftypes.String, "none"),
 		"keepers":          tftypes.NewValue(tftypes.Map{ElementType: tftypes.String}, nil),
 		"length":           tftypes.NewValue(tftypes.Number, 16),
@@ -162,24 +122,51 @@ func TestMigratePasswordStateV0toV1(t *testing.T) {
 		"result":           tftypes.NewValue(tftypes.String, "DZy_3*tnonj%Q%Yx"),
 		"special":          tftypes.NewValue(tftypes.Bool, true),
 		"upper":            tftypes.NewValue(tftypes.Bool, true),
+	})
+
+	req := tfsdk.UpgradeResourceStateRequest{
+		State: &tfsdk.State{
+			Raw:    raw,
+			Schema: getPasswordSchemaV0(),
+		},
 	}
 
-	for k, v := range expectedValues {
-		ok := data[k].Equal(v)
-		if !ok {
-			t.Errorf("expected: %v, got: %v", v, data[k])
-		}
+	resp := &tfsdk.UpgradeResourceStateResponse{
+		State: tfsdk.State{
+			Schema: getPasswordSchemaV1(),
+		},
 	}
 
-	var bcryptHash string
-	const bcryptHashExpectedLen = 60
+	migratePasswordStateV0toV1(context.Background(), req, resp)
 
-	err = data["bcrypt_hash"].As(&bcryptHash)
+	expected := PasswordModelV1{
+		ID:              types.String{Value: "none"},
+		Keepers:         types.Map{Null: true, ElemType: types.StringType},
+		Length:          types.Int64{Value: 16},
+		Special:         types.Bool{Value: true},
+		Upper:           types.Bool{Value: true},
+		Lower:           types.Bool{Value: true},
+		Number:          types.Bool{Value: true},
+		MinNumeric:      types.Int64{Value: 0},
+		MinUpper:        types.Int64{Value: 0},
+		MinLower:        types.Int64{Value: 0},
+		MinSpecial:      types.Int64{Value: 0},
+		OverrideSpecial: types.String{Value: "!#$%\u0026*()-_=+[]{}\u003c\u003e:?"},
+		Result:          types.String{Value: "DZy_3*tnonj%Q%Yx"},
+	}
+
+	actual := PasswordModelV1{}
+	resp.State.Get(context.Background(), &actual)
+
+	err := bcrypt.CompareHashAndPassword([]byte(actual.BcryptHash.Value), []byte(actual.Result.Value))
 	if err != nil {
 		t.Error(err)
 	}
 
-	if len(bcryptHash) != bcryptHashExpectedLen {
-		t.Errorf("expected len: %v, got len: %v", bcryptHashExpectedLen, len(bcryptHash))
+	// Setting actual.BcryptHash to zero value to allow direct comparison of expected and actual.
+	actual.BcryptHash = types.String{}
+
+	if !cmp.Equal(expected, actual) {
+		t.Errorf("expected: %+v, got: %+v", expected, actual)
 	}
 }
