@@ -160,7 +160,7 @@ func TestMigratePasswordStateV0toV1(t *testing.T) {
 
 	err := bcrypt.CompareHashAndPassword([]byte(actual.BcryptHash.Value), []byte(actual.Result.Value))
 	if err != nil {
-		t.Error(err)
+		t.Errorf("unexpected bcrypt comparison error: %s", err)
 	}
 
 	// Setting actual.BcryptHash to zero value to allow direct comparison of expected and actual.
