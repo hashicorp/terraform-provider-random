@@ -46,10 +46,6 @@ func (r resourceString) ImportState(ctx context.Context, req tfsdk.ImportResourc
 	importString(ctx, req, resp)
 }
 
-func (r resourceString) ValidateConfig(ctx context.Context, req tfsdk.ValidateResourceConfigRequest, resp *tfsdk.ValidateResourceConfigResponse) {
-	validateLength(ctx, req, resp)
-}
-
 func getStringSchemaV1() tfsdk.Schema {
 	stringSchema := passwordStringSchema()
 

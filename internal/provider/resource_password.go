@@ -47,10 +47,6 @@ func (r resourcePassword) ImportState(ctx context.Context, req tfsdk.ImportResou
 	importPassword(ctx, req, resp)
 }
 
-func (r resourcePassword) ValidateConfig(ctx context.Context, req tfsdk.ValidateResourceConfigRequest, resp *tfsdk.ValidateResourceConfigResponse) {
-	validateLength(ctx, req, resp)
-}
-
 func (r resourcePassword) UpgradeState(context.Context) map[int64]tfsdk.ResourceStateUpgrader {
 	passwordSchemaV0 := getPasswordSchemaV0()
 

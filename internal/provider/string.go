@@ -1,14 +1,13 @@
 package provider
 
 import (
-	"context"
 	"crypto/rand"
-	"fmt"
 	"math/big"
 	"sort"
 
 	"github.com/hashicorp/terraform-plugin-framework/tfsdk"
 	"github.com/hashicorp/terraform-plugin-framework/types"
+	"github.com/hashicorp/terraform-plugin-go/tftypes"
 )
 
 // passwordStringSchema contains the common set of Attributes for both password and string resources.
@@ -33,7 +32,15 @@ func passwordStringSchema() tfsdk.Schema {
 				Type:          types.Int64Type,
 				Required:      true,
 				PlanModifiers: []tfsdk.AttributePlanModifier{tfsdk.RequiresReplace()},
-				Validators:    []tfsdk.AttributeValidator{validatorMinInt(1)},
+				Validators: []tfsdk.AttributeValidator{
+					validatorMinInt(1),
+					isAtLeastSumOf(
+						tftypes.NewAttributePath().WithAttributeName("min_upper"),
+						tftypes.NewAttributePath().WithAttributeName("min_lower"),
+						tftypes.NewAttributePath().WithAttributeName("min_numeric"),
+						tftypes.NewAttributePath().WithAttributeName("min_special"),
+					),
+				},
 			},
 
 			"special": {
@@ -235,22 +242,4 @@ func generateRandomBytes(charSet *string, length int64) ([]byte, error) {
 		bytes[i] = (*charSet)[idx.Int64()]
 	}
 	return bytes, nil
-}
-
-func validateLength(ctx context.Context, req tfsdk.ValidateResourceConfigRequest, resp *tfsdk.ValidateResourceConfigResponse) {
-	var config StringModel
-	req.Config.Get(ctx, &config)
-
-	length := config.Length.Value
-	minUpper := config.MinUpper.Value
-	minLower := config.MinLower.Value
-	minNumeric := config.MinNumeric.Value
-	minSpecial := config.MinSpecial.Value
-
-	if length < minUpper+minLower+minNumeric+minSpecial {
-		resp.Diagnostics.AddError(
-			"Validate Password/String Error",
-			fmt.Sprintf("The password/string length (%d) must be >= min_upper + min_lower + min_numeric + min_special (%d)", length, minUpper+minLower+minNumeric+minSpecial),
-		)
-	}
 }
