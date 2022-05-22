@@ -100,7 +100,7 @@ Expected Number value, received tftypes.Value with value: tftypes.String<"17">`,
 				Diagnostics: diag.Diagnostics{},
 			}
 
-			validator := isAtLeastSumOf(c.attributesToSum...)
+			validator := NewIntIsAtLeastSumOfValidator(c.attributesToSum...)
 
 			validator.Validate(context.Background(), req, &resp)
 

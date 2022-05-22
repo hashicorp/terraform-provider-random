@@ -33,8 +33,8 @@ func passwordStringSchema() tfsdk.Schema {
 				Required:      true,
 				PlanModifiers: []tfsdk.AttributePlanModifier{tfsdk.RequiresReplace()},
 				Validators: []tfsdk.AttributeValidator{
-					validatorMinInt(1),
-					isAtLeastSumOf(
+					NewIntAtLeastValidator(1),
+					NewIntIsAtLeastSumOfValidator(
 						tftypes.NewAttributePath().WithAttributeName("min_upper"),
 						tftypes.NewAttributePath().WithAttributeName("min_lower"),
 						tftypes.NewAttributePath().WithAttributeName("min_numeric"),

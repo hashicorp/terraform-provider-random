@@ -86,7 +86,7 @@ func TestAccResourceStringErrors(t *testing.T) {
 			},
 			{
 				Config:      testAccResourceStringLengthTooShortConfig,
-				ExpectError: regexp.MustCompile(`.*Expected attribute at AttributeName\("length"\) to be at least 1, got 0`),
+				ExpectError: regexp.MustCompile(`.*Attribute "length" \(0\) must be at least 1`),
 			},
 		},
 	})

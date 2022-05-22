@@ -12,61 +12,68 @@ import (
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 )
 
-// validatorMinInt accepts an int64 and returns a struct that implements the AttributeValidator interface.
-func validatorMinInt(min int64) tfsdk.AttributeValidator {
-	return minIntValidator{min}
+// intAtLeastValidator checks that the value of the attribute in the configuration
+// (i.e., AttributeConfig in ValidateAttributeRequest) is greater than or, equal to minVal.
+type intAtLeastValidator struct {
+	minVal int64
 }
 
-type minIntValidator struct {
-	val int64
+var _ tfsdk.AttributeValidator = (*intAtLeastValidator)(nil)
+
+func NewIntAtLeastValidator(min int64) tfsdk.AttributeValidator {
+	return &intAtLeastValidator{min}
 }
 
-func (m minIntValidator) Description(ctx context.Context) string {
-	return "MinInt validator ensures that attribute is at least val"
+func (av *intAtLeastValidator) Description(ctx context.Context) string {
+	return "intAtLeastValidator ensures that attribute is at least minVal"
 }
 
-func (m minIntValidator) MarkdownDescription(context.Context) string {
-	return "MinInt validator ensures that attribute is at least `val`"
+func (av *intAtLeastValidator) MarkdownDescription(context.Context) string {
+	return "intAtLeastValidator ensures that attribute is at least `minVal`"
 }
 
-// Validate checks that the value of the attribute in the configuration is greater than or, equal to the value supplied
-// when the minIntValidator struct was initialised.
-func (m minIntValidator) Validate(ctx context.Context, req tfsdk.ValidateAttributeRequest, resp *tfsdk.ValidateAttributeResponse) {
+// Validate first determines whether AttributeConfig (attr.Value) can be reflected into types.Int64 and then checks
+// that the value is >= minVal.
+func (av *intAtLeastValidator) Validate(ctx context.Context, req tfsdk.ValidateAttributeRequest, resp *tfsdk.ValidateAttributeResponse) {
 	var t types.Int64
-	diags := tfsdk.ValueAs(ctx, req.AttributeConfig, &t)
-	resp.Diagnostics.Append(diags...)
 
+	resp.Diagnostics.Append(tfsdk.ValueAs(ctx, req.AttributeConfig, &t)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
-	if t.Value < m.val {
+	if t.Value < av.minVal {
 		resp.Diagnostics.AddError(
-			"Validating Min Int Error",
-			fmt.Sprintf("Expected attribute at %s to be at least %d, got %d", req.AttributePath.String(), m.val, t.Value),
+			"Validating Int At Least Error",
+			fmt.Sprintf("Attribute %q (%d) must be at least %d", attrPathToString(req.AttributePath), t.Value, av.minVal),
 		)
 	}
 }
 
-type isAtLeastSumOfValidator struct {
+// intIsAtLeastValidator checks that the value of the attribute in the configuration
+// (i.e., AttributeConfig in ValidateAttributeRequest) is greater than or, equal to the sum of the values of the
+// attributes in the slice of AttributePath.
+type intIsAtLeastSumOfValidator struct {
 	attributesToSum []*tftypes.AttributePath
 }
 
-var _ tfsdk.AttributeValidator = (*isAtLeastSumOfValidator)(nil)
+var _ tfsdk.AttributeValidator = (*intIsAtLeastSumOfValidator)(nil)
 
-func isAtLeastSumOf(attributePaths ...*tftypes.AttributePath) tfsdk.AttributeValidator {
-	return &isAtLeastSumOfValidator{attributePaths}
+func NewIntIsAtLeastSumOfValidator(attributePaths ...*tftypes.AttributePath) tfsdk.AttributeValidator {
+	return &intIsAtLeastSumOfValidator{attributePaths}
 }
 
-func (av *isAtLeastSumOfValidator) Description(ctx context.Context) string {
+func (av *intIsAtLeastSumOfValidator) Description(ctx context.Context) string {
 	return av.MarkdownDescription(ctx)
 }
 
-func (av *isAtLeastSumOfValidator) MarkdownDescription(context.Context) string {
+func (av *intIsAtLeastSumOfValidator) MarkdownDescription(context.Context) string {
 	return fmt.Sprintf("Ensure that attribute has a value >= sum of: %q", av.attributesToSum)
 }
 
-func (av *isAtLeastSumOfValidator) Validate(ctx context.Context, req tfsdk.ValidateAttributeRequest, resp *tfsdk.ValidateAttributeResponse) {
+// Validate first determines whether AttributeConfig (attr.Value) can be reflected into types.Int64 and then checks
+// that the value is >= sum of values of the attributes defined in attributesToSum.
+func (av *intIsAtLeastSumOfValidator) Validate(ctx context.Context, req tfsdk.ValidateAttributeRequest, resp *tfsdk.ValidateAttributeResponse) {
 	tflog.Debug(ctx, "Validating that attribute has a value at least equal to the attributes to sum", map[string]interface{}{
 		"attribute":       attrPathToString(req.AttributePath),
 		"attributesToSum": av.attributesToSum,
