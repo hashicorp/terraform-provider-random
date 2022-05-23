@@ -12,6 +12,82 @@ import (
 	"github.com/hashicorp/terraform-plugin-go/tftypes"
 )
 
+func TestIntAtLeastValidator_Validate(t *testing.T) {
+	t.Parallel()
+
+	req := tfsdk.ValidateAttributeRequest{
+		AttributePath: tftypes.NewAttributePath().WithAttributeName("length"),
+		Config: tfsdk.Config{
+			Schema: getPasswordSchemaV1(),
+		},
+	}
+
+	type expectedRespDiags struct {
+		expectedRespDiagAttrPath *tftypes.AttributePath
+		expectedRespDiagSummary  string
+		expectedRespDiagDetail   string
+	}
+
+	cases := []struct {
+		name              string
+		reqAttribConfig   attr.Value
+		reqConfigRaw      tftypes.Value
+		attributesToSum   []*tftypes.AttributePath
+		expectedRespDiags []expectedRespDiags
+	}{
+		{
+			name:            "attribute wrong type",
+			reqAttribConfig: types.String{Value: "16"},
+			expectedRespDiags: []expectedRespDiags{
+				{
+					tftypes.NewAttributePath().WithAttributeName("length"),
+					`Attribute "length" is of incorrect type for validator.`,
+					`Attribute "length" (types.StringType) cannot be used as types.Int64Type.`,
+				},
+			},
+		},
+		{
+			name:            "attribute less than min val",
+			reqAttribConfig: types.Int64{Value: 5},
+			expectedRespDiags: []expectedRespDiags{
+				{
+					tftypes.NewAttributePath().WithAttributeName("length"),
+					`Attribute "length" is less than minimum required.`,
+					`Attribute "length" (5) must be at least 10.`,
+				},
+			},
+		},
+		{
+			name:              "attribute equal to min val",
+			reqAttribConfig:   types.Int64{Value: 10},
+			expectedRespDiags: []expectedRespDiags{},
+		},
+	}
+
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			req.AttributeConfig = c.reqAttribConfig
+			req.Config.Raw = c.reqConfigRaw
+			resp := tfsdk.ValidateAttributeResponse{
+				Diagnostics: diag.Diagnostics{},
+			}
+
+			validator := NewIntAtLeastValidator(10)
+			validator.Validate(context.Background(), req, &resp)
+
+			expectedDiags := diag.Diagnostics{}
+
+			for _, v := range c.expectedRespDiags {
+				expectedDiags.AddAttributeError(v.expectedRespDiagAttrPath, v.expectedRespDiagSummary, v.expectedRespDiagDetail)
+			}
+
+			if !cmp.Equal(expectedDiags, resp.Diagnostics) {
+				t.Errorf("expecting resp diags: %s, actual resp diags: %s", expectedDiags, resp.Diagnostics)
+			}
+		})
+	}
+}
+
 func TestIsAtLeastSumOfValidator_Validate(t *testing.T) {
 	t.Parallel()
 

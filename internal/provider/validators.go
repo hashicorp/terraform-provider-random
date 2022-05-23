@@ -32,20 +32,38 @@ func (av *intAtLeastValidator) MarkdownDescription(context.Context) string {
 	return "intAtLeastValidator ensures that attribute is at least `minVal`"
 }
 
-// Validate first determines whether AttributeConfig (attr.Value) can be reflected into types.Int64 and then checks
-// that the value is >= minVal.
+// Validate runs the following checks:
+// 1. Determines whether AttributeConfig (attr.Value) Type is of correct type (i.e., types.Int64). This is required
+//		because tfsdk.ValueAs will allow a types other than types.Int64 to be supplied as the value.
+// 2. Determines if AttributeConfig can be reflected into types.Int64.
+// 3. Checks that the value is >= minVal.
 func (av *intAtLeastValidator) Validate(ctx context.Context, req tfsdk.ValidateAttributeRequest, resp *tfsdk.ValidateAttributeResponse) {
-	var t types.Int64
+	var attrib types.Int64
 
-	resp.Diagnostics.Append(tfsdk.ValueAs(ctx, req.AttributeConfig, &t)...)
+	if req.AttributeConfig.Type(ctx) != attrib.Type(ctx) {
+		pathStr := attrPathToString(req.AttributePath)
+
+		resp.Diagnostics.AddAttributeError(
+			req.AttributePath,
+			fmt.Sprintf("Attribute %q is of incorrect type for validator.", pathStr),
+			fmt.Sprintf("Attribute %q (%s) cannot be used as %s.", pathStr, req.AttributeConfig.Type(ctx), attrib.Type(ctx)),
+		)
+
+		return
+	}
+
+	resp.Diagnostics.Append(tfsdk.ValueAs(ctx, req.AttributeConfig, &attrib)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
-	if t.Value < av.minVal {
-		resp.Diagnostics.AddError(
-			"Validating Int At Least Error",
-			fmt.Sprintf("Attribute %q (%d) must be at least %d", attrPathToString(req.AttributePath), t.Value, av.minVal),
+	if attrib.Value < av.minVal {
+		pathStr := attrPathToString(req.AttributePath)
+
+		resp.Diagnostics.AddAttributeError(
+			req.AttributePath,
+			fmt.Sprintf("Attribute %q is less than minimum required.", pathStr),
+			fmt.Sprintf("Attribute %q (%d) must be at least %d.", attrPathToString(req.AttributePath), attrib.Value, av.minVal),
 		)
 	}
 }
