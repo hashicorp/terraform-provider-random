@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
+	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/tfsdk"
 	"github.com/hashicorp/terraform-plugin-framework/types"
@@ -12,6 +13,8 @@ import (
 )
 
 func TestIsAtLeastSumOfValidator_Validate(t *testing.T) {
+	t.Parallel()
+
 	req := tfsdk.ValidateAttributeRequest{
 		AttributePath:   tftypes.NewAttributePath().WithAttributeName("length"),
 		AttributeConfig: types.Int64{Value: 16},
@@ -28,12 +31,25 @@ func TestIsAtLeastSumOfValidator_Validate(t *testing.T) {
 
 	cases := []struct {
 		name              string
+		reqAttribConfig   attr.Value
 		reqConfigRaw      tftypes.Value
 		attributesToSum   []*tftypes.AttributePath
 		expectedRespDiags []expectedRespDiags
 	}{
 		{
+			name:            "attribute wrong type",
+			reqAttribConfig: types.String{Value: "16"},
+			expectedRespDiags: []expectedRespDiags{
+				{
+					tftypes.NewAttributePath().WithAttributeName("length"),
+					`Attribute "length" is of incorrect type for validator.`,
+					`Attribute "length" (types.StringType) cannot be used as types.Int64Type.`,
+				},
+			},
+		},
+		{
 			"attribute less than sum of attribute",
+			types.Int64{Value: 16},
 			tftypes.NewValue(tftypes.Object{}, map[string]tftypes.Value{
 				"min_upper": tftypes.NewValue(tftypes.Number, 17),
 			}),
@@ -48,6 +64,7 @@ func TestIsAtLeastSumOfValidator_Validate(t *testing.T) {
 		},
 		{
 			"attribute less than sum of attributes",
+			types.Int64{Value: 16},
 			tftypes.NewValue(tftypes.Object{}, map[string]tftypes.Value{
 				"min_upper": tftypes.NewValue(tftypes.Number, 10),
 				"min_lower": tftypes.NewValue(tftypes.Number, 12),
@@ -66,6 +83,7 @@ func TestIsAtLeastSumOfValidator_Validate(t *testing.T) {
 		},
 		{
 			"a summed attribute is of invalid type",
+			types.Int64{Value: 16},
 			tftypes.NewValue(tftypes.Object{}, map[string]tftypes.Value{
 				"min_upper": tftypes.NewValue(tftypes.String, "17"),
 			}),
@@ -82,6 +100,7 @@ Expected Number value, received tftypes.Value with value: tftypes.String<"17">`,
 		},
 		{
 			"attribute equal to sum of attributes",
+			types.Int64{Value: 16},
 			tftypes.NewValue(tftypes.Object{}, map[string]tftypes.Value{
 				"min_upper": tftypes.NewValue(tftypes.Number, 8),
 				"min_lower": tftypes.NewValue(tftypes.Number, 8),
@@ -95,13 +114,13 @@ Expected Number value, received tftypes.Value with value: tftypes.String<"17">`,
 
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
+			req.AttributeConfig = c.reqAttribConfig
 			req.Config.Raw = c.reqConfigRaw
 			resp := tfsdk.ValidateAttributeResponse{
 				Diagnostics: diag.Diagnostics{},
 			}
 
 			validator := NewIntIsAtLeastSumOfValidator(c.attributesToSum...)
-
 			validator.Validate(context.Background(), req, &resp)
 
 			expectedDiags := diag.Diagnostics{}

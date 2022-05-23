@@ -71,8 +71,11 @@ func (av *intIsAtLeastSumOfValidator) MarkdownDescription(context.Context) strin
 	return fmt.Sprintf("Ensure that attribute has a value >= sum of: %q", av.attributesToSum)
 }
 
-// Validate first determines whether AttributeConfig (attr.Value) can be reflected into types.Int64 and then checks
-// that the value is >= sum of values of the attributes defined in attributesToSum.
+// Validate runs the following checks:
+// 1. Determines whether AttributeConfig (attr.Value) Type is of correct type (i.e., types.Int64). This is required
+//		because tfsdk.ValueAs will allow a types other than types.Int64 to be supplied as the value.
+// 2. Determines if AttributeConfig can be reflected into types.Int64.
+// 3. Checks that the AttributeConfig value is >= sum of values of the attributes defined in attributesToSum.
 func (av *intIsAtLeastSumOfValidator) Validate(ctx context.Context, req tfsdk.ValidateAttributeRequest, resp *tfsdk.ValidateAttributeResponse) {
 	tflog.Debug(ctx, "Validating that attribute has a value at least equal to the attributes to sum", map[string]interface{}{
 		"attribute":       attrPathToString(req.AttributePath),
@@ -80,6 +83,19 @@ func (av *intIsAtLeastSumOfValidator) Validate(ctx context.Context, req tfsdk.Va
 	})
 
 	var attrib types.Int64
+
+	if req.AttributeConfig.Type(ctx) != attrib.Type(ctx) {
+		pathStr := attrPathToString(req.AttributePath)
+
+		resp.Diagnostics.AddAttributeError(
+			req.AttributePath,
+			fmt.Sprintf("Attribute %q is of incorrect type for validator.", pathStr),
+			fmt.Sprintf("Attribute %q (%s) cannot be used as %s.", pathStr, req.AttributeConfig.Type(ctx), attrib.Type(ctx)),
+		)
+
+		return
+	}
+
 	resp.Diagnostics.Append(tfsdk.ValueAs(ctx, req.AttributeConfig, &attrib)...)
 	if resp.Diagnostics.HasError() {
 		return
@@ -100,16 +116,12 @@ func (av *intIsAtLeastSumOfValidator) Validate(ctx context.Context, req tfsdk.Va
 	}
 
 	if attrib.Value < sumOfAttribs {
+		attribPath := attrPathToString(req.AttributePath)
+
 		resp.Diagnostics.AddAttributeError(
 			req.AttributePath,
-			fmt.Sprintf("Attribute %q is less than summed attributes.", attrPathToString(req.AttributePath)),
-			fmt.Sprintf(
-				"Attribute %q (%d) cannot be less than %s (%d).",
-				attrPathToString(req.AttributePath),
-				attrib.Value,
-				strings.Join(attributesToSumPaths, " + "),
-				sumOfAttribs,
-			),
+			fmt.Sprintf("Attribute %q is less than summed attributes.", attribPath),
+			fmt.Sprintf("Attribute %q (%d) cannot be less than %s (%d).", attribPath, attrib.Value, strings.Join(attributesToSumPaths, " + "), sumOfAttribs),
 		)
 	}
 }
