@@ -15,6 +15,34 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 )
 
+// passwordSchemaV2 uses passwordSchemaV1 to obtain the V1 version of the Schema key-value entries but requires that
+// the numeric entry be configured and that the number entry be altered to include ConflictsWith.
+func passwordSchemaV2() map[string]*schema.Schema {
+	passwordSchema := passwordSchemaV1()
+
+	passwordSchema["number"] = &schema.Schema{
+		Description: "Include numeric characters in the result. Default value is `true`. " +
+			"**NOTE**: This is deprecated, use `numeric` instead.",
+		Type:          schema.TypeBool,
+		Optional:      true,
+		Computed:      true,
+		ForceNew:      true,
+		ConflictsWith: []string{"numeric"},
+		Deprecated:    "Use numeric instead.",
+	}
+
+	passwordSchema["numeric"] = &schema.Schema{
+		Description:   "Include numeric characters in the result. Default value is `true`.",
+		Type:          schema.TypeBool,
+		Optional:      true,
+		Computed:      true,
+		ForceNew:      true,
+		ConflictsWith: []string{"number"},
+	}
+
+	return passwordSchema
+}
+
 // passwordSchemaV1 uses passwordSchemaV0 to obtain the V0 version of the Schema key-value entries but requires that
 // the bcrypt_hash entry be configured.
 func passwordSchemaV1() map[string]*schema.Schema {
@@ -37,6 +65,34 @@ func passwordSchemaV0() map[string]*schema.Schema {
 	passwordSchema["result"].Sensitive = true
 
 	return passwordSchema
+}
+
+// stringSchemaV2 uses stringSchemaV1 to obtain the V1 version of the Schema key-value entries but requires that
+// the numeric entry be configured and that the number entry be altered to include ConflictsWith.
+func stringSchemaV2() map[string]*schema.Schema {
+	stringSchema := stringSchemaV1()
+
+	stringSchema["number"] = &schema.Schema{
+		Description: "Include numeric characters in the result. Default value is `true`. " +
+			"**NOTE**: This is deprecated, use `numeric` instead.",
+		Type:          schema.TypeBool,
+		Optional:      true,
+		Computed:      true,
+		ForceNew:      true,
+		ConflictsWith: []string{"numeric"},
+		Deprecated:    "Use numeric instead.",
+	}
+
+	stringSchema["numeric"] = &schema.Schema{
+		Description:   "Include numeric characters in the result. Default value is `true`.",
+		Type:          schema.TypeBool,
+		Optional:      true,
+		Computed:      true,
+		ForceNew:      true,
+		ConflictsWith: []string{"number"},
+	}
+
+	return stringSchema
 }
 
 // stringSchemaV1 uses passwordStringSchema to obtain the default Schema key-value entries but requires that the id
@@ -94,21 +150,11 @@ func passwordStringSchema() map[string]*schema.Schema {
 		},
 
 		"number": {
-			Description: "Include numeric characters in the result. Default value is `true`. " +
-				"**NOTE**: This is deprecated, use `numeric` instead.",
-			Type:          schema.TypeBool,
-			Optional:      true,
-			Default:       true,
-			Deprecated:    "Use numeric instead.",
-			ConflictsWith: []string{"numeric"},
-		},
-
-		"numeric": {
-			Description:   "Include numeric characters in the result. Default value is `true`.",
-			Type:          schema.TypeBool,
-			Optional:      true,
-			Default:       true,
-			ConflictsWith: []string{"number"},
+			Description: "Include numeric characters in the result. Default value is `true`.",
+			Type:        schema.TypeBool,
+			Optional:    true,
+			Default:     true,
+			ForceNew:    true,
 		},
 
 		"min_numeric": {
@@ -165,8 +211,8 @@ func passwordStringSchema() map[string]*schema.Schema {
 	}
 }
 
-func createStringFunc(sensitive bool) func(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	return func(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func createStringFunc(sensitive bool) func(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+	return func(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 		const numChars = "0123456789"
 		const lowerChars = "abcdefghijklmnopqrstuvwxyz"
 		const upperChars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
@@ -186,10 +232,11 @@ func createStringFunc(sensitive bool) func(_ context.Context, d *schema.Resource
 		overrideSpecial := d.Get("override_special").(string)
 
 		var numeric bool
-		if v, ok := d.GetOk("number"); ok {
-			numeric = v.(bool)
-		} else if v, ok := d.GetOk("numeric"); ok {
-			numeric = v.(bool)
+
+		if d.HasChange("number") {
+			numeric = d.Get("number").(bool)
+		} else if d.HasChange("numeric") {
+			numeric = d.Get("numeric").(bool)
 		}
 
 		if length < minUpper+minLower+minNumeric+minSpecial {
@@ -246,6 +293,14 @@ func createStringFunc(sensitive bool) func(_ context.Context, d *schema.Resource
 
 		if err := d.Set("result", string(result)); err != nil {
 			return append(diags, diag.Errorf("error setting result: %s", err)...)
+		}
+
+		// This ensures that both number and numeric are kept in-sync whilst both attributes exist.
+		if err := d.Set("number", numeric); err != nil {
+			return append(diags, diag.Errorf("error setting number: %s", err)...)
+		}
+		if err := d.Set("numeric", numeric); err != nil {
+			return append(diags, diag.Errorf("error setting numeric: %s", err)...)
 		}
 
 		if sensitive {

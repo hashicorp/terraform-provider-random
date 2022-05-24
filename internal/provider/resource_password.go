@@ -18,57 +18,25 @@ func resourcePassword() *schema.Resource {
 			"This resource *does* use a cryptographic random number generator.",
 		CreateContext: createPassword,
 		ReadContext:   readNil,
-		UpdateContext: updatePassword,
 		DeleteContext: RemoveResourceFromState,
-		Schema:        passwordSchemaV1(),
+		Schema:        passwordSchemaV2(),
 		Importer: &schema.ResourceImporter{
 			StateContext: importPasswordFunc,
 		},
-		SchemaVersion: 1,
+		SchemaVersion: 2,
 		StateUpgraders: []schema.StateUpgrader{
 			{
 				Version: 0,
 				Type:    resourcePasswordV0().CoreConfigSchema().ImpliedType(),
 				Upgrade: resourcePasswordStateUpgradeV0,
 			},
+			{
+				Version: 1,
+				Type:    resourcePasswordV1().CoreConfigSchema().ImpliedType(),
+				Upgrade: resourcePasswordStateUpgradeV1,
+			},
 		},
 	}
-}
-
-// updatePassword is only implemented to handle the deprecation of "number" in favour of "numeric".
-// ConflictsWith defined on the schema for both attributes ensures that only one of these attributes
-// can be supplied in the configuration.
-// What are the possible permutations?
-//  - "number" should always be set, as it has a Default set on the schema, so at the time of update
-//		create must have been run previously, so the default value of true should be present.
-func updatePassword(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	var number, numeric bool
-	var diags diag.Diagnostics
-
-	if v, ok := d.GetOk("number"); ok {
-		number = v.(bool)
-
-		if _, ok := d.GetOk("numeric"); !ok {
-			numeric = number
-
-			err := d.Set("numeric", numeric)
-			if err != nil {
-				diags = append(diags, diag.Errorf("Could not set numeric to value of number: %s", err)...)
-			}
-
-			return diags
-		}
-	}
-
-	if d.HasChange("number") {
-		return createPassword(ctx, d, meta)
-	}
-
-	if d.HasChange("numeric") {
-		return createPassword(ctx, d, meta)
-	}
-
-	return nil
 }
 
 func createPassword(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
@@ -109,6 +77,27 @@ func importPasswordFunc(ctx context.Context, d *schema.ResourceData, meta interf
 	}
 
 	return []*schema.ResourceData{d}, nil
+}
+
+func resourcePasswordV1() *schema.Resource {
+	return &schema.Resource{
+		Schema: passwordSchemaV1(),
+	}
+}
+
+func resourcePasswordStateUpgradeV1(_ context.Context, rawState map[string]interface{}, _ interface{}) (map[string]interface{}, error) {
+	if rawState == nil {
+		return nil, fmt.Errorf("resource password state upgrade failed, state is nil")
+	}
+
+	number, ok := rawState["number"].(bool)
+	if !ok {
+		return nil, fmt.Errorf("resource password state upgrade failed, number could not be asserted as bool: %T", rawState["number"])
+	}
+
+	rawState["numeric"] = number
+
+	return rawState, nil
 }
 
 func resourcePasswordV0() *schema.Resource {
