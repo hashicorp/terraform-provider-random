@@ -94,11 +94,21 @@ func passwordStringSchema() map[string]*schema.Schema {
 		},
 
 		"number": {
-			Description: "Include numeric characters in the result. Default value is `true`.",
-			Type:        schema.TypeBool,
-			Optional:    true,
-			Default:     true,
-			ForceNew:    true,
+			Description: "Include numeric characters in the result. Default value is `true`. " +
+				"**NOTE**: This is deprecated, use `numeric` instead.",
+			Type:          schema.TypeBool,
+			Optional:      true,
+			Default:       true,
+			Deprecated:    "Use numeric instead.",
+			ConflictsWith: []string{"numeric"},
+		},
+
+		"numeric": {
+			Description:   "Include numeric characters in the result. Default value is `true`.",
+			Type:          schema.TypeBool,
+			Optional:      true,
+			Default:       true,
+			ConflictsWith: []string{"number"},
 		},
 
 		"min_numeric": {
@@ -170,11 +180,17 @@ func createStringFunc(sensitive bool) func(_ context.Context, d *schema.Resource
 		minUpper := d.Get("min_upper").(int)
 		lower := d.Get("lower").(bool)
 		minLower := d.Get("min_lower").(int)
-		number := d.Get("number").(bool)
 		minNumeric := d.Get("min_numeric").(int)
 		special := d.Get("special").(bool)
 		minSpecial := d.Get("min_special").(int)
 		overrideSpecial := d.Get("override_special").(string)
+
+		var numeric bool
+		if v, ok := d.GetOk("number"); ok {
+			numeric = v.(bool)
+		} else if v, ok := d.GetOk("numeric"); ok {
+			numeric = v.(bool)
+		}
 
 		if length < minUpper+minLower+minNumeric+minSpecial {
 			return append(diags, diag.Diagnostic{
@@ -194,7 +210,7 @@ func createStringFunc(sensitive bool) func(_ context.Context, d *schema.Resource
 		if lower {
 			chars += lowerChars
 		}
-		if number {
+		if numeric {
 			chars += numChars
 		}
 		if special {

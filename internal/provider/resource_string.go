@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
@@ -18,6 +19,7 @@ func resourceString() *schema.Resource {
 			"it in a password. For backwards compatibility it will continue to exist. For unique ids please " +
 			"use [random_id](id.html), for sensitive random values please use [random_password](password.html).",
 		CreateContext: createStringFunc(false),
+		UpdateContext: updateString,
 		ReadContext:   readNil,
 		DeleteContext: RemoveResourceFromState,
 		// MigrateState is deprecated but the implementation is being left in place as per the
@@ -29,6 +31,11 @@ func resourceString() *schema.Resource {
 			StateContext: importStringFunc,
 		},
 	}
+}
+
+func updateString(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+
+	return nil
 }
 
 func importStringFunc(ctx context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
