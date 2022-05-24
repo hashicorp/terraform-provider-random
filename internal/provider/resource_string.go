@@ -23,10 +23,17 @@ func resourceString() *schema.Resource {
 		// MigrateState is deprecated but the implementation is being left in place as per the
 		// [SDK documentation](https://github.com/hashicorp/terraform-plugin-sdk/blob/main/helper/schema/resource.go#L91).
 		MigrateState:  resourceRandomStringMigrateState,
-		SchemaVersion: 1,
-		Schema:        stringSchemaV1(),
+		SchemaVersion: 2,
+		Schema:        stringSchemaV2(),
 		Importer: &schema.ResourceImporter{
 			StateContext: importStringFunc,
+		},
+		StateUpgraders: []schema.StateUpgrader{
+			{
+				Version: 1,
+				Type:    resourceStringV1().CoreConfigSchema().ImpliedType(),
+				Upgrade: resourceStringStateUpgradeV1,
+			},
 		},
 	}
 }
@@ -39,4 +46,25 @@ func importStringFunc(ctx context.Context, d *schema.ResourceData, meta interfac
 	}
 
 	return []*schema.ResourceData{d}, nil
+}
+
+func resourceStringV1() *schema.Resource {
+	return &schema.Resource{
+		Schema: stringSchemaV1(),
+	}
+}
+
+func resourceStringStateUpgradeV1(_ context.Context, rawState map[string]interface{}, _ interface{}) (map[string]interface{}, error) {
+	if rawState == nil {
+		return nil, fmt.Errorf("resource password state upgrade failed, state is nil")
+	}
+
+	number, ok := rawState["number"].(bool)
+	if !ok {
+		return nil, fmt.Errorf("resource password state upgrade failed, number could not be asserted as bool: %T", rawState["number"])
+	}
+
+	rawState["numeric"] = number
+
+	return rawState, nil
 }

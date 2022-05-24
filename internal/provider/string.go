@@ -211,8 +211,8 @@ func passwordStringSchema() map[string]*schema.Schema {
 	}
 }
 
-func createStringFunc(sensitive bool) func(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	return func(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func createStringFunc(sensitive bool) func(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+	return func(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 		const numChars = "0123456789"
 		const lowerChars = "abcdefghijklmnopqrstuvwxyz"
 		const upperChars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
@@ -231,7 +231,8 @@ func createStringFunc(sensitive bool) func(ctx context.Context, d *schema.Resour
 		minSpecial := d.Get("min_special").(int)
 		overrideSpecial := d.Get("override_special").(string)
 
-		var numeric bool
+		// Default to true unless number or numeric has been changed.
+		numeric := true
 
 		if d.HasChange("number") {
 			numeric = d.Get("number").(bool)
