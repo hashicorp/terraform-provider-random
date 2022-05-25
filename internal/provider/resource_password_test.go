@@ -103,6 +103,64 @@ func TestAccResourcePasswordMin(t *testing.T) {
 	})
 }
 
+func TestAccResourcePassword_UpdateNumberAndNumeric(t *testing.T) {
+	t.Parallel()
+	resource.UnitTest(t, resource.TestCase{
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: testAccProviders,
+		Steps: []resource.TestStep{
+			{
+				Config: `resource "random_password" "default" {
+							length = 12
+						}`,
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("random_password.default", "number", "true"),
+					resource.TestCheckResourceAttr("random_password.default", "numeric", "true"),
+				),
+			},
+			{
+				Config: `resource "random_password" "default" {
+							length = 12
+							number = false
+						}`,
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("random_password.default", "number", "false"),
+					resource.TestCheckResourceAttr("random_password.default", "numeric", "false"),
+				),
+			},
+			{
+				Config: `resource "random_password" "default" {
+							length = 12
+							numeric = true
+						}`,
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("random_password.default", "number", "true"),
+					resource.TestCheckResourceAttr("random_password.default", "numeric", "true"),
+				),
+			},
+			{
+				Config: `resource "random_password" "default" {
+							length = 12
+							numeric = false
+						}`,
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("random_password.default", "number", "false"),
+					resource.TestCheckResourceAttr("random_password.default", "numeric", "false"),
+				),
+			},
+			{
+				Config: `resource "random_password" "default" {
+							length = 12
+						}`,
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("random_password.default", "number", "true"),
+					resource.TestCheckResourceAttr("random_password.default", "numeric", "true"),
+				),
+			},
+		},
+	})
+}
+
 func TestResourcePasswordStateUpgradeV0(t *testing.T) {
 	cases := []struct {
 		name            string
