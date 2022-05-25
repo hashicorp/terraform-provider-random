@@ -32,7 +32,7 @@ func TestAccResourceString(t *testing.T) {
 				ResourceName:            "random_string.basic",
 				ImportState:             true,
 				ImportStateVerify:       true,
-				ImportStateVerifyIgnore: []string{"length", "lower", "number", "special", "upper", "min_lower", "min_numeric", "min_special", "min_upper", "override_special"},
+				ImportStateVerifyIgnore: []string{"length", "lower", "number", "numeric", "special", "upper", "min_lower", "min_numeric", "min_special", "min_upper", "override_special"},
 			},
 		},
 	})
