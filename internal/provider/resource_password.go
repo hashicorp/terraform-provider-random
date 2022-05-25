@@ -38,6 +38,44 @@ func resourcePassword() *schema.Resource {
 			},
 		},
 		CustomizeDiff: customdiff.All(
+			customdiff.IfValue("number",
+				func(ctx context.Context, value, meta interface{}) bool {
+					return !value.(bool)
+				},
+				func(_ context.Context, d *schema.ResourceDiff, _ interface{}) error {
+					vm := d.GetRawConfig().AsValueMap()
+					if vm["number"].IsNull() && vm["numeric"].IsNull() {
+						err := d.SetNew("number", true)
+						if err != nil {
+							return err
+						}
+						err = d.SetNew("numeric", true)
+						if err != nil {
+							return err
+						}
+					}
+					return nil
+				},
+			),
+			customdiff.IfValue("numeric",
+				func(ctx context.Context, value, meta interface{}) bool {
+					return !value.(bool)
+				},
+				func(_ context.Context, d *schema.ResourceDiff, _ interface{}) error {
+					vm := d.GetRawConfig().AsValueMap()
+					if vm["number"].IsNull() && vm["numeric"].IsNull() {
+						err := d.SetNew("number", true)
+						if err != nil {
+							return err
+						}
+						err = d.SetNew("numeric", true)
+						if err != nil {
+							return err
+						}
+					}
+					return nil
+				},
+			),
 			customdiff.IfValueChange("number",
 				func(ctx context.Context, oldValue, newValue, meta interface{}) bool {
 					return oldValue != newValue

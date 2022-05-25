@@ -211,8 +211,8 @@ func passwordStringSchema() map[string]*schema.Schema {
 	}
 }
 
-func createStringFunc(sensitive bool) func(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	return func(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func createStringFunc(sensitive bool) func(_ context.Context, d *schema.ResourceData, _ interface{}) diag.Diagnostics {
+	return func(_ context.Context, d *schema.ResourceData, _ interface{}) diag.Diagnostics {
 		const numChars = "0123456789"
 		const lowerChars = "abcdefghijklmnopqrstuvwxyz"
 		const upperChars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
@@ -232,11 +232,6 @@ func createStringFunc(sensitive bool) func(ctx context.Context, d *schema.Resour
 		special := d.Get("special").(bool)
 		minSpecial := d.Get("min_special").(int)
 		overrideSpecial := d.Get("override_special").(string)
-
-		vm := d.GetRawConfig().AsValueMap()
-		if vm["number"].IsNull() && vm["numeric"].IsNull() {
-			number, numeric = true, true
-		}
 
 		if length < minUpper+minLower+minNumeric+minSpecial {
 			return append(diags, diag.Diagnostic{
