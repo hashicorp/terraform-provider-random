@@ -233,6 +233,11 @@ func createStringFunc(sensitive bool) func(ctx context.Context, d *schema.Resour
 		minSpecial := d.Get("min_special").(int)
 		overrideSpecial := d.Get("override_special").(string)
 
+		vm := d.GetRawConfig().AsValueMap()
+		if vm["number"].IsNull() && vm["numeric"].IsNull() {
+			number, numeric = true, true
+		}
+
 		if length < minUpper+minLower+minNumeric+minSpecial {
 			return append(diags, diag.Diagnostic{
 				Severity: diag.Error,
