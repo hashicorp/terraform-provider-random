@@ -211,8 +211,8 @@ func passwordStringSchema() map[string]*schema.Schema {
 	}
 }
 
-func createStringFunc(sensitive bool) func(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	return func(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func createStringFunc(sensitive bool) func(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+	return func(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 		const numChars = "0123456789"
 		const lowerChars = "abcdefghijklmnopqrstuvwxyz"
 		const upperChars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
@@ -226,19 +226,12 @@ func createStringFunc(sensitive bool) func(_ context.Context, d *schema.Resource
 		minUpper := d.Get("min_upper").(int)
 		lower := d.Get("lower").(bool)
 		minLower := d.Get("min_lower").(int)
+		number := d.Get("number").(bool)
+		numeric := d.Get("numeric").(bool)
 		minNumeric := d.Get("min_numeric").(int)
 		special := d.Get("special").(bool)
 		minSpecial := d.Get("min_special").(int)
 		overrideSpecial := d.Get("override_special").(string)
-
-		// Default to true unless number or numeric has been changed.
-		numeric := true
-
-		if d.HasChange("number") {
-			numeric = d.Get("number").(bool)
-		} else if d.HasChange("numeric") {
-			numeric = d.Get("numeric").(bool)
-		}
 
 		if length < minUpper+minLower+minNumeric+minSpecial {
 			return append(diags, diag.Diagnostic{
@@ -296,8 +289,7 @@ func createStringFunc(sensitive bool) func(_ context.Context, d *schema.Resource
 			return append(diags, diag.Errorf("error setting result: %s", err)...)
 		}
 
-		// This ensures that both number and numeric are kept in-sync whilst both attributes exist.
-		if err := d.Set("number", numeric); err != nil {
+		if err := d.Set("number", number); err != nil {
 			return append(diags, diag.Errorf("error setting number: %s", err)...)
 		}
 		if err := d.Set("numeric", numeric); err != nil {

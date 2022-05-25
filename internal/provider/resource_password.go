@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/customdiff"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"golang.org/x/crypto/bcrypt"
 )
@@ -36,6 +37,24 @@ func resourcePassword() *schema.Resource {
 				Upgrade: resourcePasswordStateUpgradeV1,
 			},
 		},
+		CustomizeDiff: customdiff.All(
+			customdiff.IfValueChange("number",
+				func(ctx context.Context, oldValue, newValue, meta interface{}) bool {
+					return oldValue != newValue
+				},
+				func(_ context.Context, d *schema.ResourceDiff, _ interface{}) error {
+					return d.SetNew("numeric", d.Get("number"))
+				},
+			),
+			customdiff.IfValueChange("numeric",
+				func(ctx context.Context, oldValue, newValue, meta interface{}) bool {
+					return oldValue != newValue
+				},
+				func(_ context.Context, d *schema.ResourceDiff, _ interface{}) error {
+					return d.SetNew("number", d.Get("numeric"))
+				},
+			),
+		),
 	}
 }
 
