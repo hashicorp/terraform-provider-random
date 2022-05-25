@@ -142,19 +142,8 @@ func resourcePasswordV1() *schema.Resource {
 	}
 }
 
-func resourcePasswordStateUpgradeV1(_ context.Context, rawState map[string]interface{}, _ interface{}) (map[string]interface{}, error) {
-	if rawState == nil {
-		return nil, fmt.Errorf("resource password state upgrade failed, state is nil")
-	}
-
-	number, ok := rawState["number"].(bool)
-	if !ok {
-		return nil, fmt.Errorf("resource password state upgrade failed, number could not be asserted as bool: %T", rawState["number"])
-	}
-
-	rawState["numeric"] = number
-
-	return rawState, nil
+func resourcePasswordStateUpgradeV1(ctx context.Context, rawState map[string]interface{}, meta interface{}) (map[string]interface{}, error) {
+	return resourceStateUpgradeAddNumeric(ctx, rawState, meta, "password")(ctx, rawState, meta)
 }
 
 func resourcePasswordV0() *schema.Resource {

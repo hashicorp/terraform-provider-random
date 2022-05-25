@@ -321,3 +321,20 @@ func generateRandomBytes(charSet *string, length int) ([]byte, error) {
 func readNil(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	return nil
 }
+
+func resourceStateUpgradeAddNumeric(_ context.Context, rawState map[string]interface{}, _ interface{}, resourceName string) func(_ context.Context, rawState map[string]interface{}, _ interface{}) (map[string]interface{}, error) {
+	return func(_ context.Context, rawState map[string]interface{}, _ interface{}) (map[string]interface{}, error) {
+		if rawState == nil {
+			return nil, fmt.Errorf("resource %s state upgrade failed, state is nil", resourceName)
+		}
+
+		number, ok := rawState["number"].(bool)
+		if !ok {
+			return nil, fmt.Errorf("resource %s state upgrade failed, number could not be asserted as bool: %T", resourceName, rawState["number"])
+		}
+
+		rawState["numeric"] = number
+
+		return rawState, nil
+	}
+}
