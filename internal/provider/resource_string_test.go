@@ -1,11 +1,14 @@
 package provider
 
 import (
+	"context"
 	"fmt"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 	"regexp"
 	"testing"
+
+	"github.com/google/go-cmp/cmp"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 )
 
 type customLens struct {
@@ -72,6 +75,113 @@ func TestAccResourceStringMin(t *testing.T) {
 			},
 		},
 	})
+}
+
+func TestAccResourceString_UpdateNumberAndNumeric(t *testing.T) {
+	t.Parallel()
+	resource.UnitTest(t, resource.TestCase{
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: testAccProviders,
+		Steps: []resource.TestStep{
+			{
+				Config: `resource "random_string" "default" {
+							length = 12
+						}`,
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("random_string.default", "number", "true"),
+					resource.TestCheckResourceAttr("random_string.default", "numeric", "true"),
+				),
+			},
+			{
+				Config: `resource "random_string" "default" {
+							length = 12
+							number = false
+						}`,
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("random_string.default", "number", "false"),
+					resource.TestCheckResourceAttr("random_string.default", "numeric", "false"),
+				),
+			},
+			{
+				Config: `resource "random_string" "default" {
+							length = 12
+							numeric = true
+						}`,
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("random_string.default", "number", "true"),
+					resource.TestCheckResourceAttr("random_string.default", "numeric", "true"),
+				),
+			},
+			{
+				Config: `resource "random_string" "default" {
+							length = 12
+							numeric = false
+						}`,
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("random_string.default", "number", "false"),
+					resource.TestCheckResourceAttr("random_string.default", "numeric", "false"),
+				),
+			},
+			{
+				Config: `resource "random_string" "default" {
+							length = 12
+						}`,
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("random_string.default", "number", "true"),
+					resource.TestCheckResourceAttr("random_string.default", "numeric", "true"),
+				),
+			},
+		},
+	})
+}
+
+func TestResourceStringStateUpgradeV1(t *testing.T) {
+	cases := []struct {
+		name            string
+		stateV1         map[string]interface{}
+		shouldError     bool
+		errMsg          string
+		expectedStateV2 map[string]interface{}
+	}{
+		{
+			name:        "number is not bool",
+			stateV1:     map[string]interface{}{"number": 0},
+			shouldError: true,
+			errMsg:      "resource string state upgrade failed, number could not be asserted as bool: int",
+		},
+		{
+			name:            "success",
+			stateV1:         map[string]interface{}{"number": true},
+			shouldError:     false,
+			expectedStateV2: map[string]interface{}{"number": true, "numeric": true},
+		},
+	}
+
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			actualStateV2, err := resourceStringStateUpgradeV1(context.Background(), c.stateV1, nil)
+
+			if c.shouldError {
+				if !cmp.Equal(c.errMsg, err.Error()) {
+					t.Errorf("expected: %q, got: %q", c.errMsg, err)
+				}
+				if !cmp.Equal(c.expectedStateV2, actualStateV2) {
+					t.Errorf("expected: %+v, got: %+v", c.expectedStateV2, err)
+				}
+			} else {
+				if err != nil {
+					t.Errorf("err should be nil, actual: %v", err)
+				}
+
+				for k := range c.expectedStateV2 {
+					_, ok := actualStateV2[k]
+					if !ok {
+						t.Errorf("expected key: %s is missing from state", k)
+					}
+				}
+			}
+		})
+	}
 }
 
 func TestAccResourceStringErrors(t *testing.T) {

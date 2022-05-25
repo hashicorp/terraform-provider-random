@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/customdiff"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
@@ -35,6 +36,62 @@ func resourceString() *schema.Resource {
 				Upgrade: resourceStringStateUpgradeV1,
 			},
 		},
+		CustomizeDiff: customdiff.All(
+			customdiff.IfValue("number",
+				func(ctx context.Context, value, meta interface{}) bool {
+					return !value.(bool)
+				},
+				func(_ context.Context, d *schema.ResourceDiff, _ interface{}) error {
+					vm := d.GetRawConfig().AsValueMap()
+					if vm["number"].IsNull() && vm["numeric"].IsNull() {
+						err := d.SetNew("number", true)
+						if err != nil {
+							return err
+						}
+						err = d.SetNew("numeric", true)
+						if err != nil {
+							return err
+						}
+					}
+					return nil
+				},
+			),
+			customdiff.IfValue("numeric",
+				func(ctx context.Context, value, meta interface{}) bool {
+					return !value.(bool)
+				},
+				func(_ context.Context, d *schema.ResourceDiff, _ interface{}) error {
+					vm := d.GetRawConfig().AsValueMap()
+					if vm["number"].IsNull() && vm["numeric"].IsNull() {
+						err := d.SetNew("number", true)
+						if err != nil {
+							return err
+						}
+						err = d.SetNew("numeric", true)
+						if err != nil {
+							return err
+						}
+					}
+					return nil
+				},
+			),
+			customdiff.IfValueChange("number",
+				func(ctx context.Context, oldValue, newValue, meta interface{}) bool {
+					return oldValue != newValue
+				},
+				func(_ context.Context, d *schema.ResourceDiff, _ interface{}) error {
+					return d.SetNew("numeric", d.Get("number"))
+				},
+			),
+			customdiff.IfValueChange("numeric",
+				func(ctx context.Context, oldValue, newValue, meta interface{}) bool {
+					return oldValue != newValue
+				},
+				func(_ context.Context, d *schema.ResourceDiff, _ interface{}) error {
+					return d.SetNew("number", d.Get("numeric"))
+				},
+			),
+		),
 	}
 }
 
@@ -61,7 +118,7 @@ func resourceStringStateUpgradeV1(_ context.Context, rawState map[string]interfa
 
 	number, ok := rawState["number"].(bool)
 	if !ok {
-		return nil, fmt.Errorf("resource password state upgrade failed, number could not be asserted as bool: %T", rawState["number"])
+		return nil, fmt.Errorf("resource string state upgrade failed, number could not be asserted as bool: %T", rawState["number"])
 	}
 
 	rawState["numeric"] = number
