@@ -151,3 +151,52 @@ func TestResourcePasswordStateUpgradeV0(t *testing.T) {
 		})
 	}
 }
+
+func TestResourcePasswordStateUpgradeV1(t *testing.T) {
+	cases := []struct {
+		name            string
+		stateV1         map[string]interface{}
+		shouldError     bool
+		errMsg          string
+		expectedStateV2 map[string]interface{}
+	}{
+		{
+			name:        "number is not bool",
+			stateV1:     map[string]interface{}{"number": 0},
+			shouldError: true,
+			errMsg:      "resource password state upgrade failed, number could not be asserted as bool: int",
+		},
+		{
+			name:            "success",
+			stateV1:         map[string]interface{}{"number": true},
+			shouldError:     false,
+			expectedStateV2: map[string]interface{}{"number": true, "numeric": true},
+		},
+	}
+
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			actualStateV2, err := resourcePasswordStateUpgradeV1(context.Background(), c.stateV1, nil)
+
+			if c.shouldError {
+				if !cmp.Equal(c.errMsg, err.Error()) {
+					t.Errorf("expected: %q, got: %q", c.errMsg, err)
+				}
+				if !cmp.Equal(c.expectedStateV2, actualStateV2) {
+					t.Errorf("expected: %+v, got: %+v", c.expectedStateV2, err)
+				}
+			} else {
+				if err != nil {
+					t.Errorf("err should be nil, actual: %v", err)
+				}
+
+				for k := range c.expectedStateV2 {
+					_, ok := actualStateV2[k]
+					if !ok {
+						t.Errorf("expected key: %s is missing from state", k)
+					}
+				}
+			}
+		})
+	}
+}
