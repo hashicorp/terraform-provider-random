@@ -41,7 +41,8 @@ resource "random_string" "random" {
 - `min_numeric` (Number) Minimum number of numeric characters in the result. Default value is `0`.
 - `min_special` (Number) Minimum number of special characters in the result. Default value is `0`.
 - `min_upper` (Number) Minimum number of uppercase alphabet characters in the result. Default value is `0`.
-- `number` (Boolean) Include numeric characters in the result. Default value is `true`.
+- `number` (Boolean, Deprecated) Include numeric characters in the result. Default value is `true`. **NOTE**: This is deprecated, use `numeric` instead.
+- `numeric` (Boolean) Include numeric characters in the result. Default value is `true`.
 - `override_special` (String) Supply your own list of special characters to use for string generation.  This overrides the default character list in the special argument.  The `special` argument must still be set to true for any overwritten characters to be used in generation.
 - `special` (Boolean) Include special characters in the result. These are `!@#$%&*()-_=+[]{}<>:?`. Default value is `true`.
 - `upper` (Boolean) Include uppercase alphabet characters in the result. Default value is `true`.
