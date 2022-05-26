@@ -1,3 +1,10 @@
+## 3.3.0 (May 26, 2022)
+
+ENHANCEMENTS:
+
+* resource/random_password: `number` is now deprecated and `numeric` has been added to align attribute naming. `number` will be removed in the next major release ([#258](https://github.com/hashicorp/terraform-provider-random/pull/258)).
+* resource/random_string: `number` is now deprecated and `numeric` has been added to align attribute naming. `number` will be removed in the next major release ([#258](https://github.com/hashicorp/terraform-provider-random/pull/258)).
+
 ## 3.2.0 (May 18, 2022)
 
 NEW FEATURES:
