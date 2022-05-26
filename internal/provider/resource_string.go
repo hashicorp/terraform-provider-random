@@ -62,5 +62,5 @@ func resourceStringV1() *schema.Resource {
 }
 
 func resourceStringStateUpgradeV1(ctx context.Context, rawState map[string]interface{}, meta interface{}) (map[string]interface{}, error) {
-	return resourceStateUpgradeAddNumeric(ctx, rawState, meta, "string")(ctx, rawState, meta)
+	return resourceStateUpgradeAddNumeric("string")(ctx, rawState, meta)
 }

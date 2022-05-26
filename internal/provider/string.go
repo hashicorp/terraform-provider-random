@@ -323,7 +323,7 @@ func readNil(_ context.Context, d *schema.ResourceData, meta interface{}) diag.D
 	return nil
 }
 
-func resourceStateUpgradeAddNumeric(_ context.Context, rawState map[string]interface{}, _ interface{}, resourceName string) func(_ context.Context, rawState map[string]interface{}, _ interface{}) (map[string]interface{}, error) {
+func resourceStateUpgradeAddNumeric(resourceName string) func(_ context.Context, rawState map[string]interface{}, _ interface{}) (map[string]interface{}, error) {
 	return func(_ context.Context, rawState map[string]interface{}, _ interface{}) (map[string]interface{}, error) {
 		if rawState == nil {
 			return nil, fmt.Errorf("resource %s state upgrade failed, state is nil", resourceName)

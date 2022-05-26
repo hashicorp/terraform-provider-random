@@ -93,7 +93,7 @@ func resourcePasswordV1() *schema.Resource {
 }
 
 func resourcePasswordStateUpgradeV1(ctx context.Context, rawState map[string]interface{}, meta interface{}) (map[string]interface{}, error) {
-	return resourceStateUpgradeAddNumeric(ctx, rawState, meta, "password")(ctx, rawState, meta)
+	return resourceStateUpgradeAddNumeric("password")(ctx, rawState, meta)
 }
 
 func resourcePasswordV0() *schema.Resource {
