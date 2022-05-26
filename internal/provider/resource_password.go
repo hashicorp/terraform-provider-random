@@ -109,7 +109,7 @@ func resourcePasswordStateUpgradeV0(_ context.Context, rawState map[string]inter
 
 	result, ok := rawState["result"].(string)
 	if !ok {
-		return nil, fmt.Errorf("resource password state upgrade failed, result could not be asserted as string: %T", rawState["result"])
+		return nil, fmt.Errorf("resource password state upgrade failed, result is not a string: %T", rawState["result"])
 	}
 
 	hash, err := generateHash(result)

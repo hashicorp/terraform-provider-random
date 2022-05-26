@@ -331,7 +331,7 @@ func resourceStateUpgradeAddNumeric(resourceName string) func(_ context.Context,
 
 		number, ok := rawState["number"].(bool)
 		if !ok {
-			return nil, fmt.Errorf("resource %s state upgrade failed, number could not be asserted as bool: %T", resourceName, rawState["number"])
+			return nil, fmt.Errorf("resource %s state upgrade failed, number is not a boolean: %T", resourceName, rawState["number"])
 		}
 
 		rawState["numeric"] = number

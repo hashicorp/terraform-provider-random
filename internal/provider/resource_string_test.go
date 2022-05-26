@@ -147,7 +147,7 @@ func TestResourceStringStateUpgradeV1(t *testing.T) {
 			name:        "number is not bool",
 			stateV1:     map[string]interface{}{"number": 0},
 			shouldError: true,
-			errMsg:      "resource string state upgrade failed, number could not be asserted as bool: int",
+			errMsg:      "resource string state upgrade failed, number is not a boolean: int",
 		},
 		{
 			name:            "success",

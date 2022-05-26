@@ -173,7 +173,7 @@ func TestResourcePasswordStateUpgradeV0(t *testing.T) {
 			name:        "result is not string",
 			stateV0:     map[string]interface{}{"result": 0},
 			shouldError: true,
-			errMsg:      "resource password state upgrade failed, result could not be asserted as string: int",
+			errMsg:      "resource password state upgrade failed, result is not a string: int",
 		},
 		{
 			name:            "success",
@@ -222,7 +222,7 @@ func TestResourcePasswordStateUpgradeV1(t *testing.T) {
 			name:        "number is not bool",
 			stateV1:     map[string]interface{}{"number": 0},
 			shouldError: true,
-			errMsg:      "resource password state upgrade failed, number could not be asserted as bool: int",
+			errMsg:      "resource password state upgrade failed, number is not a boolean: int",
 		},
 		{
 			name:            "success",
