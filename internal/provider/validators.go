@@ -33,24 +33,24 @@ func (av *intAtLeastValidator) MarkdownDescription(context.Context) string {
 }
 
 // Validate runs the following checks:
-// 1. Determines whether AttributeConfig (attr.Value) Type is of correct type (i.e., types.Int64). This is required
-//		because tfsdk.ValueAs will allow a types other than types.Int64 to be supplied as the value.
-// 2. Determines if AttributeConfig can be reflected into types.Int64.
-// 3. Checks that the value is >= minVal.
+// 1. Determines if AttributeConfig can be reflected into types.Int64.
+// 2. Checks that the value is >= minVal.
 func (av *intAtLeastValidator) Validate(ctx context.Context, req tfsdk.ValidateAttributeRequest, resp *tfsdk.ValidateAttributeResponse) {
-	var attrib types.Int64
-
-	if req.AttributeConfig.Type(ctx) != attrib.Type(ctx) {
-		pathStr := attrPathToString(req.AttributePath)
-
-		resp.Diagnostics.AddAttributeError(
-			req.AttributePath,
-			fmt.Sprintf("Attribute %q is of incorrect type for validator.", pathStr),
-			fmt.Sprintf("Attribute %q (%s) cannot be used as %s.", pathStr, req.AttributeConfig.Type(ctx), attrib.Type(ctx)),
+	// TODO: Remove once attr.Value interface includes IsNull.
+	attribConfigValue, err := req.AttributeConfig.ToTerraformValue(ctx)
+	if err != nil {
+		resp.Diagnostics.AddError(
+			"Int at least validator failed",
+			fmt.Sprintf("Unable to convert attribute config (%s) to terraform value: %s", req.AttributeConfig.Type(ctx).String(), err),
 		)
-
 		return
 	}
+
+	if attribConfigValue.IsNull() || !attribConfigValue.IsKnown() {
+		return
+	}
+
+	var attrib types.Int64
 
 	resp.Diagnostics.Append(tfsdk.ValueAs(ctx, req.AttributeConfig, &attrib)...)
 	if resp.Diagnostics.HasError() {
@@ -90,29 +90,29 @@ func (av *intIsAtLeastSumOfValidator) MarkdownDescription(context.Context) strin
 }
 
 // Validate runs the following checks:
-// 1. Determines whether AttributeConfig (attr.Value) Type is of correct type (i.e., types.Int64). This is required
-//		because tfsdk.ValueAs will allow a types other than types.Int64 to be supplied as the value.
-// 2. Determines if AttributeConfig can be reflected into types.Int64.
-// 3. Checks that the AttributeConfig value is >= sum of values of the attributes defined in attributesToSum.
+// 1. Determines if AttributeConfig can be reflected into types.Int64.
+// 2. Checks that the AttributeConfig value is >= sum of values of the attributes defined in attributesToSum.
 func (av *intIsAtLeastSumOfValidator) Validate(ctx context.Context, req tfsdk.ValidateAttributeRequest, resp *tfsdk.ValidateAttributeResponse) {
 	tflog.Debug(ctx, "Validating that attribute has a value at least equal to the attributes to sum", map[string]interface{}{
 		"attribute":       attrPathToString(req.AttributePath),
 		"attributesToSum": av.attributesToSum,
 	})
 
-	var attrib types.Int64
-
-	if req.AttributeConfig.Type(ctx) != attrib.Type(ctx) {
-		pathStr := attrPathToString(req.AttributePath)
-
-		resp.Diagnostics.AddAttributeError(
-			req.AttributePath,
-			fmt.Sprintf("Attribute %q is of incorrect type for validator.", pathStr),
-			fmt.Sprintf("Attribute %q (%s) cannot be used as %s.", pathStr, req.AttributeConfig.Type(ctx), attrib.Type(ctx)),
+	// TODO: Remove once attr.Value interface includes IsNull.
+	attribConfigValue, err := req.AttributeConfig.ToTerraformValue(ctx)
+	if err != nil {
+		resp.Diagnostics.AddError(
+			"Int at least sum of validator failed",
+			fmt.Sprintf("Unable to convert attribute config (%s) to terraform value: %s", req.AttributeConfig.Type(ctx).String(), err),
 		)
-
 		return
 	}
+
+	if attribConfigValue.IsNull() || !attribConfigValue.IsKnown() {
+		return
+	}
+
+	var attrib types.Int64
 
 	resp.Diagnostics.Append(tfsdk.ValueAs(ctx, req.AttributeConfig, &attrib)...)
 	if resp.Diagnostics.HasError() {

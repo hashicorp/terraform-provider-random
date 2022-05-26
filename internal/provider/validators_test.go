@@ -22,52 +22,39 @@ func TestIntAtLeastValidator_Validate(t *testing.T) {
 		},
 	}
 
-	type expectedRespDiags struct {
-		expectedRespDiagAttrPath *tftypes.AttributePath
-		expectedRespDiagSummary  string
-		expectedRespDiagDetail   string
-	}
-
 	cases := []struct {
-		name              string
-		reqAttribConfig   attr.Value
-		reqConfigRaw      tftypes.Value
-		attributesToSum   []*tftypes.AttributePath
-		expectedRespDiags []expectedRespDiags
+		name                   string
+		reqAttribConfig        attr.Value
+		expectDiag             bool
+		expectedValidatorDiags diag.Diagnostics
 	}{
 		{
 			name:            "attribute wrong type",
 			reqAttribConfig: types.String{Value: "16"},
-			expectedRespDiags: []expectedRespDiags{
-				{
-					tftypes.NewAttributePath().WithAttributeName("length"),
-					`Attribute "length" is of incorrect type for validator.`,
-					`Attribute "length" (types.StringType) cannot be used as types.Int64Type.`,
-				},
-			},
+			expectDiag:      true,
 		},
 		{
 			name:            "attribute less than min val",
 			reqAttribConfig: types.Int64{Value: 5},
-			expectedRespDiags: []expectedRespDiags{
-				{
+			expectDiag:      true,
+			expectedValidatorDiags: diag.Diagnostics{
+				diag.NewAttributeErrorDiagnostic(
 					tftypes.NewAttributePath().WithAttributeName("length"),
 					`Attribute "length" is less than minimum required.`,
 					`Attribute "length" (5) must be at least 10.`,
-				},
+				),
 			},
 		},
 		{
-			name:              "attribute equal to min val",
-			reqAttribConfig:   types.Int64{Value: 10},
-			expectedRespDiags: []expectedRespDiags{},
+			name:            "attribute equal to min val",
+			reqAttribConfig: types.Int64{Value: 10},
+			expectDiag:      false,
 		},
 	}
 
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
 			req.AttributeConfig = c.reqAttribConfig
-			req.Config.Raw = c.reqConfigRaw
 			resp := tfsdk.ValidateAttributeResponse{
 				Diagnostics: diag.Diagnostics{},
 			}
@@ -75,14 +62,17 @@ func TestIntAtLeastValidator_Validate(t *testing.T) {
 			validator := NewIntAtLeastValidator(10)
 			validator.Validate(context.Background(), req, &resp)
 
-			expectedDiags := diag.Diagnostics{}
-
-			for _, v := range c.expectedRespDiags {
-				expectedDiags.AddAttributeError(v.expectedRespDiagAttrPath, v.expectedRespDiagSummary, v.expectedRespDiagDetail)
+			if c.expectDiag {
+				if len(resp.Diagnostics) != 1 {
+					t.Errorf("expecting resp diags len: 1, actual resp diags len: %d", len(resp.Diagnostics))
+				}
 			}
 
-			if !cmp.Equal(expectedDiags, resp.Diagnostics) {
-				t.Errorf("expecting resp diags: %s, actual resp diags: %s", expectedDiags, resp.Diagnostics)
+			// Only test the contents of diags that are explicitly under the control of the validator.
+			if c.expectedValidatorDiags != nil {
+				if !cmp.Equal(c.expectedValidatorDiags, resp.Diagnostics) {
+					t.Errorf("expecting resp diags: %s, actual resp diags: %s", c.expectedValidatorDiags, resp.Diagnostics)
+				}
 			}
 		})
 	}
@@ -99,29 +89,18 @@ func TestIsAtLeastSumOfValidator_Validate(t *testing.T) {
 		},
 	}
 
-	type expectedRespDiags struct {
-		expectedRespDiagAttrPath *tftypes.AttributePath
-		expectedRespDiagSummary  string
-		expectedRespDiagDetail   string
-	}
-
 	cases := []struct {
-		name              string
-		reqAttribConfig   attr.Value
-		reqConfigRaw      tftypes.Value
-		attributesToSum   []*tftypes.AttributePath
-		expectedRespDiags []expectedRespDiags
+		name                   string
+		reqAttribConfig        attr.Value
+		reqConfigRaw           tftypes.Value
+		attributesToSum        []*tftypes.AttributePath
+		expectDiag             bool
+		expectedValidatorDiags diag.Diagnostics
 	}{
 		{
 			name:            "attribute wrong type",
 			reqAttribConfig: types.String{Value: "16"},
-			expectedRespDiags: []expectedRespDiags{
-				{
-					tftypes.NewAttributePath().WithAttributeName("length"),
-					`Attribute "length" is of incorrect type for validator.`,
-					`Attribute "length" (types.StringType) cannot be used as types.Int64Type.`,
-				},
-			},
+			expectDiag:      true,
 		},
 		{
 			"attribute less than sum of attribute",
@@ -129,13 +108,16 @@ func TestIsAtLeastSumOfValidator_Validate(t *testing.T) {
 			tftypes.NewValue(tftypes.Object{}, map[string]tftypes.Value{
 				"min_upper": tftypes.NewValue(tftypes.Number, 17),
 			}),
-			[]*tftypes.AttributePath{tftypes.NewAttributePath().WithAttributeName("min_upper")},
-			[]expectedRespDiags{
-				{
+			[]*tftypes.AttributePath{
+				tftypes.NewAttributePath().WithAttributeName("min_upper"),
+			},
+			true,
+			diag.Diagnostics{
+				diag.NewAttributeErrorDiagnostic(
 					tftypes.NewAttributePath().WithAttributeName("length"),
 					`Attribute "length" is less than summed attributes.`,
 					`Attribute "length" (16) cannot be less than min_upper (17).`,
-				},
+				),
 			},
 		},
 		{
@@ -149,12 +131,13 @@ func TestIsAtLeastSumOfValidator_Validate(t *testing.T) {
 				tftypes.NewAttributePath().WithAttributeName("min_upper"),
 				tftypes.NewAttributePath().WithAttributeName("min_lower"),
 			},
-			[]expectedRespDiags{
-				{
+			true,
+			diag.Diagnostics{
+				diag.NewAttributeErrorDiagnostic(
 					tftypes.NewAttributePath().WithAttributeName("length"),
 					`Attribute "length" is less than summed attributes.`,
 					`Attribute "length" (16) cannot be less than min_upper + min_lower (22).`,
-				},
+				),
 			},
 		},
 		{
@@ -163,28 +146,32 @@ func TestIsAtLeastSumOfValidator_Validate(t *testing.T) {
 			tftypes.NewValue(tftypes.Object{}, map[string]tftypes.Value{
 				"min_upper": tftypes.NewValue(tftypes.String, "17"),
 			}),
-			[]*tftypes.AttributePath{tftypes.NewAttributePath().WithAttributeName("min_upper")},
-			[]expectedRespDiags{
-				{
+			[]*tftypes.AttributePath{
+				tftypes.NewAttributePath().WithAttributeName("min_upper"),
+			},
+			true,
+			diag.Diagnostics{
+				diag.NewAttributeErrorDiagnostic(
 					tftypes.NewAttributePath().WithAttributeName("min_upper"),
 					`Int64 Type Validation Error`,
 					`An unexpected error was encountered trying to validate an attribute value. This is always an error in the provider. Please report the following to the provider developer:
 
 Expected Number value, received tftypes.Value with value: tftypes.String<"17">`,
-				},
+				),
 			},
 		},
 		{
-			"attribute equal to sum of attributes",
-			types.Int64{Value: 16},
-			tftypes.NewValue(tftypes.Object{}, map[string]tftypes.Value{
+			name:            "attribute equal to sum of attributes",
+			reqAttribConfig: types.Int64{Value: 16},
+			reqConfigRaw: tftypes.NewValue(tftypes.Object{}, map[string]tftypes.Value{
 				"min_upper": tftypes.NewValue(tftypes.Number, 8),
 				"min_lower": tftypes.NewValue(tftypes.Number, 8),
 			}),
-			[]*tftypes.AttributePath{
+			attributesToSum: []*tftypes.AttributePath{
 				tftypes.NewAttributePath().WithAttributeName("min_upper"),
-				tftypes.NewAttributePath().WithAttributeName("min_lower")},
-			[]expectedRespDiags{},
+				tftypes.NewAttributePath().WithAttributeName("min_lower"),
+			},
+			expectDiag: false,
 		},
 	}
 
@@ -199,14 +186,17 @@ Expected Number value, received tftypes.Value with value: tftypes.String<"17">`,
 			validator := NewIntIsAtLeastSumOfValidator(c.attributesToSum...)
 			validator.Validate(context.Background(), req, &resp)
 
-			expectedDiags := diag.Diagnostics{}
-
-			for _, v := range c.expectedRespDiags {
-				expectedDiags.AddAttributeError(v.expectedRespDiagAttrPath, v.expectedRespDiagSummary, v.expectedRespDiagDetail)
+			if c.expectDiag {
+				if len(resp.Diagnostics) != 1 {
+					t.Errorf("expecting resp diags len: 1, actual resp diags len: %d", len(resp.Diagnostics))
+				}
 			}
 
-			if !cmp.Equal(expectedDiags, resp.Diagnostics) {
-				t.Errorf("expecting resp diags: %s, actual resp diags: %s", expectedDiags, resp.Diagnostics)
+			// Only test the contents of diags that are explicitly under the control of the validator.
+			if c.expectedValidatorDiags != nil {
+				if !cmp.Equal(c.expectedValidatorDiags, resp.Diagnostics) {
+					t.Errorf("expecting resp diags: %s, actual resp diags: %s", c.expectedValidatorDiags, resp.Diagnostics)
+				}
 			}
 		})
 	}
