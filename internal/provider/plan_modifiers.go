@@ -2,115 +2,64 @@ package provider
 
 import (
 	"context"
+	"fmt"
 
+	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/tfsdk"
-	"github.com/hashicorp/terraform-plugin-framework/types"
 )
 
-// defaultBool accepts a bool and returns a struct that implements the AttributePlanModifier interface.
+// newDefaultValueAttributePlanModifier accepts an attr.Value and returns a struct that implements the
+// AttributePlanModifier interface.
 //nolint:unparam // val is always true
-func defaultBool(val bool) tfsdk.AttributePlanModifier {
-	return boolDefault{val}
+func newDefaultValueAttributePlanModifier(val attr.Value) tfsdk.AttributePlanModifier {
+	return &defaultValueAttributePlanModifier{val}
 }
 
-type boolDefault struct {
-	val bool
+type defaultValueAttributePlanModifier struct {
+	val attr.Value
 }
 
-func (d boolDefault) Description(ctx context.Context) string {
+func (d *defaultValueAttributePlanModifier) Description(ctx context.Context) string {
 	return "If the plan does not contain a value, a default will be set using val."
 }
 
-func (d boolDefault) MarkdownDescription(ctx context.Context) string {
+func (d *defaultValueAttributePlanModifier) MarkdownDescription(ctx context.Context) string {
 	return "If the plan does not contain a value, a default will be set using `val`."
 }
 
-// Modify checks that the value of the attribute in the configuration and, if the attribute is Null, assigns the value
-// supplied to the boolDefault struct when it was initialised.
-func (d boolDefault) Modify(ctx context.Context, req tfsdk.ModifyAttributePlanRequest, resp *tfsdk.ModifyAttributePlanResponse) {
-	var t types.Bool
-	diags := tfsdk.ValueAs(ctx, req.AttributeConfig, &t)
-	resp.Diagnostics.Append(diags...)
-
-	if resp.Diagnostics.HasError() {
+// Modify checks that the value of the attribute in the configuration and the plan and only assigns the default value if
+// the value in the config is null or the value in the plan is not known, or is known but is null.
+func (d *defaultValueAttributePlanModifier) Modify(ctx context.Context, req tfsdk.ModifyAttributePlanRequest, resp *tfsdk.ModifyAttributePlanResponse) {
+	// TODO: Remove once attr.Value interface includes IsNull.
+	attribConfigValue, err := req.AttributeConfig.ToTerraformValue(ctx)
+	if err != nil {
+		resp.Diagnostics.AddError(
+			"Default value attribute plan modifier failed",
+			fmt.Sprintf("Unable to convert attribute config (%s) to terraform value: %s", req.AttributeConfig.Type(ctx).String(), err),
+		)
 		return
 	}
 
-	if t.Null {
-		resp.AttributePlan = types.Bool{
-			Value: d.val,
-		}
-	}
-}
-
-// defaultInt accepts an int64 and returns a struct that implements the AttributePlanModifier interface.
-func defaultInt(val int64) tfsdk.AttributePlanModifier {
-	return intDefault{val}
-}
-
-type intDefault struct {
-	val int64
-}
-
-func (d intDefault) Description(ctx context.Context) string {
-	return "If the plan does not contain a value, a default will be set using val."
-}
-
-func (d intDefault) MarkdownDescription(ctx context.Context) string {
-	return "If the plan does not contain a value, a default will be set using `val`."
-}
-
-// Modify checks that the value of the attribute in the configuration and, if the attribute is Null, assigns the value
-// supplied to the intDefault struct when it was initialised.
-func (d intDefault) Modify(ctx context.Context, req tfsdk.ModifyAttributePlanRequest, resp *tfsdk.ModifyAttributePlanResponse) {
-	var t types.Int64
-	diags := tfsdk.ValueAs(ctx, req.AttributeConfig, &t)
-	resp.Diagnostics.Append(diags...)
-
-	if resp.Diagnostics.HasError() {
+	// Do not set default if the attribute configuration has been set.
+	if !attribConfigValue.IsNull() {
 		return
 	}
 
-	if t.Null {
-		resp.AttributePlan = types.Int64{
-			Null:  false,
-			Value: d.val,
-		}
-	}
-}
-
-// defaultString accepts a string and returns a struct that implements the AttributePlanModifier interface.
-func defaultString(val string) tfsdk.AttributePlanModifier {
-	return stringDefault{val}
-}
-
-type stringDefault struct {
-	val string
-}
-
-func (d stringDefault) Description(ctx context.Context) string {
-	return "If the plan does not contain a value, a default will be set."
-}
-
-func (d stringDefault) MarkdownDescription(ctx context.Context) string {
-	return "If the plan does not contain a value, a default will be set."
-}
-
-// Modify checks that the value of the attribute in the configuration and, if the attribute is Null, assigns the value
-// supplied to the stringDefault struct when it was initialised.
-func (d stringDefault) Modify(ctx context.Context, req tfsdk.ModifyAttributePlanRequest, resp *tfsdk.ModifyAttributePlanResponse) {
-	var t types.String
-	diags := tfsdk.ValueAs(ctx, req.AttributeConfig, &t)
-	resp.Diagnostics.Append(diags...)
-
-	if resp.Diagnostics.HasError() {
+	// TODO: Remove once attr.Value interface includes IsUnknown.
+	attribPlanValue, err := req.AttributePlan.ToTerraformValue(ctx)
+	if err != nil {
+		resp.Diagnostics.AddError(
+			"Default value attribute plan modifier failed",
+			fmt.Sprintf("Unable to convert attribute plan %s to terraform value: %s", req.AttributePlan.Type(ctx).String(), err),
+		)
 		return
 	}
 
-	if t.Null {
-		resp.AttributePlan = types.String{
-			Null:  false,
-			Value: d.val,
-		}
+	// If the attribute plan is "known" and "not null", then a previous plan modifier in the sequence has already been
+	// applied and, we don't want to overwrite.
+	if attribPlanValue.IsKnown() && !attribPlanValue.IsNull() {
+		return
 	}
+
+	resp.AttributePlan = d.val
 }

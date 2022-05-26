@@ -43,7 +43,7 @@ func (r resourcePetType) GetSchema(context.Context) (tfsdk.Schema, diag.Diagnost
 				Computed:    true,
 				PlanModifiers: []tfsdk.AttributePlanModifier{
 					tfsdk.RequiresReplace(),
-					defaultInt(2),
+					newDefaultValueAttributePlanModifier(types.Int64{Value: 2}),
 				},
 			},
 			"prefix": {
@@ -59,7 +59,7 @@ func (r resourcePetType) GetSchema(context.Context) (tfsdk.Schema, diag.Diagnost
 				Computed:    true,
 				PlanModifiers: []tfsdk.AttributePlanModifier{
 					tfsdk.RequiresReplace(),
-					defaultString("-"),
+					newDefaultValueAttributePlanModifier(types.String{Value: "-"}),
 				},
 			},
 			"id": {

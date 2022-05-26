@@ -50,7 +50,7 @@ func passwordStringSchema() tfsdk.Schema {
 				Computed:    true,
 				PlanModifiers: []tfsdk.AttributePlanModifier{
 					tfsdk.RequiresReplace(),
-					defaultBool(true),
+					newDefaultValueAttributePlanModifier(types.Bool{Value: true}),
 				},
 			},
 
@@ -61,7 +61,7 @@ func passwordStringSchema() tfsdk.Schema {
 				Computed:    true,
 				PlanModifiers: []tfsdk.AttributePlanModifier{
 					tfsdk.RequiresReplace(),
-					defaultBool(true),
+					newDefaultValueAttributePlanModifier(types.Bool{Value: true}),
 				},
 			},
 
@@ -72,7 +72,7 @@ func passwordStringSchema() tfsdk.Schema {
 				Computed:    true,
 				PlanModifiers: []tfsdk.AttributePlanModifier{
 					tfsdk.RequiresReplace(),
-					defaultBool(true),
+					newDefaultValueAttributePlanModifier(types.Bool{Value: true}),
 				},
 			},
 
@@ -83,7 +83,7 @@ func passwordStringSchema() tfsdk.Schema {
 				Computed:    true,
 				PlanModifiers: []tfsdk.AttributePlanModifier{
 					tfsdk.RequiresReplace(),
-					defaultBool(true),
+					newDefaultValueAttributePlanModifier(types.Bool{Value: true}),
 				},
 			},
 
@@ -94,7 +94,7 @@ func passwordStringSchema() tfsdk.Schema {
 				Computed:    true,
 				PlanModifiers: []tfsdk.AttributePlanModifier{
 					tfsdk.RequiresReplace(),
-					defaultInt(0),
+					newDefaultValueAttributePlanModifier(types.Int64{Value: 0}),
 				},
 			},
 
@@ -105,7 +105,7 @@ func passwordStringSchema() tfsdk.Schema {
 				Computed:    true,
 				PlanModifiers: []tfsdk.AttributePlanModifier{
 					tfsdk.RequiresReplace(),
-					defaultInt(0),
+					newDefaultValueAttributePlanModifier(types.Int64{Value: 0}),
 				},
 			},
 
@@ -116,7 +116,7 @@ func passwordStringSchema() tfsdk.Schema {
 				Computed:    true,
 				PlanModifiers: []tfsdk.AttributePlanModifier{
 					tfsdk.RequiresReplace(),
-					defaultInt(0),
+					newDefaultValueAttributePlanModifier(types.Int64{Value: 0}),
 				},
 			},
 
@@ -127,7 +127,7 @@ func passwordStringSchema() tfsdk.Schema {
 				Computed:    true,
 				PlanModifiers: []tfsdk.AttributePlanModifier{
 					tfsdk.RequiresReplace(),
-					defaultInt(0),
+					newDefaultValueAttributePlanModifier(types.Int64{Value: 0}),
 				},
 			},
 
