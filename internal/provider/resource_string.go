@@ -8,6 +8,10 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
+// resourceString and resourcePassword both use the same set of CustomizeDiffFunc(s) in order to handle the deprecation
+// of the `number` attribute and the simultaneous addition of the `numeric` attribute. customDiffIfValue handles
+// ensuring that both `number` and `numeric` default to `true` when they are both absent from config.
+// customDiffIfValueChange handles keeping number and numeric in-sync when either one has been changed.
 func resourceString() *schema.Resource {
 	return &schema.Resource{
 		Description: "The resource `random_string` generates a random permutation of alphanumeric " +
@@ -39,8 +43,8 @@ func resourceString() *schema.Resource {
 		CustomizeDiff: customdiff.All(
 			customDiffIfValue("number"),
 			customDiffIfValue("numeric"),
-			customDiffIfValueChangeNumber(),
-			customDiffIfValueChangeNumeric(),
+			customDiffIfValueChange("number", "numeric"),
+			customDiffIfValueChange("numeric", "number"),
 		),
 	}
 }

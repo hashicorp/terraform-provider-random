@@ -340,6 +340,10 @@ func resourceStateUpgradeAddNumeric(resourceName string) func(_ context.Context,
 	}
 }
 
+// customDiffIfValue handles ensuring that both `number` and `numeric` attributes default to `true` when neither are set
+// in the config and, they had been previously set to `false`. This behaviour mimics setting `Default: true` on the
+// attributes. Usage of `Default` is avoided as `Default` cannot be used with CustomizeDiffFunc(s) which are required in
+// order to keep `number` and `numeric` in-sync (see customDiffIfValueChange).
 func customDiffIfValue(key string) func(context.Context, *schema.ResourceDiff, interface{}) error {
 	return customdiff.IfValue(
 		key,
@@ -363,26 +367,16 @@ func customDiffIfValue(key string) func(context.Context, *schema.ResourceDiff, i
 	)
 }
 
-func customDiffIfValueChangeNumber() func(context.Context, *schema.ResourceDiff, interface{}) error {
+// customDiffIfValueChange handles keeping `number` and `numeric` in-sync. If either is changed the value of both is
+// set to the new value of the attribute that has changed.
+func customDiffIfValueChange(key, keyToSync string) func(context.Context, *schema.ResourceDiff, interface{}) error {
 	return customdiff.IfValueChange(
-		"number",
+		key,
 		func(ctx context.Context, oldValue, newValue, meta interface{}) bool {
 			return oldValue != newValue
 		},
 		func(_ context.Context, d *schema.ResourceDiff, _ interface{}) error {
-			return d.SetNew("numeric", d.Get("number"))
-		},
-	)
-}
-
-func customDiffIfValueChangeNumeric() func(context.Context, *schema.ResourceDiff, interface{}) error {
-	return customdiff.IfValueChange(
-		"numeric",
-		func(ctx context.Context, oldValue, newValue, meta interface{}) bool {
-			return oldValue != newValue
-		},
-		func(_ context.Context, d *schema.ResourceDiff, _ interface{}) error {
-			return d.SetNew("number", d.Get("numeric"))
+			return d.SetNew(keyToSync, d.Get(key))
 		},
 	)
 }

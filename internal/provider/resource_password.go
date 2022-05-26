@@ -10,6 +10,10 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
+// resourcePassword and resourceString both use the same set of CustomizeDiffFunc(s) in order to handle the deprecation
+// of the `number` attribute and the simultaneous addition of the `numeric` attribute. customDiffIfValue handles
+// ensuring that both `number` and `numeric` default to `true` when they are both absent from config.
+// customDiffIfValueChange handles keeping number and numeric in-sync when either one has been changed.
 func resourcePassword() *schema.Resource {
 	return &schema.Resource{
 		Description: "Identical to [random_string](string.html) with the exception that the result is " +
@@ -40,8 +44,8 @@ func resourcePassword() *schema.Resource {
 		CustomizeDiff: customdiff.All(
 			customDiffIfValue("number"),
 			customDiffIfValue("numeric"),
-			customDiffIfValueChangeNumber(),
-			customDiffIfValueChangeNumeric(),
+			customDiffIfValueChange("number", "numeric"),
+			customDiffIfValueChange("numeric", "number"),
 		),
 	}
 }
