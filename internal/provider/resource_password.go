@@ -53,9 +53,28 @@ func (r resourcePassword) UpgradeState(context.Context) map[int64]tfsdk.Resource
 	return map[int64]tfsdk.ResourceStateUpgrader{
 		0: {
 			PriorSchema:   &passwordSchemaV0,
-			StateUpgrader: migratePasswordStateV0toV1,
+			StateUpgrader: migratePasswordStateV0toV2,
 		},
 	}
+}
+
+func getPasswordSchemaV2() tfsdk.Schema {
+	passwordSchema := getPasswordSchemaV1()
+
+	passwordSchema.Attributes["numeric"] = tfsdk.Attribute{
+		Description: "Include numeric characters in the result. Default value is `true`.",
+		Type:        types.BoolType,
+		Optional:    true,
+		Computed:    true,
+		PlanModifiers: []tfsdk.AttributePlanModifier{
+			tfsdk.RequiresReplace(),
+			newDefaultValueAttributePlanModifier(types.Bool{Value: true}),
+		},
+	}
+
+	passwordSchema.Version = 2
+
+	return passwordSchema
 }
 
 func getPasswordSchemaV1() tfsdk.Schema {
@@ -179,7 +198,7 @@ func importPassword(ctx context.Context, req tfsdk.ImportResourceStateRequest, r
 	}
 }
 
-func migratePasswordStateV0toV1(ctx context.Context, req tfsdk.UpgradeResourceStateRequest, resp *tfsdk.UpgradeResourceStateResponse) {
+func migratePasswordStateV0toV2(ctx context.Context, req tfsdk.UpgradeResourceStateRequest, resp *tfsdk.UpgradeResourceStateResponse) {
 	var passwordDataV0 PasswordModelV0
 
 	resp.Diagnostics.Append(req.State.Get(ctx, &passwordDataV0)...)
@@ -187,13 +206,14 @@ func migratePasswordStateV0toV1(ctx context.Context, req tfsdk.UpgradeResourceSt
 		return
 	}
 
-	passwordDataV1 := PasswordModelV1{
+	passwordDataV2 := PasswordModelV2{
 		Keepers:         passwordDataV0.Keepers,
 		Length:          passwordDataV0.Length,
 		Special:         passwordDataV0.Special,
 		Upper:           passwordDataV0.Upper,
 		Lower:           passwordDataV0.Lower,
 		Number:          passwordDataV0.Number,
+		Numeric:         passwordDataV0.Number,
 		MinNumeric:      passwordDataV0.MinNumeric,
 		MinLower:        passwordDataV0.MinLower,
 		MinSpecial:      passwordDataV0.MinSpecial,
@@ -202,15 +222,16 @@ func migratePasswordStateV0toV1(ctx context.Context, req tfsdk.UpgradeResourceSt
 		ID:              passwordDataV0.ID,
 	}
 
-	hash, err := generateHash(passwordDataV1.Result.Value)
+	hash, err := generateHash(passwordDataV2.Result.Value)
 	if err != nil {
 		resp.Diagnostics.Append(hashGenerationError(err.Error())...)
 		return
 	}
 
-	passwordDataV1.BcryptHash.Value = hash
+	passwordDataV2.BcryptHash.Value = hash
 
-	resp.Diagnostics.Append(resp.State.Set(ctx, passwordDataV1)...)
+	diags := resp.State.Set(ctx, passwordDataV2)
+	resp.Diagnostics.Append(diags...)
 }
 
 func generateHash(toHash string) (string, error) {

@@ -22,6 +22,24 @@ type IntegerModel struct {
 	Result  types.Int64  `tfsdk:"result"`
 }
 
+type PasswordModelV2 struct {
+	ID              types.String `tfsdk:"id"`
+	Keepers         types.Map    `tfsdk:"keepers"`
+	Length          types.Int64  `tfsdk:"length"`
+	Special         types.Bool   `tfsdk:"special"`
+	Upper           types.Bool   `tfsdk:"upper"`
+	Lower           types.Bool   `tfsdk:"lower"`
+	Number          types.Bool   `tfsdk:"number"`
+	Numeric         types.Bool   `tfsdk:"numeric"`
+	MinNumeric      types.Int64  `tfsdk:"min_numeric"`
+	MinUpper        types.Int64  `tfsdk:"min_upper"`
+	MinLower        types.Int64  `tfsdk:"min_lower"`
+	MinSpecial      types.Int64  `tfsdk:"min_special"`
+	OverrideSpecial types.String `tfsdk:"override_special"`
+	Result          types.String `tfsdk:"result"`
+	BcryptHash      types.String `tfsdk:"bcrypt_hash"`
+}
+
 type PasswordModelV1 struct {
 	ID              types.String `tfsdk:"id"`
 	Keepers         types.Map    `tfsdk:"keepers"`

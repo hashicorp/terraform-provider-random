@@ -133,13 +133,13 @@ func TestMigratePasswordStateV0toV1(t *testing.T) {
 
 	resp := &tfsdk.UpgradeResourceStateResponse{
 		State: tfsdk.State{
-			Schema: getPasswordSchemaV1(),
+			Schema: getPasswordSchemaV2(),
 		},
 	}
 
-	migratePasswordStateV0toV1(context.Background(), req, resp)
+	migratePasswordStateV0toV2(context.Background(), req, resp)
 
-	expected := PasswordModelV1{
+	expected := PasswordModelV2{
 		ID:              types.String{Value: "none"},
 		Keepers:         types.Map{Null: true, ElemType: types.StringType},
 		Length:          types.Int64{Value: 16},
@@ -147,6 +147,7 @@ func TestMigratePasswordStateV0toV1(t *testing.T) {
 		Upper:           types.Bool{Value: true},
 		Lower:           types.Bool{Value: true},
 		Number:          types.Bool{Value: true},
+		Numeric:         types.Bool{Value: true},
 		MinNumeric:      types.Int64{Value: 0},
 		MinUpper:        types.Int64{Value: 0},
 		MinLower:        types.Int64{Value: 0},
@@ -155,8 +156,11 @@ func TestMigratePasswordStateV0toV1(t *testing.T) {
 		Result:          types.String{Value: "DZy_3*tnonj%Q%Yx"},
 	}
 
-	actual := PasswordModelV1{}
-	resp.State.Get(context.Background(), &actual)
+	actual := PasswordModelV2{}
+	diags := resp.State.Get(context.Background(), &actual)
+	if diags.HasError() {
+		t.Errorf("error getting state: %v", diags)
+	}
 
 	err := bcrypt.CompareHashAndPassword([]byte(actual.BcryptHash.Value), []byte(actual.Result.Value))
 	if err != nil {
