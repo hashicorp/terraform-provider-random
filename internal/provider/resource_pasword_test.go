@@ -107,7 +107,7 @@ func TestAccResourcePasswordMin(t *testing.T) {
 	})
 }
 
-func TestMigratePasswordStateV0toV1(t *testing.T) {
+func TestMigratePasswordStateV0toV2(t *testing.T) {
 	raw := tftypes.NewValue(tftypes.Object{}, map[string]tftypes.Value{
 		"id":               tftypes.NewValue(tftypes.String, "none"),
 		"keepers":          tftypes.NewValue(tftypes.Map{ElementType: tftypes.String}, nil),
@@ -169,6 +169,68 @@ func TestMigratePasswordStateV0toV1(t *testing.T) {
 
 	// Setting actual.BcryptHash to zero value to allow direct comparison of expected and actual.
 	actual.BcryptHash = types.String{}
+
+	if !cmp.Equal(expected, actual) {
+		t.Errorf("expected: %+v, got: %+v", expected, actual)
+	}
+}
+
+func TestMigratePasswordStateV1toV2(t *testing.T) {
+	raw := tftypes.NewValue(tftypes.Object{}, map[string]tftypes.Value{
+		"id":               tftypes.NewValue(tftypes.String, "none"),
+		"keepers":          tftypes.NewValue(tftypes.Map{ElementType: tftypes.String}, nil),
+		"length":           tftypes.NewValue(tftypes.Number, 16),
+		"lower":            tftypes.NewValue(tftypes.Bool, true),
+		"min_lower":        tftypes.NewValue(tftypes.Number, 0),
+		"min_numeric":      tftypes.NewValue(tftypes.Number, 0),
+		"min_special":      tftypes.NewValue(tftypes.Number, 0),
+		"min_upper":        tftypes.NewValue(tftypes.Number, 0),
+		"number":           tftypes.NewValue(tftypes.Bool, true),
+		"override_special": tftypes.NewValue(tftypes.String, "!#$%\u0026*()-_=+[]{}\u003c\u003e:?"),
+		"result":           tftypes.NewValue(tftypes.String, "DZy_3*tnonj%Q%Yx"),
+		"special":          tftypes.NewValue(tftypes.Bool, true),
+		"upper":            tftypes.NewValue(tftypes.Bool, true),
+		"bcrypt_hash":      tftypes.NewValue(tftypes.String, "bcrypt_hash"),
+	})
+
+	req := tfsdk.UpgradeResourceStateRequest{
+		State: &tfsdk.State{
+			Raw:    raw,
+			Schema: getPasswordSchemaV1(),
+		},
+	}
+
+	resp := &tfsdk.UpgradeResourceStateResponse{
+		State: tfsdk.State{
+			Schema: getPasswordSchemaV2(),
+		},
+	}
+
+	migratePasswordStateV1toV2(context.Background(), req, resp)
+
+	expected := PasswordModelV2{
+		ID:              types.String{Value: "none"},
+		Keepers:         types.Map{Null: true, ElemType: types.StringType},
+		Length:          types.Int64{Value: 16},
+		Special:         types.Bool{Value: true},
+		Upper:           types.Bool{Value: true},
+		Lower:           types.Bool{Value: true},
+		Number:          types.Bool{Value: true},
+		Numeric:         types.Bool{Value: true},
+		MinNumeric:      types.Int64{Value: 0},
+		MinUpper:        types.Int64{Value: 0},
+		MinLower:        types.Int64{Value: 0},
+		MinSpecial:      types.Int64{Value: 0},
+		OverrideSpecial: types.String{Value: "!#$%\u0026*()-_=+[]{}\u003c\u003e:?"},
+		BcryptHash:      types.String{Value: "bcrypt_hash"},
+		Result:          types.String{Value: "DZy_3*tnonj%Q%Yx"},
+	}
+
+	actual := PasswordModelV2{}
+	diags := resp.State.Get(context.Background(), &actual)
+	if diags.HasError() {
+		t.Errorf("error getting state: %v", diags)
+	}
 
 	if !cmp.Equal(expected, actual) {
 		t.Errorf("expected: %+v, got: %+v", expected, actual)

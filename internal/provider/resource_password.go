@@ -49,11 +49,16 @@ func (r resourcePassword) ImportState(ctx context.Context, req tfsdk.ImportResou
 
 func (r resourcePassword) UpgradeState(context.Context) map[int64]tfsdk.ResourceStateUpgrader {
 	passwordSchemaV0 := getPasswordSchemaV0()
+	passwordSchemaV1 := getPasswordSchemaV1()
 
 	return map[int64]tfsdk.ResourceStateUpgrader{
 		0: {
 			PriorSchema:   &passwordSchemaV0,
 			StateUpgrader: migratePasswordStateV0toV2,
+		},
+		1: {
+			PriorSchema:   &passwordSchemaV1,
+			StateUpgrader: migratePasswordStateV1toV2,
 		},
 	}
 }
@@ -229,6 +234,35 @@ func migratePasswordStateV0toV2(ctx context.Context, req tfsdk.UpgradeResourceSt
 	}
 
 	passwordDataV2.BcryptHash.Value = hash
+
+	diags := resp.State.Set(ctx, passwordDataV2)
+	resp.Diagnostics.Append(diags...)
+}
+
+func migratePasswordStateV1toV2(ctx context.Context, req tfsdk.UpgradeResourceStateRequest, resp *tfsdk.UpgradeResourceStateResponse) {
+	var passwordDataV1 PasswordModelV1
+
+	resp.Diagnostics.Append(req.State.Get(ctx, &passwordDataV1)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	passwordDataV2 := PasswordModelV2{
+		Keepers:         passwordDataV1.Keepers,
+		Length:          passwordDataV1.Length,
+		Special:         passwordDataV1.Special,
+		Upper:           passwordDataV1.Upper,
+		Lower:           passwordDataV1.Lower,
+		Number:          passwordDataV1.Number,
+		Numeric:         passwordDataV1.Number,
+		MinNumeric:      passwordDataV1.MinNumeric,
+		MinLower:        passwordDataV1.MinLower,
+		MinSpecial:      passwordDataV1.MinSpecial,
+		OverrideSpecial: passwordDataV1.OverrideSpecial,
+		BcryptHash:      passwordDataV1.BcryptHash,
+		Result:          passwordDataV1.Result,
+		ID:              passwordDataV1.ID,
+	}
 
 	diags := resp.State.Set(ctx, passwordDataV2)
 	resp.Diagnostics.Append(diags...)
