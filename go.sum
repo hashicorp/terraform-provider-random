@@ -167,7 +167,12 @@ github.com/hashicorp/terraform-plugin-sdk/v2 v2.17.0/go.mod h1:b+LFg8WpYgFgvEBP/
 =======
 github.com/hashicorp/terraform-plugin-sdk/v2 v2.16.1-0.20220526194717-a8e255aecae2 h1:yuFvcxHuK6DI6nCzPN1Z+a5jedtIZA+14BFAEC5nY1w=
 github.com/hashicorp/terraform-plugin-sdk/v2 v2.16.1-0.20220526194717-a8e255aecae2/go.mod h1:b+LFg8WpYgFgvEBP/6Htk5H9/pJp1V1E8NJAekfH2Ws=
+<<<<<<< HEAD
 >>>>>>> 8bf6993 (Temporarily using sdk/v2 sha to use ExternalProviders in TestStep)
+=======
+github.com/hashicorp/terraform-plugin-sdk/v2 v2.16.1-0.20220527155737-8a0031d0a59f h1:VXOO0M6G+Up71Meb8QaIiPYcO2nLU9OQwU+amxynwMQ=
+github.com/hashicorp/terraform-plugin-sdk/v2 v2.16.1-0.20220527155737-8a0031d0a59f/go.mod h1:b+LFg8WpYgFgvEBP/6Htk5H9/pJp1V1E8NJAekfH2Ws=
+>>>>>>> 1ba96af (Bumping SDK version to use ExternalProviders in TestStep fix and adding test to verify behaviour)
 github.com/hashicorp/terraform-registry-address v0.0.0-20210412075316-9b2996cce896 h1:1FGtlkJw87UsTMg5s8jrekrHmUPUJaMcu6ELiVhQrNw=
 github.com/hashicorp/terraform-registry-address v0.0.0-20210412075316-9b2996cce896/go.mod h1:bzBPnUIkI0RxauU8Dqo+2KrZZ28Cf48s8V6IHt3p4co=
 github.com/hashicorp/terraform-svchost v0.0.0-20200729002733-f050f53b9734 h1:HKLsbzeOsfXmKNpr3GiT18XAblV0BjCbzL8KQAMZGa0=

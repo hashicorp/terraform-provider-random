@@ -171,21 +171,22 @@ func TestAccResourcePassword_V0ToV2(t *testing.T) {
 					VersionConstraint: "3.1.3",
 					Source:            "hashicorp/random",
 				}},
-				Config: `terraform {
-							required_providers {
-								random = {
-									source = "hashicorp/random"
-									version = "3.1.3"
-								}
-							}
-						}
-						provider "random" {}
-						resource "random_password" "default" {
+				Config: `resource "random_password" "default" {
+							length = 12
+						}`,
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckNoResourceAttr("random_password.default", "bcrypt_hash"),
+					resource.TestCheckNoResourceAttr("random_password.default", "numeric"),
+				),
+			},
+			{
+				ProviderFactories: testAccProviders,
+				Config: `resource "random_password" "default" {
 							length = 12
 						}`,
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttrSet("random_password.default", "bcrypt_hash"),
-					resource.TestCheckResourceAttrSet("random_password.default", "numeric"),
+					resource.TestCheckResourceAttrPair("random_password.default", "number", "random_password.default", "numeric"),
 				),
 			},
 		},
