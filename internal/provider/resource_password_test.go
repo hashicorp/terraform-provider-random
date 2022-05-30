@@ -193,6 +193,217 @@ func TestAccResourcePassword_V0ToV2(t *testing.T) {
 	})
 }
 
+func TestAccResourcePassword_V0ToV2_NumberAndNumeric(t *testing.T) {
+	t.Parallel()
+
+	cases := []struct {
+		name                string
+		configBeforeUpgrade string
+		configDuringUpgrade string
+		beforeStateUpgrade  []resource.TestCheckFunc
+		afterStateUpgrade   []resource.TestCheckFunc
+	}{
+		{
+			name: "number is absent",
+			configBeforeUpgrade: `resource "random_password" "default" {
+						length = 12
+					}`,
+			beforeStateUpgrade: []resource.TestCheckFunc{
+				resource.TestCheckResourceAttrSet("random_password.default", "number"),
+				resource.TestCheckResourceAttr("random_password.default", "number", "true"),
+				resource.TestCheckNoResourceAttr("random_password.default", "numeric"),
+			},
+			afterStateUpgrade: []resource.TestCheckFunc{
+				resource.TestCheckResourceAttrSet("random_password.default", "number"),
+				resource.TestCheckResourceAttr("random_password.default", "number", "true"),
+				resource.TestCheckResourceAttrPair("random_password.default", "number", "random_password.default", "numeric"),
+			},
+		},
+		{
+			name: "number is absent then true",
+			configBeforeUpgrade: `resource "random_password" "default" {
+						length = 12
+					}`,
+			configDuringUpgrade: `resource "random_password" "default" {
+						length = 12
+						number = true
+					}`,
+			beforeStateUpgrade: []resource.TestCheckFunc{
+				resource.TestCheckResourceAttrSet("random_password.default", "number"),
+				resource.TestCheckResourceAttr("random_password.default", "number", "true"),
+				resource.TestCheckNoResourceAttr("random_password.default", "numeric"),
+			},
+			afterStateUpgrade: []resource.TestCheckFunc{
+				resource.TestCheckResourceAttrSet("random_password.default", "number"),
+				resource.TestCheckResourceAttr("random_password.default", "number", "true"),
+				resource.TestCheckResourceAttrPair("random_password.default", "number", "random_password.default", "numeric"),
+			},
+		},
+		{
+			name: "number is absent then false",
+			configBeforeUpgrade: `resource "random_password" "default" {
+						length = 12
+					}`,
+			configDuringUpgrade: `resource "random_password" "default" {
+						length = 12
+						number = false
+					}`,
+			beforeStateUpgrade: []resource.TestCheckFunc{
+				resource.TestCheckResourceAttrSet("random_password.default", "number"),
+				resource.TestCheckResourceAttr("random_password.default", "number", "true"),
+				resource.TestCheckNoResourceAttr("random_password.default", "numeric"),
+			},
+			afterStateUpgrade: []resource.TestCheckFunc{
+				resource.TestCheckResourceAttrSet("random_password.default", "number"),
+				resource.TestCheckResourceAttr("random_password.default", "number", "false"),
+				resource.TestCheckResourceAttrPair("random_password.default", "number", "random_password.default", "numeric"),
+			},
+		},
+		{
+			name: "number is true",
+			configBeforeUpgrade: `resource "random_password" "default" {
+						length = 12
+						number = true
+					}`,
+			beforeStateUpgrade: []resource.TestCheckFunc{
+				resource.TestCheckResourceAttrSet("random_password.default", "number"),
+				resource.TestCheckResourceAttr("random_password.default", "number", "true"),
+				resource.TestCheckNoResourceAttr("random_password.default", "numeric"),
+			},
+			afterStateUpgrade: []resource.TestCheckFunc{
+				resource.TestCheckResourceAttrSet("random_password.default", "number"),
+				resource.TestCheckResourceAttr("random_password.default", "number", "true"),
+				resource.TestCheckResourceAttrPair("random_password.default", "number", "random_password.default", "numeric"),
+			},
+		},
+		{
+			name: "number is true then absent",
+			configBeforeUpgrade: `resource "random_password" "default" {
+						length = 12
+						number = true
+					}`,
+			configDuringUpgrade: `resource "random_password" "default" {
+						length = 12
+					}`,
+			beforeStateUpgrade: []resource.TestCheckFunc{
+				resource.TestCheckResourceAttrSet("random_password.default", "number"),
+				resource.TestCheckResourceAttr("random_password.default", "number", "true"),
+				resource.TestCheckNoResourceAttr("random_password.default", "numeric"),
+			},
+			afterStateUpgrade: []resource.TestCheckFunc{
+				resource.TestCheckResourceAttrSet("random_password.default", "number"),
+				resource.TestCheckResourceAttr("random_password.default", "number", "true"),
+				resource.TestCheckResourceAttrPair("random_password.default", "number", "random_password.default", "numeric"),
+			},
+		},
+		{
+			name: "number is true then false",
+			configBeforeUpgrade: `resource "random_password" "default" {
+						length = 12
+						number = true
+					}`,
+			configDuringUpgrade: `resource "random_password" "default" {
+						length = 12
+						number = false
+					}`,
+			beforeStateUpgrade: []resource.TestCheckFunc{
+				resource.TestCheckResourceAttrSet("random_password.default", "number"),
+				resource.TestCheckResourceAttr("random_password.default", "number", "true"),
+				resource.TestCheckNoResourceAttr("random_password.default", "numeric"),
+			},
+			afterStateUpgrade: []resource.TestCheckFunc{
+				resource.TestCheckResourceAttrSet("random_password.default", "number"),
+				resource.TestCheckResourceAttr("random_password.default", "number", "false"),
+				resource.TestCheckResourceAttrPair("random_password.default", "number", "random_password.default", "numeric"),
+			},
+		},
+		{
+			name: "number is false",
+			configBeforeUpgrade: `resource "random_password" "default" {
+						length = 12
+						number = false
+					}`,
+			beforeStateUpgrade: []resource.TestCheckFunc{
+				resource.TestCheckResourceAttrSet("random_password.default", "number"),
+				resource.TestCheckResourceAttr("random_password.default", "number", "false"),
+				resource.TestCheckNoResourceAttr("random_password.default", "numeric"),
+			},
+			afterStateUpgrade: []resource.TestCheckFunc{
+				resource.TestCheckResourceAttrSet("random_password.default", "number"),
+				resource.TestCheckResourceAttr("random_password.default", "number", "false"),
+				resource.TestCheckResourceAttrPair("random_password.default", "number", "random_password.default", "numeric"),
+			},
+		},
+		{
+			name: "number is false then absent",
+			configBeforeUpgrade: `resource "random_password" "default" {
+						length = 12
+						number = false
+					}`,
+			configDuringUpgrade: `resource "random_password" "default" {
+						length = 12
+					}`,
+			beforeStateUpgrade: []resource.TestCheckFunc{
+				resource.TestCheckResourceAttrSet("random_password.default", "number"),
+				resource.TestCheckResourceAttr("random_password.default", "number", "false"),
+				resource.TestCheckNoResourceAttr("random_password.default", "numeric"),
+			},
+			afterStateUpgrade: []resource.TestCheckFunc{
+				resource.TestCheckResourceAttrSet("random_password.default", "number"),
+				resource.TestCheckResourceAttr("random_password.default", "number", "true"),
+				resource.TestCheckResourceAttrPair("random_password.default", "number", "random_password.default", "numeric"),
+			},
+		},
+		{
+			name: "number is false then true",
+			configBeforeUpgrade: `resource "random_password" "default" {
+						length = 12
+						number = false
+					}`,
+			configDuringUpgrade: `resource "random_password" "default" {
+						length = 12
+						number = true
+					}`,
+			beforeStateUpgrade: []resource.TestCheckFunc{
+				resource.TestCheckResourceAttrSet("random_password.default", "number"),
+				resource.TestCheckResourceAttr("random_password.default", "number", "false"),
+				resource.TestCheckNoResourceAttr("random_password.default", "numeric"),
+			},
+			afterStateUpgrade: []resource.TestCheckFunc{
+				resource.TestCheckResourceAttrSet("random_password.default", "number"),
+				resource.TestCheckResourceAttr("random_password.default", "number", "true"),
+				resource.TestCheckResourceAttrPair("random_password.default", "number", "random_password.default", "numeric"),
+			},
+		},
+	}
+
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			if c.configDuringUpgrade == "" {
+				c.configDuringUpgrade = c.configBeforeUpgrade
+			}
+
+			resource.UnitTest(t, resource.TestCase{
+				Steps: []resource.TestStep{
+					{
+						ExternalProviders: map[string]resource.ExternalProvider{"random": {
+							VersionConstraint: "3.1.3",
+							Source:            "hashicorp/random",
+						}},
+						Config: c.configBeforeUpgrade,
+						Check:  resource.ComposeTestCheckFunc(c.beforeStateUpgrade...),
+					},
+					{
+						ProviderFactories: testAccProviders,
+						Config:            c.configDuringUpgrade,
+						Check:             resource.ComposeTestCheckFunc(c.afterStateUpgrade...),
+					},
+				},
+			})
+		})
+	}
+}
+
 func TestResourcePasswordStateUpgradeV0(t *testing.T) {
 	cases := []struct {
 		name            string
