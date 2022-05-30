@@ -162,11 +162,12 @@ func TestAccResourcePassword_UpdateNumberAndNumeric(t *testing.T) {
 	})
 }
 
-// TestAccResourcePassword_V0ToV2 covers the addition of bcrypt_hash and numeric attributes
-func TestAccResourcePassword_V0ToV2(t *testing.T) {
+// TestAccResourcePassword_StateUpgraders covers the state upgrades from v0 to V2 and V1 to V2.
+// This includes the addition of bcrypt_hash and numeric attributes.
+func TestAccResourcePassword_StateUpgraders(t *testing.T) {
 	t.Parallel()
 
-	cases := []struct {
+	v1Cases := []struct {
 		name                string
 		configBeforeUpgrade string
 		configDuringUpgrade string
@@ -174,19 +175,7 @@ func TestAccResourcePassword_V0ToV2(t *testing.T) {
 		afterStateUpgrade   []resource.TestCheckFunc
 	}{
 		{
-			name: "bcrypt_hash",
-			configBeforeUpgrade: `resource "random_password" "default" {
-						length = 12
-					}`,
-			beforeStateUpgrade: []resource.TestCheckFunc{
-				resource.TestCheckNoResourceAttr("random_password.default", "bcrypt_hash"),
-			},
-			afterStateUpgrade: []resource.TestCheckFunc{
-				resource.TestCheckResourceAttrSet("random_password.default", "bcrypt_hash"),
-			},
-		},
-		{
-			name: "number is absent",
+			name: "%s number is absent",
 			configBeforeUpgrade: `resource "random_password" "default" {
 						length = 12
 					}`,
@@ -202,7 +191,7 @@ func TestAccResourcePassword_V0ToV2(t *testing.T) {
 			},
 		},
 		{
-			name: "number is absent then true",
+			name: "%s number is absent then true",
 			configBeforeUpgrade: `resource "random_password" "default" {
 						length = 12
 					}`,
@@ -222,7 +211,7 @@ func TestAccResourcePassword_V0ToV2(t *testing.T) {
 			},
 		},
 		{
-			name: "number is absent then false",
+			name: "%s number is absent then false",
 			configBeforeUpgrade: `resource "random_password" "default" {
 						length = 12
 					}`,
@@ -242,7 +231,7 @@ func TestAccResourcePassword_V0ToV2(t *testing.T) {
 			},
 		},
 		{
-			name: "number is true",
+			name: "%s number is true",
 			configBeforeUpgrade: `resource "random_password" "default" {
 						length = 12
 						number = true
@@ -259,7 +248,7 @@ func TestAccResourcePassword_V0ToV2(t *testing.T) {
 			},
 		},
 		{
-			name: "number is true then absent",
+			name: "%s number is true then absent",
 			configBeforeUpgrade: `resource "random_password" "default" {
 						length = 12
 						number = true
@@ -279,7 +268,7 @@ func TestAccResourcePassword_V0ToV2(t *testing.T) {
 			},
 		},
 		{
-			name: "number is true then false",
+			name: "%s number is true then false",
 			configBeforeUpgrade: `resource "random_password" "default" {
 						length = 12
 						number = true
@@ -300,7 +289,7 @@ func TestAccResourcePassword_V0ToV2(t *testing.T) {
 			},
 		},
 		{
-			name: "number is false",
+			name: "%s number is false",
 			configBeforeUpgrade: `resource "random_password" "default" {
 						length = 12
 						number = false
@@ -317,7 +306,7 @@ func TestAccResourcePassword_V0ToV2(t *testing.T) {
 			},
 		},
 		{
-			name: "number is false then absent",
+			name: "%s number is false then absent",
 			configBeforeUpgrade: `resource "random_password" "default" {
 						length = 12
 						number = false
@@ -337,7 +326,7 @@ func TestAccResourcePassword_V0ToV2(t *testing.T) {
 			},
 		},
 		{
-			name: "number is false then true",
+			name: "%s number is false then true",
 			configBeforeUpgrade: `resource "random_password" "default" {
 						length = 12
 						number = false
@@ -359,30 +348,64 @@ func TestAccResourcePassword_V0ToV2(t *testing.T) {
 		},
 	}
 
-	for _, c := range cases {
-		t.Run(c.name, func(t *testing.T) {
-			if c.configDuringUpgrade == "" {
-				c.configDuringUpgrade = c.configBeforeUpgrade
-			}
+	v0Cases := v1Cases
+	v0Cases = append(v0Cases, struct {
+		name                string
+		configBeforeUpgrade string
+		configDuringUpgrade string
+		beforeStateUpgrade  []resource.TestCheckFunc
+		afterStateUpgrade   []resource.TestCheckFunc
+	}{
+		name: "%s bcrypt_hash",
+		configBeforeUpgrade: `resource "random_password" "default" {
+						length = 12
+					}`,
+		beforeStateUpgrade: []resource.TestCheckFunc{
+			resource.TestCheckNoResourceAttr("random_password.default", "bcrypt_hash"),
+		},
+		afterStateUpgrade: []resource.TestCheckFunc{
+			resource.TestCheckResourceAttrSet("random_password.default", "bcrypt_hash"),
+		},
+	})
 
-			resource.UnitTest(t, resource.TestCase{
-				Steps: []resource.TestStep{
-					{
-						ExternalProviders: map[string]resource.ExternalProvider{"random": {
-							VersionConstraint: "3.1.3",
-							Source:            "hashicorp/random",
-						}},
-						Config: c.configBeforeUpgrade,
-						Check:  resource.ComposeTestCheckFunc(c.beforeStateUpgrade...),
+	cases := map[string][]struct {
+		name                string
+		configBeforeUpgrade string
+		configDuringUpgrade string
+		beforeStateUpgrade  []resource.TestCheckFunc
+		afterStateUpgrade   []resource.TestCheckFunc
+	}{
+		"3.1.3": v0Cases,
+		"3.2.0": v1Cases,
+	}
+
+	for providerVersion, v := range cases {
+		for _, c := range v {
+			name := fmt.Sprintf(c.name, providerVersion)
+			t.Run(name, func(t *testing.T) {
+				if c.configDuringUpgrade == "" {
+					c.configDuringUpgrade = c.configBeforeUpgrade
+				}
+
+				resource.UnitTest(t, resource.TestCase{
+					Steps: []resource.TestStep{
+						{
+							ExternalProviders: map[string]resource.ExternalProvider{"random": {
+								VersionConstraint: providerVersion,
+								Source:            "hashicorp/random",
+							}},
+							Config: c.configBeforeUpgrade,
+							Check:  resource.ComposeTestCheckFunc(c.beforeStateUpgrade...),
+						},
+						{
+							ProviderFactories: testAccProviders,
+							Config:            c.configDuringUpgrade,
+							Check:             resource.ComposeTestCheckFunc(c.afterStateUpgrade...),
+						},
 					},
-					{
-						ProviderFactories: testAccProviders,
-						Config:            c.configDuringUpgrade,
-						Check:             resource.ComposeTestCheckFunc(c.afterStateUpgrade...),
-					},
-				},
+				})
 			})
-		})
+		}
 	}
 }
 
