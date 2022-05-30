@@ -9,6 +9,7 @@ import (
 	"github.com/google/go-cmp/cmp"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
+	"golang.org/x/crypto/bcrypt"
 )
 
 func TestAccResourcePasswordBasic(t *testing.T) {
@@ -412,9 +413,11 @@ func TestResourcePasswordStateUpgradeV0(t *testing.T) {
 			actualStateV1, err := resourcePasswordStateUpgradeV0(context.Background(), c.stateV0, nil)
 
 			if c.shouldError {
+				// Check error msg
 				if !cmp.Equal(c.errMsg, err.Error()) {
 					t.Errorf("expected: %q, got: %q", c.errMsg, err)
 				}
+				// Check actualStateV1 is nil
 				if !cmp.Equal(c.expectedStateV1, actualStateV1) {
 					t.Errorf("expected: %+v, got: %+v", c.expectedStateV1, err)
 				}
@@ -423,11 +426,18 @@ func TestResourcePasswordStateUpgradeV0(t *testing.T) {
 					t.Errorf("err should be nil, actual: %v", err)
 				}
 
-				for k := range c.expectedStateV1 {
-					_, ok := actualStateV1[k]
-					if !ok {
-						t.Errorf("expected key: %s is missing from state", k)
-					}
+				// Compare bcrypt_hash with plaintext equivalent to verify match
+				bcryptHash := actualStateV1["bcrypt_hash"]
+				err := bcrypt.CompareHashAndPassword([]byte(bcryptHash.(string)), []byte(c.stateV0["result"].(string)))
+				if err != nil {
+					t.Error("hash and password do not match")
+				}
+
+				// Delete bcrypt_hash from actualStateV1 and expectedStateV1 so can compare
+				delete(actualStateV1, "bcrypt_hash")
+				delete(c.expectedStateV1, "bcrypt_hash")
+				if !cmp.Equal(actualStateV1, c.expectedStateV1) {
+					t.Errorf("expected: %v, got: %v", c.expectedStateV1, actualStateV1)
 				}
 			}
 		})
@@ -472,11 +482,8 @@ func TestResourcePasswordStateUpgradeV1(t *testing.T) {
 					t.Errorf("err should be nil, actual: %v", err)
 				}
 
-				for k := range c.expectedStateV2 {
-					_, ok := actualStateV2[k]
-					if !ok {
-						t.Errorf("expected key: %s is missing from state", k)
-					}
+				if !cmp.Equal(actualStateV2, c.expectedStateV2) {
+					t.Errorf("expected: %v, got: %v", c.expectedStateV2, actualStateV2)
 				}
 			}
 		})
