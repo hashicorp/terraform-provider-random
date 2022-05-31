@@ -12,7 +12,7 @@ require (
 	golang.org/x/crypto v0.0.0-20220525230936-793ad666bf5e
 =======
 	github.com/hashicorp/terraform-plugin-docs v0.8.1
-	github.com/hashicorp/terraform-plugin-sdk/v2 v2.16.1-0.20220527155737-8a0031d0a59f
+	github.com/hashicorp/terraform-plugin-sdk/v2 v2.17.0
 	golang.org/x/crypto v0.0.0-20210616213533-5ff15b29337e
 >>>>>>> 8bf6993 (Temporarily using sdk/v2 sha to use ExternalProviders in TestStep)
 )
