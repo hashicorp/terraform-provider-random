@@ -2,6 +2,7 @@ package provider
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"regexp"
 	"testing"
@@ -347,20 +348,17 @@ func TestResourceStringStateUpgradeV1(t *testing.T) {
 	cases := []struct {
 		name            string
 		stateV1         map[string]interface{}
-		shouldError     bool
-		errMsg          string
+		err             error
 		expectedStateV2 map[string]interface{}
 	}{
 		{
-			name:        "number is not bool",
-			stateV1:     map[string]interface{}{"number": 0},
-			shouldError: true,
-			errMsg:      "resource string state upgrade failed, number is not a boolean: int",
+			name:    "number is not bool",
+			stateV1: map[string]interface{}{"number": 0},
+			err:     errors.New("resource string state upgrade failed, number is not a boolean: int"),
 		},
 		{
 			name:            "success",
 			stateV1:         map[string]interface{}{"number": true},
-			shouldError:     false,
 			expectedStateV2: map[string]interface{}{"number": true, "numeric": true},
 		},
 	}
@@ -369,9 +367,9 @@ func TestResourceStringStateUpgradeV1(t *testing.T) {
 		t.Run(c.name, func(t *testing.T) {
 			actualStateV2, err := resourceStringStateUpgradeV1(context.Background(), c.stateV1, nil)
 
-			if c.shouldError {
-				if !cmp.Equal(c.errMsg, err.Error()) {
-					t.Errorf("expected: %q, got: %q", c.errMsg, err)
+			if c.err != nil {
+				if !cmp.Equal(c.err.Error(), err.Error()) {
+					t.Errorf("expected: %q, got: %q", c.err.Error(), err)
 				}
 				if !cmp.Equal(c.expectedStateV2, actualStateV2) {
 					t.Errorf("expected: %+v, got: %+v", c.expectedStateV2, err)

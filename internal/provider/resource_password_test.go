@@ -2,6 +2,7 @@ package provider
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"regexp"
 	"testing"
@@ -395,20 +396,17 @@ func TestResourcePasswordStateUpgradeV0(t *testing.T) {
 	cases := []struct {
 		name            string
 		stateV0         map[string]interface{}
-		shouldError     bool
-		errMsg          string
+		err             error
 		expectedStateV1 map[string]interface{}
 	}{
 		{
-			name:        "result is not string",
-			stateV0:     map[string]interface{}{"result": 0},
-			shouldError: true,
-			errMsg:      "resource password state upgrade failed, result is not a string: int",
+			name:    "result is not string",
+			stateV0: map[string]interface{}{"result": 0},
+			err:     errors.New("resource password state upgrade failed, result is not a string: int"),
 		},
 		{
 			name:            "success",
 			stateV0:         map[string]interface{}{"result": "abc123"},
-			shouldError:     false,
 			expectedStateV1: map[string]interface{}{"result": "abc123", "bcrypt_hash": "123"},
 		},
 	}
@@ -417,10 +415,10 @@ func TestResourcePasswordStateUpgradeV0(t *testing.T) {
 		t.Run(c.name, func(t *testing.T) {
 			actualStateV1, err := resourcePasswordStateUpgradeV0(context.Background(), c.stateV0, nil)
 
-			if c.shouldError {
+			if c.err != nil {
 				// Check error msg
-				if !cmp.Equal(c.errMsg, err.Error()) {
-					t.Errorf("expected: %q, got: %q", c.errMsg, err)
+				if !cmp.Equal(c.err.Error(), err.Error()) {
+					t.Errorf("expected: %q, got: %q", c.err.Error(), err)
 				}
 				// Check actualStateV1 is nil
 				if !cmp.Equal(c.expectedStateV1, actualStateV1) {
@@ -453,20 +451,17 @@ func TestResourcePasswordStateUpgradeV1(t *testing.T) {
 	cases := []struct {
 		name            string
 		stateV1         map[string]interface{}
-		shouldError     bool
-		errMsg          string
+		err             error
 		expectedStateV2 map[string]interface{}
 	}{
 		{
-			name:        "number is not bool",
-			stateV1:     map[string]interface{}{"number": 0},
-			shouldError: true,
-			errMsg:      "resource password state upgrade failed, number is not a boolean: int",
+			name:    "number is not bool",
+			stateV1: map[string]interface{}{"number": 0},
+			err:     errors.New("resource password state upgrade failed, number is not a boolean: int"),
 		},
 		{
 			name:            "success",
 			stateV1:         map[string]interface{}{"number": true},
-			shouldError:     false,
 			expectedStateV2: map[string]interface{}{"number": true, "numeric": true},
 		},
 	}
@@ -475,9 +470,9 @@ func TestResourcePasswordStateUpgradeV1(t *testing.T) {
 		t.Run(c.name, func(t *testing.T) {
 			actualStateV2, err := resourcePasswordStateUpgradeV1(context.Background(), c.stateV1, nil)
 
-			if c.shouldError {
-				if !cmp.Equal(c.errMsg, err.Error()) {
-					t.Errorf("expected: %q, got: %q", c.errMsg, err)
+			if c.err != nil {
+				if !cmp.Equal(c.err.Error(), err.Error()) {
+					t.Errorf("expected: %q, got: %q", c.err.Error(), err)
 				}
 				if !cmp.Equal(c.expectedStateV2, actualStateV2) {
 					t.Errorf("expected: %+v, got: %+v", c.expectedStateV2, err)
