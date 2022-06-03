@@ -180,12 +180,10 @@ func TestAccResourcePassword_StateUpgraders(t *testing.T) {
 						length = 12
 					}`,
 			beforeStateUpgrade: []resource.TestCheckFunc{
-				resource.TestCheckResourceAttrSet("random_password.default", "number"),
 				resource.TestCheckResourceAttr("random_password.default", "number", "true"),
 				resource.TestCheckNoResourceAttr("random_password.default", "numeric"),
 			},
 			afterStateUpgrade: []resource.TestCheckFunc{
-				resource.TestCheckResourceAttrSet("random_password.default", "number"),
 				resource.TestCheckResourceAttr("random_password.default", "number", "true"),
 				resource.TestCheckResourceAttrPair("random_password.default", "number", "random_password.default", "numeric"),
 			},
@@ -200,12 +198,10 @@ func TestAccResourcePassword_StateUpgraders(t *testing.T) {
 						number = true
 					}`,
 			beforeStateUpgrade: []resource.TestCheckFunc{
-				resource.TestCheckResourceAttrSet("random_password.default", "number"),
 				resource.TestCheckResourceAttr("random_password.default", "number", "true"),
 				resource.TestCheckNoResourceAttr("random_password.default", "numeric"),
 			},
 			afterStateUpgrade: []resource.TestCheckFunc{
-				resource.TestCheckResourceAttrSet("random_password.default", "number"),
 				resource.TestCheckResourceAttr("random_password.default", "number", "true"),
 				resource.TestCheckResourceAttrPair("random_password.default", "number", "random_password.default", "numeric"),
 			},
@@ -220,12 +216,10 @@ func TestAccResourcePassword_StateUpgraders(t *testing.T) {
 						number = false
 					}`,
 			beforeStateUpgrade: []resource.TestCheckFunc{
-				resource.TestCheckResourceAttrSet("random_password.default", "number"),
 				resource.TestCheckResourceAttr("random_password.default", "number", "true"),
 				resource.TestCheckNoResourceAttr("random_password.default", "numeric"),
 			},
 			afterStateUpgrade: []resource.TestCheckFunc{
-				resource.TestCheckResourceAttrSet("random_password.default", "number"),
 				resource.TestCheckResourceAttr("random_password.default", "number", "false"),
 				resource.TestCheckResourceAttrPair("random_password.default", "number", "random_password.default", "numeric"),
 			},
@@ -237,12 +231,10 @@ func TestAccResourcePassword_StateUpgraders(t *testing.T) {
 						number = true
 					}`,
 			beforeStateUpgrade: []resource.TestCheckFunc{
-				resource.TestCheckResourceAttrSet("random_password.default", "number"),
 				resource.TestCheckResourceAttr("random_password.default", "number", "true"),
 				resource.TestCheckNoResourceAttr("random_password.default", "numeric"),
 			},
 			afterStateUpgrade: []resource.TestCheckFunc{
-				resource.TestCheckResourceAttrSet("random_password.default", "number"),
 				resource.TestCheckResourceAttr("random_password.default", "number", "true"),
 				resource.TestCheckResourceAttrPair("random_password.default", "number", "random_password.default", "numeric"),
 			},
@@ -257,12 +249,10 @@ func TestAccResourcePassword_StateUpgraders(t *testing.T) {
 						length = 12
 					}`,
 			beforeStateUpgrade: []resource.TestCheckFunc{
-				resource.TestCheckResourceAttrSet("random_password.default", "number"),
 				resource.TestCheckResourceAttr("random_password.default", "number", "true"),
 				resource.TestCheckNoResourceAttr("random_password.default", "numeric"),
 			},
 			afterStateUpgrade: []resource.TestCheckFunc{
-				resource.TestCheckResourceAttrSet("random_password.default", "number"),
 				resource.TestCheckResourceAttr("random_password.default", "number", "true"),
 				resource.TestCheckResourceAttrPair("random_password.default", "number", "random_password.default", "numeric"),
 			},
@@ -278,12 +268,10 @@ func TestAccResourcePassword_StateUpgraders(t *testing.T) {
 						number = false
 					}`,
 			beforeStateUpgrade: []resource.TestCheckFunc{
-				resource.TestCheckResourceAttrSet("random_password.default", "number"),
 				resource.TestCheckResourceAttr("random_password.default", "number", "true"),
 				resource.TestCheckNoResourceAttr("random_password.default", "numeric"),
 			},
 			afterStateUpgrade: []resource.TestCheckFunc{
-				resource.TestCheckResourceAttrSet("random_password.default", "number"),
 				resource.TestCheckResourceAttr("random_password.default", "number", "false"),
 				resource.TestCheckResourceAttrPair("random_password.default", "number", "random_password.default", "numeric"),
 			},
@@ -295,12 +283,10 @@ func TestAccResourcePassword_StateUpgraders(t *testing.T) {
 						number = false
 					}`,
 			beforeStateUpgrade: []resource.TestCheckFunc{
-				resource.TestCheckResourceAttrSet("random_password.default", "number"),
 				resource.TestCheckResourceAttr("random_password.default", "number", "false"),
 				resource.TestCheckNoResourceAttr("random_password.default", "numeric"),
 			},
 			afterStateUpgrade: []resource.TestCheckFunc{
-				resource.TestCheckResourceAttrSet("random_password.default", "number"),
 				resource.TestCheckResourceAttr("random_password.default", "number", "false"),
 				resource.TestCheckResourceAttrPair("random_password.default", "number", "random_password.default", "numeric"),
 			},
@@ -315,12 +301,10 @@ func TestAccResourcePassword_StateUpgraders(t *testing.T) {
 						length = 12
 					}`,
 			beforeStateUpgrade: []resource.TestCheckFunc{
-				resource.TestCheckResourceAttrSet("random_password.default", "number"),
 				resource.TestCheckResourceAttr("random_password.default", "number", "false"),
 				resource.TestCheckNoResourceAttr("random_password.default", "numeric"),
 			},
 			afterStateUpgrade: []resource.TestCheckFunc{
-				resource.TestCheckResourceAttrSet("random_password.default", "number"),
 				resource.TestCheckResourceAttr("random_password.default", "number", "true"),
 				resource.TestCheckResourceAttrPair("random_password.default", "number", "random_password.default", "numeric"),
 			},
@@ -336,12 +320,10 @@ func TestAccResourcePassword_StateUpgraders(t *testing.T) {
 						number = true
 					}`,
 			beforeStateUpgrade: []resource.TestCheckFunc{
-				resource.TestCheckResourceAttrSet("random_password.default", "number"),
 				resource.TestCheckResourceAttr("random_password.default", "number", "false"),
 				resource.TestCheckNoResourceAttr("random_password.default", "numeric"),
 			},
 			afterStateUpgrade: []resource.TestCheckFunc{
-				resource.TestCheckResourceAttrSet("random_password.default", "number"),
 				resource.TestCheckResourceAttr("random_password.default", "number", "true"),
 				resource.TestCheckResourceAttrPair("random_password.default", "number", "random_password.default", "numeric"),
 			},
