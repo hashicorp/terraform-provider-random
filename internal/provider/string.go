@@ -6,6 +6,7 @@ package provider
 import (
 	"context"
 	"crypto/rand"
+	"errors"
 	"fmt"
 	"math/big"
 	"sort"
@@ -340,36 +341,53 @@ func resourceStateUpgradeAddNumeric(resourceName string) func(_ context.Context,
 	}
 }
 
-// customDiffIfValue handles ensuring that both `number` and `numeric` attributes default to `true` when neither are set
+// planDefaultIfAllNull handles ensuring that both `number` and `numeric` attributes default to `true` when neither are set
 // in the config and, they had been previously set to `false`. This behaviour mimics setting `Default: true` on the
 // attributes. Usage of `Default` is avoided as `Default` cannot be used with CustomizeDiffFunc(s) which are required in
-// order to keep `number` and `numeric` in-sync (see customDiffIfValueChange).
-func customDiffIfValue(key string) func(context.Context, *schema.ResourceDiff, interface{}) error {
-	return customdiff.IfValue(
-		key,
-		func(ctx context.Context, value, meta interface{}) bool {
-			return !value.(bool)
-		},
-		func(_ context.Context, d *schema.ResourceDiff, _ interface{}) error {
-			vm := d.GetRawConfig().AsValueMap()
-			if vm["number"].IsNull() && vm["numeric"].IsNull() {
-				err := d.SetNew("number", true)
-				if err != nil {
-					return err
+// order to keep `number` and `numeric` in-sync (see planSyncIfChange).
+func planDefaultIfAllNull(defaultVal interface{}, keys ...string) []schema.CustomizeDiffFunc {
+	var result []schema.CustomizeDiffFunc
+
+	for _, key := range keys {
+		result = append(result, customdiff.IfValue(
+			key,
+			func(ctx context.Context, value, meta interface{}) bool {
+				return !value.(bool)
+			},
+			func(_ context.Context, d *schema.ResourceDiff, _ interface{}) error {
+				vm := d.GetRawConfig().AsValueMap()
+
+				number, ok := vm["number"]
+				if !ok {
+					return errors.New("number is absent from raw config")
 				}
-				err = d.SetNew("numeric", true)
-				if err != nil {
-					return err
+
+				numeric, ok := vm["numeric"]
+				if !ok {
+					return errors.New("numeric is absent from raw config")
 				}
-			}
-			return nil
-		},
-	)
+
+				if number.IsNull() && numeric.IsNull() {
+					err := d.SetNew("number", defaultVal)
+					if err != nil {
+						return err
+					}
+					err = d.SetNew("numeric", defaultVal)
+					if err != nil {
+						return err
+					}
+				}
+				return nil
+			},
+		))
+	}
+
+	return result
 }
 
-// customDiffIfValueChange handles keeping `number` and `numeric` in-sync. If either is changed the value of both is
+// planSyncIfChange handles keeping `number` and `numeric` in-sync. If either is changed the value of both is
 // set to the new value of the attribute that has changed.
-func customDiffIfValueChange(key, keyToSync string) func(context.Context, *schema.ResourceDiff, interface{}) error {
+func planSyncIfChange(key, keyToSync string) func(context.Context, *schema.ResourceDiff, interface{}) error {
 	return customdiff.IfValueChange(
 		key,
 		func(ctx context.Context, oldValue, newValue, meta interface{}) bool {

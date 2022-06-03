@@ -9,10 +9,14 @@ import (
 )
 
 // resourceString and resourcePassword both use the same set of CustomizeDiffFunc(s) in order to handle the deprecation
-// of the `number` attribute and the simultaneous addition of the `numeric` attribute. customDiffIfValue handles
+// of the `number` attribute and the simultaneous addition of the `numeric` attribute. planDefaultIfAllNull handles
 // ensuring that both `number` and `numeric` default to `true` when they are both absent from config.
-// customDiffIfValueChange handles keeping number and numeric in-sync when either one has been changed.
+// planSyncIfChange handles keeping number and numeric in-sync when either one has been changed.
 func resourceString() *schema.Resource {
+	customizeDiffFuncs := planDefaultIfAllNull(true, "number", "numeric")
+	customizeDiffFuncs = append(customizeDiffFuncs, planSyncIfChange("number", "numeric"))
+	customizeDiffFuncs = append(customizeDiffFuncs, planSyncIfChange("numeric", "number"))
+
 	return &schema.Resource{
 		Description: "The resource `random_string` generates a random permutation of alphanumeric " +
 			"characters and optionally special characters.\n" +
@@ -41,10 +45,7 @@ func resourceString() *schema.Resource {
 			},
 		},
 		CustomizeDiff: customdiff.All(
-			customDiffIfValue("number"),
-			customDiffIfValue("numeric"),
-			customDiffIfValueChange("number", "numeric"),
-			customDiffIfValueChange("numeric", "number"),
+			customizeDiffFuncs...,
 		),
 	}
 }

@@ -11,10 +11,14 @@ import (
 )
 
 // resourcePassword and resourceString both use the same set of CustomizeDiffFunc(s) in order to handle the deprecation
-// of the `number` attribute and the simultaneous addition of the `numeric` attribute. customDiffIfValue handles
+// of the `number` attribute and the simultaneous addition of the `numeric` attribute. planDefaultIfAllNull handles
 // ensuring that both `number` and `numeric` default to `true` when they are both absent from config.
-// customDiffIfValueChange handles keeping number and numeric in-sync when either one has been changed.
+// planSyncIfChange handles keeping number and numeric in-sync when either one has been changed.
 func resourcePassword() *schema.Resource {
+	customizeDiffFuncs := planDefaultIfAllNull(true, "number", "numeric")
+	customizeDiffFuncs = append(customizeDiffFuncs, planSyncIfChange("number", "numeric"))
+	customizeDiffFuncs = append(customizeDiffFuncs, planSyncIfChange("numeric", "number"))
+
 	return &schema.Resource{
 		Description: "Identical to [random_string](string.html) with the exception that the result is " +
 			"treated as sensitive and, thus, _not_ displayed in console output. Read more about sensitive " +
@@ -42,10 +46,7 @@ func resourcePassword() *schema.Resource {
 			},
 		},
 		CustomizeDiff: customdiff.All(
-			customDiffIfValue("number"),
-			customDiffIfValue("numeric"),
-			customDiffIfValueChange("number", "numeric"),
-			customDiffIfValueChange("numeric", "number"),
+			customizeDiffFuncs...,
 		),
 	}
 }
