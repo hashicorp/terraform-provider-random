@@ -4,10 +4,19 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/customdiff"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
+// resourceString and resourcePassword both use the same set of CustomizeDiffFunc(s) in order to handle the deprecation
+// of the `number` attribute and the simultaneous addition of the `numeric` attribute. planDefaultIfAllNull handles
+// ensuring that both `number` and `numeric` default to `true` when they are both absent from config.
+// planSyncIfChange handles keeping number and numeric in-sync when either one has been changed.
 func resourceString() *schema.Resource {
+	customizeDiffFuncs := planDefaultIfAllNull(true, "number", "numeric")
+	customizeDiffFuncs = append(customizeDiffFuncs, planSyncIfChange("number", "numeric"))
+	customizeDiffFuncs = append(customizeDiffFuncs, planSyncIfChange("numeric", "number"))
+
 	return &schema.Resource{
 		Description: "The resource `random_string` generates a random permutation of alphanumeric " +
 			"characters and optionally special characters.\n" +
@@ -23,11 +32,21 @@ func resourceString() *schema.Resource {
 		// MigrateState is deprecated but the implementation is being left in place as per the
 		// [SDK documentation](https://github.com/hashicorp/terraform-plugin-sdk/blob/main/helper/schema/resource.go#L91).
 		MigrateState:  resourceRandomStringMigrateState,
-		SchemaVersion: 1,
-		Schema:        stringSchemaV1(),
+		SchemaVersion: 2,
+		Schema:        stringSchemaV2(),
 		Importer: &schema.ResourceImporter{
 			StateContext: importStringFunc,
 		},
+		StateUpgraders: []schema.StateUpgrader{
+			{
+				Version: 1,
+				Type:    resourceStringV1().CoreConfigSchema().ImpliedType(),
+				Upgrade: resourcePasswordStringStateUpgradeV1,
+			},
+		},
+		CustomizeDiff: customdiff.All(
+			customizeDiffFuncs...,
+		),
 	}
 }
 
@@ -39,4 +58,10 @@ func importStringFunc(ctx context.Context, d *schema.ResourceData, meta interfac
 	}
 
 	return []*schema.ResourceData{d}, nil
+}
+
+func resourceStringV1() *schema.Resource {
+	return &schema.Resource{
+		Schema: stringSchemaV1(),
+	}
 }

@@ -5,11 +5,20 @@ import (
 	"fmt"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/customdiff"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"golang.org/x/crypto/bcrypt"
 )
 
+// resourcePassword and resourceString both use the same set of CustomizeDiffFunc(s) in order to handle the deprecation
+// of the `number` attribute and the simultaneous addition of the `numeric` attribute. planDefaultIfAllNull handles
+// ensuring that both `number` and `numeric` default to `true` when they are both absent from config.
+// planSyncIfChange handles keeping number and numeric in-sync when either one has been changed.
 func resourcePassword() *schema.Resource {
+	customizeDiffFuncs := planDefaultIfAllNull(true, "number", "numeric")
+	customizeDiffFuncs = append(customizeDiffFuncs, planSyncIfChange("number", "numeric"))
+	customizeDiffFuncs = append(customizeDiffFuncs, planSyncIfChange("numeric", "number"))
+
 	return &schema.Resource{
 		Description: "Identical to [random_string](string.html) with the exception that the result is " +
 			"treated as sensitive and, thus, _not_ displayed in console output. Read more about sensitive " +
@@ -19,18 +28,26 @@ func resourcePassword() *schema.Resource {
 		CreateContext: createPassword,
 		ReadContext:   readNil,
 		DeleteContext: RemoveResourceFromState,
-		Schema:        passwordSchemaV1(),
+		Schema:        passwordSchemaV2(),
 		Importer: &schema.ResourceImporter{
 			StateContext: importPasswordFunc,
 		},
-		SchemaVersion: 1,
+		SchemaVersion: 2,
 		StateUpgraders: []schema.StateUpgrader{
 			{
 				Version: 0,
 				Type:    resourcePasswordV0().CoreConfigSchema().ImpliedType(),
 				Upgrade: resourcePasswordStateUpgradeV0,
 			},
+			{
+				Version: 1,
+				Type:    resourcePasswordV1().CoreConfigSchema().ImpliedType(),
+				Upgrade: resourcePasswordStringStateUpgradeV1,
+			},
 		},
+		CustomizeDiff: customdiff.All(
+			customizeDiffFuncs...,
+		),
 	}
 }
 
@@ -74,6 +91,12 @@ func importPasswordFunc(ctx context.Context, d *schema.ResourceData, meta interf
 	return []*schema.ResourceData{d}, nil
 }
 
+func resourcePasswordV1() *schema.Resource {
+	return &schema.Resource{
+		Schema: passwordSchemaV1(),
+	}
+}
+
 func resourcePasswordV0() *schema.Resource {
 	return &schema.Resource{
 		Schema: passwordSchemaV0(),
@@ -87,7 +110,7 @@ func resourcePasswordStateUpgradeV0(_ context.Context, rawState map[string]inter
 
 	result, ok := rawState["result"].(string)
 	if !ok {
-		return nil, fmt.Errorf("resource password state upgrade failed, result could not be asserted as string: %T", rawState["result"])
+		return nil, fmt.Errorf("resource password state upgrade failed, result is not a string: %T", rawState["result"])
 	}
 
 	hash, err := generateHash(result)

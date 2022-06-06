@@ -6,14 +6,44 @@ package provider
 import (
 	"context"
 	"crypto/rand"
+	"errors"
 	"fmt"
 	"math/big"
 	"sort"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/customdiff"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 )
+
+// passwordSchemaV2 uses passwordSchemaV1 to obtain the V1 version of the Schema key-value entries but requires that
+// the numeric entry be configured and that the number entry be altered to include ConflictsWith.
+func passwordSchemaV2() map[string]*schema.Schema {
+	passwordSchema := passwordSchemaV1()
+
+	passwordSchema["number"] = &schema.Schema{
+		Description: "Include numeric characters in the result. Default value is `true`. " +
+			"**NOTE**: This is deprecated, use `numeric` instead.",
+		Type:          schema.TypeBool,
+		Optional:      true,
+		Computed:      true,
+		ForceNew:      true,
+		ConflictsWith: []string{"numeric"},
+		Deprecated:    "Use numeric instead.",
+	}
+
+	passwordSchema["numeric"] = &schema.Schema{
+		Description:   "Include numeric characters in the result. Default value is `true`.",
+		Type:          schema.TypeBool,
+		Optional:      true,
+		Computed:      true,
+		ForceNew:      true,
+		ConflictsWith: []string{"number"},
+	}
+
+	return passwordSchema
+}
 
 // passwordSchemaV1 uses passwordSchemaV0 to obtain the V0 version of the Schema key-value entries but requires that
 // the bcrypt_hash entry be configured.
@@ -37,6 +67,34 @@ func passwordSchemaV0() map[string]*schema.Schema {
 	passwordSchema["result"].Sensitive = true
 
 	return passwordSchema
+}
+
+// stringSchemaV2 uses stringSchemaV1 to obtain the V1 version of the Schema key-value entries but requires that
+// the numeric entry be configured and that the number entry be altered to include ConflictsWith.
+func stringSchemaV2() map[string]*schema.Schema {
+	stringSchema := stringSchemaV1()
+
+	stringSchema["number"] = &schema.Schema{
+		Description: "Include numeric characters in the result. Default value is `true`. " +
+			"**NOTE**: This is deprecated, use `numeric` instead.",
+		Type:          schema.TypeBool,
+		Optional:      true,
+		Computed:      true,
+		ForceNew:      true,
+		ConflictsWith: []string{"numeric"},
+		Deprecated:    "Use numeric instead.",
+	}
+
+	stringSchema["numeric"] = &schema.Schema{
+		Description:   "Include numeric characters in the result. Default value is `true`.",
+		Type:          schema.TypeBool,
+		Optional:      true,
+		Computed:      true,
+		ForceNew:      true,
+		ConflictsWith: []string{"number"},
+	}
+
+	return stringSchema
 }
 
 // stringSchemaV1 uses passwordStringSchema to obtain the default Schema key-value entries but requires that the id
@@ -155,8 +213,8 @@ func passwordStringSchema() map[string]*schema.Schema {
 	}
 }
 
-func createStringFunc(sensitive bool) func(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	return func(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func createStringFunc(sensitive bool) func(_ context.Context, d *schema.ResourceData, _ interface{}) diag.Diagnostics {
+	return func(_ context.Context, d *schema.ResourceData, _ interface{}) diag.Diagnostics {
 		const numChars = "0123456789"
 		const lowerChars = "abcdefghijklmnopqrstuvwxyz"
 		const upperChars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
@@ -171,6 +229,7 @@ func createStringFunc(sensitive bool) func(_ context.Context, d *schema.Resource
 		lower := d.Get("lower").(bool)
 		minLower := d.Get("min_lower").(int)
 		number := d.Get("number").(bool)
+		numeric := d.Get("numeric").(bool)
 		minNumeric := d.Get("min_numeric").(int)
 		special := d.Get("special").(bool)
 		minSpecial := d.Get("min_special").(int)
@@ -194,7 +253,7 @@ func createStringFunc(sensitive bool) func(_ context.Context, d *schema.Resource
 		if lower {
 			chars += lowerChars
 		}
-		if number {
+		if numeric {
 			chars += numChars
 		}
 		if special {
@@ -232,6 +291,13 @@ func createStringFunc(sensitive bool) func(_ context.Context, d *schema.Resource
 			return append(diags, diag.Errorf("error setting result: %s", err)...)
 		}
 
+		if err := d.Set("number", number); err != nil {
+			return append(diags, diag.Errorf("error setting number: %s", err)...)
+		}
+		if err := d.Set("numeric", numeric); err != nil {
+			return append(diags, diag.Errorf("error setting numeric: %s", err)...)
+		}
+
 		if sensitive {
 			d.SetId("none")
 		} else {
@@ -256,4 +322,77 @@ func generateRandomBytes(charSet *string, length int) ([]byte, error) {
 
 func readNil(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	return nil
+}
+
+func resourcePasswordStringStateUpgradeV1(_ context.Context, rawState map[string]interface{}, _ interface{}) (map[string]interface{}, error) {
+	if rawState == nil {
+		return nil, errors.New("state upgrade failed, state is nil")
+	}
+
+	number, ok := rawState["number"].(bool)
+	if !ok {
+		return nil, fmt.Errorf("state upgrade failed, number is not a boolean: %T", rawState["number"])
+	}
+
+	rawState["numeric"] = number
+
+	return rawState, nil
+}
+
+// planDefaultIfAllNull handles ensuring that both `number` and `numeric` attributes default to `true` when neither are set
+// in the config and, they had been previously set to `false`. This behaviour mimics setting `Default: true` on the
+// attributes. Usage of `Default` is avoided as `Default` cannot be used with CustomizeDiffFunc(s) which are required in
+// order to keep `number` and `numeric` in-sync (see planSyncIfChange).
+func planDefaultIfAllNull(defaultVal interface{}, keys ...string) []schema.CustomizeDiffFunc {
+	var result []schema.CustomizeDiffFunc
+
+	for _, key := range keys {
+		result = append(result, customdiff.IfValue(
+			key,
+			func(ctx context.Context, value, meta interface{}) bool {
+				return !value.(bool)
+			},
+			func(_ context.Context, d *schema.ResourceDiff, _ interface{}) error {
+				vm := d.GetRawConfig().AsValueMap()
+
+				number, ok := vm["number"]
+				if !ok {
+					return errors.New("number is absent from raw config")
+				}
+
+				numeric, ok := vm["numeric"]
+				if !ok {
+					return errors.New("numeric is absent from raw config")
+				}
+
+				if number.IsNull() && numeric.IsNull() {
+					err := d.SetNew("number", defaultVal)
+					if err != nil {
+						return err
+					}
+					err = d.SetNew("numeric", defaultVal)
+					if err != nil {
+						return err
+					}
+				}
+				return nil
+			},
+		))
+	}
+
+	return result
+}
+
+// planSyncIfChange handles keeping `number` and `numeric` in-sync. If either is changed the value of both is
+// set to the new value of the attribute that has changed.
+func planSyncIfChange(key, keyToSync string) func(context.Context, *schema.ResourceDiff, interface{}) error {
+	return customdiff.IfValueChange(
+		key,
+		func(ctx context.Context, oldValue, newValue, meta interface{}) bool {
+			return oldValue != newValue
+		},
+		func(_ context.Context, d *schema.ResourceDiff, _ interface{}) error {
+			return d.SetNew(keyToSync, d.Get(key))
+		},
+	)
 }
