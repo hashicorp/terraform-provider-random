@@ -41,7 +41,7 @@ func resourceString() *schema.Resource {
 			{
 				Version: 1,
 				Type:    resourceStringV1().CoreConfigSchema().ImpliedType(),
-				Upgrade: resourceStringStateUpgradeV1,
+				Upgrade: resourcePasswordStringStateUpgradeV1,
 			},
 		},
 		CustomizeDiff: customdiff.All(
@@ -64,8 +64,4 @@ func resourceStringV1() *schema.Resource {
 	return &schema.Resource{
 		Schema: stringSchemaV1(),
 	}
-}
-
-func resourceStringStateUpgradeV1(ctx context.Context, rawState map[string]interface{}, meta interface{}) (map[string]interface{}, error) {
-	return resourceStateUpgradeAddNumeric("string")(ctx, rawState, meta)
 }

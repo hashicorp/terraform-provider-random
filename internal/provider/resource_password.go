@@ -42,7 +42,7 @@ func resourcePassword() *schema.Resource {
 			{
 				Version: 1,
 				Type:    resourcePasswordV1().CoreConfigSchema().ImpliedType(),
-				Upgrade: resourcePasswordStateUpgradeV1,
+				Upgrade: resourcePasswordStringStateUpgradeV1,
 			},
 		},
 		CustomizeDiff: customdiff.All(
@@ -95,10 +95,6 @@ func resourcePasswordV1() *schema.Resource {
 	return &schema.Resource{
 		Schema: passwordSchemaV1(),
 	}
-}
-
-func resourcePasswordStateUpgradeV1(ctx context.Context, rawState map[string]interface{}, meta interface{}) (map[string]interface{}, error) {
-	return resourceStateUpgradeAddNumeric("password")(ctx, rawState, meta)
 }
 
 func resourcePasswordV0() *schema.Resource {

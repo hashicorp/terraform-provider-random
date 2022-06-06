@@ -324,21 +324,19 @@ func readNil(_ context.Context, d *schema.ResourceData, meta interface{}) diag.D
 	return nil
 }
 
-func resourceStateUpgradeAddNumeric(resourceName string) func(_ context.Context, rawState map[string]interface{}, _ interface{}) (map[string]interface{}, error) {
-	return func(_ context.Context, rawState map[string]interface{}, _ interface{}) (map[string]interface{}, error) {
-		if rawState == nil {
-			return nil, fmt.Errorf("resource %s state upgrade failed, state is nil", resourceName)
-		}
-
-		number, ok := rawState["number"].(bool)
-		if !ok {
-			return nil, fmt.Errorf("resource %s state upgrade failed, number is not a boolean: %T", resourceName, rawState["number"])
-		}
-
-		rawState["numeric"] = number
-
-		return rawState, nil
+func resourcePasswordStringStateUpgradeV1(_ context.Context, rawState map[string]interface{}, _ interface{}) (map[string]interface{}, error) {
+	if rawState == nil {
+		return nil, errors.New("state upgrade failed, state is nil")
 	}
+
+	number, ok := rawState["number"].(bool)
+	if !ok {
+		return nil, fmt.Errorf("state upgrade failed, number is not a boolean: %T", rawState["number"])
+	}
+
+	rawState["numeric"] = number
+
+	return rawState, nil
 }
 
 // planDefaultIfAllNull handles ensuring that both `number` and `numeric` attributes default to `true` when neither are set
