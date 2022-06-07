@@ -2,8 +2,8 @@
 
 BUG FIXES:
 
-* resource/random_password: Only assign value of number to numeric when value is boolean ([262](https://github.com/hashicorp/terraform-provider-random/pull/262))
-* resource/random_string: Only assign value of number to numeric when value is boolean ([262](https://github.com/hashicorp/terraform-provider-random/pull/262))
+* resource/random_password: During schema upgrade, copy value of attribute `number` to attribute `numeric`, only if said value is a boolean (i.e. not `null`) ([262](https://github.com/hashicorp/terraform-provider-random/pull/262))
+* resource/random_string: During schema upgrade, copy value of attribute `number` to attribute `numeric`, only if said value is a boolean (i.e. not `null`) ([262](https://github.com/hashicorp/terraform-provider-random/pull/262))
 
 ## 3.3.0 (June 06, 2022)
 
