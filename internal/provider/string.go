@@ -329,12 +329,9 @@ func resourcePasswordStringStateUpgradeV1(_ context.Context, rawState map[string
 		return nil, errors.New("state upgrade failed, state is nil")
 	}
 
-	number, ok := rawState["number"].(bool)
-	if !ok {
-		return nil, fmt.Errorf("state upgrade failed, number is not a boolean: %T", rawState["number"])
+	if number, ok := rawState["number"].(bool); ok {
+		rawState["numeric"] = number
 	}
-
-	rawState["numeric"] = number
 
 	return rawState, nil
 }

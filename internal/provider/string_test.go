@@ -21,9 +21,9 @@ func TestResourcePasswordStringStateUpgradeV1(t *testing.T) {
 			err:     errors.New("state upgrade failed, state is nil"),
 		},
 		{
-			name:    "number is not bool",
-			stateV1: map[string]interface{}{"number": 0},
-			err:     errors.New("state upgrade failed, number is not a boolean: int"),
+			name:            "number is not bool, raw state unaltered",
+			stateV1:         map[string]interface{}{"number": 0},
+			expectedStateV2: map[string]interface{}{"number": 0},
 		},
 		{
 			name:            "success",
