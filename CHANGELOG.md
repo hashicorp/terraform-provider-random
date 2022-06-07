@@ -1,4 +1,11 @@
-## 3.3.0 (Unreleased)
+## 3.3.1 (June 07, 2022)
+
+BUG FIXES:
+
+* resource/random_password: Only assign value of number to numeric when value is boolean ([262](https://github.com/hashicorp/terraform-provider-random/pull/262))
+* resource/random_string: Only assign value of number to numeric when value is boolean ([262](https://github.com/hashicorp/terraform-provider-random/pull/262))
+
+## 3.3.0 (June 06, 2022)
 
 ENHANCEMENTS:
 
