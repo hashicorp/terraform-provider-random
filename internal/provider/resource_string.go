@@ -146,7 +146,7 @@ func createString(ctx context.Context, req tfsdk.CreateResourceRequest, resp *tf
 func importString(ctx context.Context, req tfsdk.ImportResourceStateRequest, resp *tfsdk.ImportResourceStateResponse) {
 	id := req.ID
 
-	state := StringModelV0{
+	state := StringModelV1{
 		ID:     types.String{Value: id},
 		Result: types.String{Value: id},
 	}
