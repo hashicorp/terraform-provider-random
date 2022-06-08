@@ -64,6 +64,17 @@ func getStringSchemaV1() tfsdk.Schema {
 		stringSchema.Attributes["id"] = id
 	}
 
+	stringSchema.Attributes["numeric"] = tfsdk.Attribute{
+		Description: "Include numeric characters in the result. Default value is `true`.",
+		Type:        types.BoolType,
+		Optional:    true,
+		Computed:    true,
+		PlanModifiers: []tfsdk.AttributePlanModifier{
+			tfsdk.RequiresReplace(),
+			newDefaultValueAttributePlanModifier(types.Bool{Value: true}),
+		},
+	}
+
 	return stringSchema
 }
 
