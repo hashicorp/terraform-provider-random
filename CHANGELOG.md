@@ -1,3 +1,17 @@
+## 3.3.1 (June 07, 2022)
+
+BUG FIXES:
+
+* resource/random_password: During schema upgrade, copy value of attribute `number` to attribute `numeric`, only if said value is a boolean (i.e. not `null`) ([262](https://github.com/hashicorp/terraform-provider-random/pull/262))
+* resource/random_string: During schema upgrade, copy value of attribute `number` to attribute `numeric`, only if said value is a boolean (i.e. not `null`) ([262](https://github.com/hashicorp/terraform-provider-random/pull/262))
+
+## 3.3.0 (June 06, 2022)
+
+ENHANCEMENTS:
+
+* resource/random_password: `number` is now deprecated and `numeric` has been added to align attribute naming. `number` will be removed in the next major release ([#258](https://github.com/hashicorp/terraform-provider-random/pull/258)).
+* resource/random_string: `number` is now deprecated and `numeric` has been added to align attribute naming. `number` will be removed in the next major release ([#258](https://github.com/hashicorp/terraform-provider-random/pull/258)).
+
 ## 3.2.0 (May 18, 2022)
 
 NEW FEATURES:

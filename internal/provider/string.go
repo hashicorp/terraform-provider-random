@@ -164,6 +164,7 @@ type randomStringParams struct {
 	lower           bool
 	minLower        int64
 	number          bool
+	numeric         bool
 	minNumeric      int64
 	special         bool
 	minSpecial      int64
@@ -181,14 +182,14 @@ func createRandomString(input randomStringParams) ([]byte, error) {
 		specialChars = input.overrideSpecial
 	}
 
-	var chars = string("")
+	var chars = ""
 	if input.upper {
 		chars += upperChars
 	}
 	if input.lower {
 		chars += lowerChars
 	}
-	if input.number {
+	if input.numeric {
 		chars += numChars
 	}
 	if input.special {

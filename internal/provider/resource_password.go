@@ -12,7 +12,7 @@ import (
 type resourcePasswordType struct{}
 
 func (r resourcePasswordType) GetSchema(context.Context) (tfsdk.Schema, diag.Diagnostics) {
-	return getPasswordSchemaV1(), nil
+	return getPasswordSchemaV2(), nil
 }
 
 func (r resourcePasswordType) NewResource(_ context.Context, p tfsdk.Provider) (tfsdk.Resource, diag.Diagnostics) {
@@ -121,8 +121,10 @@ func getPasswordSchemaV0() tfsdk.Schema {
 	return passwordSchema
 }
 
+// createPassword currently uses plan.Number.Value for both number and numeric.
+// TODO: Remove usage of number before release.
 func createPassword(ctx context.Context, req tfsdk.CreateResourceRequest, resp *tfsdk.CreateResourceResponse) {
-	var plan PasswordModelV1
+	var plan PasswordModelV2
 
 	diags := req.Plan.Get(ctx, &plan)
 	resp.Diagnostics.Append(diags...)
@@ -137,6 +139,7 @@ func createPassword(ctx context.Context, req tfsdk.CreateResourceRequest, resp *
 		lower:           plan.Lower.Value,
 		minLower:        plan.MinLower.Value,
 		number:          plan.Number.Value,
+		numeric:         plan.Number.Value,
 		minNumeric:      plan.MinNumeric.Value,
 		special:         plan.Special.Value,
 		minSpecial:      plan.MinSpecial.Value,
@@ -149,7 +152,7 @@ func createPassword(ctx context.Context, req tfsdk.CreateResourceRequest, resp *
 		return
 	}
 
-	state := PasswordModelV1{
+	state := PasswordModelV2{
 		ID:              types.String{Value: "none"},
 		Keepers:         plan.Keepers,
 		Length:          types.Int64{Value: plan.Length.Value},
@@ -157,6 +160,7 @@ func createPassword(ctx context.Context, req tfsdk.CreateResourceRequest, resp *
 		Upper:           types.Bool{Value: plan.Upper.Value},
 		Lower:           types.Bool{Value: plan.Lower.Value},
 		Number:          types.Bool{Value: plan.Number.Value},
+		Numeric:         types.Bool{Value: plan.Number.Value},
 		MinNumeric:      types.Int64{Value: plan.MinNumeric.Value},
 		MinUpper:        types.Int64{Value: plan.MinUpper.Value},
 		MinLower:        types.Int64{Value: plan.MinLower.Value},
@@ -182,7 +186,7 @@ func createPassword(ctx context.Context, req tfsdk.CreateResourceRequest, resp *
 func importPassword(ctx context.Context, req tfsdk.ImportResourceStateRequest, resp *tfsdk.ImportResourceStateResponse) {
 	id := req.ID
 
-	state := PasswordModelV1{
+	state := PasswordModelV2{
 		ID:     types.String{Value: "none"},
 		Result: types.String{Value: id},
 	}

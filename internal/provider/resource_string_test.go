@@ -30,7 +30,7 @@ func TestAccResourceString(t *testing.T) {
 				ResourceName:            "random_string.basic",
 				ImportState:             true,
 				ImportStateVerify:       true,
-				ImportStateVerifyIgnore: []string{"length", "lower", "number", "special", "upper", "min_lower", "min_numeric", "min_special", "min_upper", "override_special"},
+				ImportStateVerifyIgnore: []string{"length", "lower", "number", "numeric", "special", "upper", "min_lower", "min_numeric", "min_special", "min_upper", "override_special"},
 			},
 		},
 	})
@@ -73,6 +73,214 @@ func TestAccResourceStringMin(t *testing.T) {
 			},
 		},
 	})
+}
+
+// TestAccResourceString_StateUpgraders covers the state upgrade from V1 to V2.
+// This includes the addition of numeric attribute.
+func TestAccResourceString_StateUpgraders(t *testing.T) {
+	t.Parallel()
+
+	v1Cases := []struct {
+		name                string
+		configBeforeUpgrade string
+		configDuringUpgrade string
+		beforeStateUpgrade  []resource.TestCheckFunc
+		afterStateUpgrade   []resource.TestCheckFunc
+	}{
+		{
+			name: "%s number is absent",
+			configBeforeUpgrade: `resource "random_string" "default" {
+						length = 12
+					}`,
+			beforeStateUpgrade: []resource.TestCheckFunc{
+				resource.TestCheckResourceAttr("random_string.default", "number", "true"),
+				resource.TestCheckNoResourceAttr("random_string.default", "numeric"),
+			},
+			afterStateUpgrade: []resource.TestCheckFunc{
+				//resource.TestCheckResourceAttr("random_string.default", "number", "true"),
+				//resource.TestCheckResourceAttrPair("random_string.default", "number", "random_string.default", "numeric"),
+			},
+		},
+		{
+			name: "%s number is absent then true",
+			configBeforeUpgrade: `resource "random_string" "default" {
+						length = 12
+					}`,
+			configDuringUpgrade: `resource "random_string" "default" {
+						length = 12
+						number = true
+					}`,
+			beforeStateUpgrade: []resource.TestCheckFunc{
+				resource.TestCheckResourceAttr("random_string.default", "number", "true"),
+				resource.TestCheckNoResourceAttr("random_string.default", "numeric"),
+			},
+			afterStateUpgrade: []resource.TestCheckFunc{
+				resource.TestCheckResourceAttr("random_string.default", "number", "true"),
+				resource.TestCheckResourceAttrPair("random_string.default", "number", "random_string.default", "numeric"),
+			},
+		},
+		{
+			name: "%s number is absent then false",
+			configBeforeUpgrade: `resource "random_string" "default" {
+						length = 12
+					}`,
+			configDuringUpgrade: `resource "random_string" "default" {
+						length = 12
+						number = false
+					}`,
+			beforeStateUpgrade: []resource.TestCheckFunc{
+				resource.TestCheckResourceAttr("random_string.default", "number", "true"),
+				resource.TestCheckNoResourceAttr("random_string.default", "numeric"),
+			},
+			afterStateUpgrade: []resource.TestCheckFunc{
+				resource.TestCheckResourceAttr("random_string.default", "number", "false"),
+				resource.TestCheckResourceAttrPair("random_string.default", "number", "random_string.default", "numeric"),
+			},
+		},
+		{
+			name: "%s number is true",
+			configBeforeUpgrade: `resource "random_string" "default" {
+						length = 12
+						number = true
+					}`,
+			beforeStateUpgrade: []resource.TestCheckFunc{
+				resource.TestCheckResourceAttr("random_string.default", "number", "true"),
+				resource.TestCheckNoResourceAttr("random_string.default", "numeric"),
+			},
+			afterStateUpgrade: []resource.TestCheckFunc{
+				resource.TestCheckResourceAttr("random_string.default", "number", "true"),
+				resource.TestCheckResourceAttrPair("random_string.default", "number", "random_string.default", "numeric"),
+			},
+		},
+		{
+			name: "%s number is true then absent",
+			configBeforeUpgrade: `resource "random_string" "default" {
+						length = 12
+						number = true
+					}`,
+			configDuringUpgrade: `resource "random_string" "default" {
+						length = 12
+					}`,
+			beforeStateUpgrade: []resource.TestCheckFunc{
+				resource.TestCheckResourceAttr("random_string.default", "number", "true"),
+				resource.TestCheckNoResourceAttr("random_string.default", "numeric"),
+			},
+			afterStateUpgrade: []resource.TestCheckFunc{
+				resource.TestCheckResourceAttr("random_string.default", "number", "true"),
+				resource.TestCheckResourceAttrPair("random_string.default", "number", "random_string.default", "numeric"),
+			},
+		},
+		{
+			name: "%s number is true then false",
+			configBeforeUpgrade: `resource "random_string" "default" {
+						length = 12
+						number = true
+					}`,
+			configDuringUpgrade: `resource "random_string" "default" {
+						length = 12
+						number = false
+					}`,
+			beforeStateUpgrade: []resource.TestCheckFunc{
+				resource.TestCheckResourceAttr("random_string.default", "number", "true"),
+				resource.TestCheckNoResourceAttr("random_string.default", "numeric"),
+			},
+			afterStateUpgrade: []resource.TestCheckFunc{
+				resource.TestCheckResourceAttr("random_string.default", "number", "false"),
+				resource.TestCheckResourceAttrPair("random_string.default", "number", "random_string.default", "numeric"),
+			},
+		},
+		{
+			name: "%s number is false",
+			configBeforeUpgrade: `resource "random_string" "default" {
+						length = 12
+						number = false
+					}`,
+			beforeStateUpgrade: []resource.TestCheckFunc{
+				resource.TestCheckResourceAttr("random_string.default", "number", "false"),
+				resource.TestCheckNoResourceAttr("random_string.default", "numeric"),
+			},
+			afterStateUpgrade: []resource.TestCheckFunc{
+				resource.TestCheckResourceAttr("random_string.default", "number", "false"),
+				resource.TestCheckResourceAttrPair("random_string.default", "number", "random_string.default", "numeric"),
+			},
+		},
+		{
+			name: "%s number is false then absent",
+			configBeforeUpgrade: `resource "random_string" "default" {
+						length = 12
+						number = false
+					}`,
+			configDuringUpgrade: `resource "random_string" "default" {
+						length = 12
+					}`,
+			beforeStateUpgrade: []resource.TestCheckFunc{
+				resource.TestCheckResourceAttr("random_string.default", "number", "false"),
+				resource.TestCheckNoResourceAttr("random_string.default", "numeric"),
+			},
+			afterStateUpgrade: []resource.TestCheckFunc{
+				resource.TestCheckResourceAttr("random_string.default", "number", "true"),
+				resource.TestCheckResourceAttrPair("random_string.default", "number", "random_string.default", "numeric"),
+			},
+		},
+		{
+			name: "%s number is false then true",
+			configBeforeUpgrade: `resource "random_string" "default" {
+						length = 12
+						number = false
+					}`,
+			configDuringUpgrade: `resource "random_string" "default" {
+						length = 12
+						number = true
+					}`,
+			beforeStateUpgrade: []resource.TestCheckFunc{
+				resource.TestCheckResourceAttr("random_string.default", "number", "false"),
+				resource.TestCheckNoResourceAttr("random_string.default", "numeric"),
+			},
+			afterStateUpgrade: []resource.TestCheckFunc{
+				resource.TestCheckResourceAttr("random_string.default", "number", "true"),
+				resource.TestCheckResourceAttrPair("random_string.default", "number", "random_string.default", "numeric"),
+			},
+		},
+	}
+
+	cases := map[string][]struct {
+		name                string
+		configBeforeUpgrade string
+		configDuringUpgrade string
+		beforeStateUpgrade  []resource.TestCheckFunc
+		afterStateUpgrade   []resource.TestCheckFunc
+	}{
+		"3.2.0": v1Cases,
+	}
+
+	for providerVersion, v := range cases {
+		for _, c := range v {
+			name := fmt.Sprintf(c.name, providerVersion)
+			t.Run(name, func(t *testing.T) {
+				if c.configDuringUpgrade == "" {
+					c.configDuringUpgrade = c.configBeforeUpgrade
+				}
+
+				resource.UnitTest(t, resource.TestCase{
+					Steps: []resource.TestStep{
+						{
+							ExternalProviders: map[string]resource.ExternalProvider{"random": {
+								VersionConstraint: providerVersion,
+								Source:            "hashicorp/random",
+							}},
+							Config: c.configBeforeUpgrade,
+							Check:  resource.ComposeTestCheckFunc(c.beforeStateUpgrade...),
+						},
+						{
+							ProtoV6ProviderFactories: testAccProtoV6ProviderFactories(),
+							Config:                   c.configDuringUpgrade,
+							Check:                    resource.ComposeTestCheckFunc(c.afterStateUpgrade...),
+						},
+					},
+				})
+			})
+		}
+	}
 }
 
 func TestAccResourceStringErrors(t *testing.T) {
