@@ -97,8 +97,8 @@ func TestAccResourceString_StateUpgraders(t *testing.T) {
 				resource.TestCheckNoResourceAttr("random_string.default", "numeric"),
 			},
 			afterStateUpgrade: []resource.TestCheckFunc{
-				//resource.TestCheckResourceAttr("random_string.default", "number", "true"),
-				//resource.TestCheckResourceAttrPair("random_string.default", "number", "random_string.default", "numeric"),
+				resource.TestCheckResourceAttr("random_string.default", "number", "true"),
+				resource.TestCheckResourceAttrPair("random_string.default", "number", "random_string.default", "numeric"),
 			},
 		},
 		{
