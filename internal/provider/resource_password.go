@@ -66,6 +66,19 @@ func (r resourcePassword) UpgradeState(context.Context) map[int64]tfsdk.Resource
 func getPasswordSchemaV2() tfsdk.Schema {
 	passwordSchema := getPasswordSchemaV1()
 
+	passwordSchema.Attributes["number"] = tfsdk.Attribute{
+		Description: "Include numeric characters in the result. Default value is `true`. " +
+			"**NOTE**: This is deprecated, use `numeric` instead.",
+		Type:     types.BoolType,
+		Optional: true,
+		Computed: true,
+		PlanModifiers: []tfsdk.AttributePlanModifier{
+			tfsdk.RequiresReplace(),
+			newNumberNumericAttributePlanModifier(),
+		},
+		DeprecationMessage: "**NOTE**: This is deprecated, use `numeric` instead.",
+	}
+
 	passwordSchema.Attributes["numeric"] = tfsdk.Attribute{
 		Description: "Include numeric characters in the result. Default value is `true`.",
 		Type:        types.BoolType,
@@ -73,7 +86,7 @@ func getPasswordSchemaV2() tfsdk.Schema {
 		Computed:    true,
 		PlanModifiers: []tfsdk.AttributePlanModifier{
 			tfsdk.RequiresReplace(),
-			newDefaultValueAttributePlanModifier(types.Bool{Value: true}),
+			newNumberNumericAttributePlanModifier(),
 		},
 	}
 

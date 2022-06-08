@@ -190,7 +190,8 @@ func TestAccResourcePassword_StateUpgraders(t *testing.T) {
 			},
 			afterStateUpgrade: []resource.TestCheckFunc{
 				resource.TestCheckResourceAttr("random_password.default", "number", "false"),
-				resource.TestCheckResourceAttrPair("random_password.default", "number", "random_password.default", "numeric"),
+				resource.TestCheckResourceAttr("random_password.default", "numeric", "false"),
+				//resource.TestCheckResourceAttrPair("random_password.default", "number", "random_password.default", "numeric"),
 			},
 		},
 		{
