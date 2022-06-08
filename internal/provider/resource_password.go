@@ -72,11 +72,30 @@ func createPassword(ctx context.Context, d *schema.ResourceData, meta interface{
 }
 
 func importPasswordFunc(ctx context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
+	for k, v := range passwordSchemaV2() {
+		if v.Default == nil {
+			continue
+		}
+		if err := d.Set(k, v.Default); err != nil {
+			return nil, fmt.Errorf("error setting %s: %w", k, err)
+		}
+	}
+
+	for _, key := range []string{"number", "numeric"} {
+		if err := d.Set(key, true); err != nil {
+			return nil, fmt.Errorf("error setting %s: %w", key, err)
+		}
+	}
+
 	val := d.Id()
 	d.SetId("none")
 
 	if err := d.Set("result", val); err != nil {
 		return nil, fmt.Errorf("resource password import failed, error setting result: %w", err)
+	}
+
+	if err := d.Set("length", len(val)); err != nil {
+		return nil, fmt.Errorf("error setting length: %w", err)
 	}
 
 	hash, err := generateHash(val)
