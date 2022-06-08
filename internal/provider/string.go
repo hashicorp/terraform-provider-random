@@ -165,7 +165,6 @@ type randomStringParams struct {
 	minUpper        int64
 	lower           bool
 	minLower        int64
-	number          bool
 	numeric         bool
 	minNumeric      int64
 	special         bool
