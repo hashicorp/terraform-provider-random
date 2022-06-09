@@ -55,11 +55,11 @@ func (r resourcePassword) UpgradeState(context.Context) map[int64]tfsdk.Resource
 	return map[int64]tfsdk.ResourceStateUpgrader{
 		0: {
 			PriorSchema:   &schemaV0,
-			StateUpgrader: migratePasswordStateV0toV2,
+			StateUpgrader: upgradePasswordStateV0toV2,
 		},
 		1: {
 			PriorSchema:   &schemaV1,
-			StateUpgrader: migratePasswordStateV1toV2,
+			StateUpgrader: upgradePasswordStateV1toV2,
 		},
 	}
 }
@@ -631,7 +631,7 @@ func importPassword(ctx context.Context, req tfsdk.ImportResourceStateRequest, r
 	}
 }
 
-func migratePasswordStateV0toV2(ctx context.Context, req tfsdk.UpgradeResourceStateRequest, resp *tfsdk.UpgradeResourceStateResponse) {
+func upgradePasswordStateV0toV2(ctx context.Context, req tfsdk.UpgradeResourceStateRequest, resp *tfsdk.UpgradeResourceStateResponse) {
 	var passwordDataV0 PasswordModelV0
 
 	resp.Diagnostics.Append(req.State.Get(ctx, &passwordDataV0)...)
@@ -667,7 +667,7 @@ func migratePasswordStateV0toV2(ctx context.Context, req tfsdk.UpgradeResourceSt
 	resp.Diagnostics.Append(diags...)
 }
 
-func migratePasswordStateV1toV2(ctx context.Context, req tfsdk.UpgradeResourceStateRequest, resp *tfsdk.UpgradeResourceStateResponse) {
+func upgradePasswordStateV1toV2(ctx context.Context, req tfsdk.UpgradeResourceStateRequest, resp *tfsdk.UpgradeResourceStateResponse) {
 	var passwordDataV1 PasswordModelV1
 
 	resp.Diagnostics.Append(req.State.Get(ctx, &passwordDataV1)...)

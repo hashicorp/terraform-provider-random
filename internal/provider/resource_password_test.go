@@ -366,7 +366,7 @@ func TestMigratePasswordStateV0toV2(t *testing.T) {
 		},
 	}
 
-	migratePasswordStateV0toV2(context.Background(), req, resp)
+	upgradePasswordStateV0toV2(context.Background(), req, resp)
 
 	expected := PasswordModelV2{
 		ID:              types.String{Value: "none"},
@@ -435,7 +435,7 @@ func TestMigratePasswordStateV1toV2(t *testing.T) {
 		},
 	}
 
-	migratePasswordStateV1toV2(context.Background(), req, resp)
+	upgradePasswordStateV1toV2(context.Background(), req, resp)
 
 	expected := PasswordModelV2{
 		ID:              types.String{Value: "none"},
