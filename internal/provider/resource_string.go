@@ -11,7 +11,7 @@ import (
 type resourceStringType struct{}
 
 func (r resourceStringType) GetSchema(context.Context) (tfsdk.Schema, diag.Diagnostics) {
-	return getStringSchemaV1(), nil
+	return getStringSchemaV2(), nil
 }
 
 func (r resourceStringType) NewResource(_ context.Context, p tfsdk.Provider) (tfsdk.Resource, diag.Diagnostics) {
@@ -46,23 +46,19 @@ func (r resourceString) ImportState(ctx context.Context, req tfsdk.ImportResourc
 	importString(ctx, req, resp)
 }
 
-func getStringSchemaV1() tfsdk.Schema {
-	stringSchema := passwordStringSchema()
+func (r resourceString) UpgradeState(context.Context) map[int64]tfsdk.ResourceStateUpgrader {
+	stringSchemaV1 := getStringSchemaV1()
 
-	stringSchema.Description = "The resource `random_string` generates a random permutation of alphanumeric " +
-		"characters and optionally special characters.\n" +
-		"\n" +
-		"This resource *does* use a cryptographic random number generator.\n" +
-		"\n" +
-		"Historically this resource's intended usage has been ambiguous as the original example used " +
-		"it in a password. For backwards compatibility it will continue to exist. For unique ids please " +
-		"use [random_id](id.html), for sensitive random values please use [random_password](password.html)."
-
-	id, ok := stringSchema.Attributes["id"]
-	if ok {
-		id.Description = "The generated random string."
-		stringSchema.Attributes["id"] = id
+	return map[int64]tfsdk.ResourceStateUpgrader{
+		1: {
+			PriorSchema:   &stringSchemaV1,
+			StateUpgrader: upgradeStringStateV1toV2,
+		},
 	}
+}
+
+func getStringSchemaV2() tfsdk.Schema {
+	stringSchema := getStringSchemaV1()
 
 	stringSchema.Attributes["number"] = tfsdk.Attribute{
 		Description: "Include numeric characters in the result. Default value is `true`. " +
@@ -88,11 +84,36 @@ func getStringSchemaV1() tfsdk.Schema {
 		},
 	}
 
+	stringSchema.Version = 2
+
+	return stringSchema
+}
+
+func getStringSchemaV1() tfsdk.Schema {
+	stringSchema := passwordStringSchema()
+
+	stringSchema.Description = "The resource `random_string` generates a random permutation of alphanumeric " +
+		"characters and optionally special characters.\n" +
+		"\n" +
+		"This resource *does* use a cryptographic random number generator.\n" +
+		"\n" +
+		"Historically this resource's intended usage has been ambiguous as the original example used " +
+		"it in a password. For backwards compatibility it will continue to exist. For unique ids please " +
+		"use [random_id](id.html), for sensitive random values please use [random_password](password.html)."
+
+	id, ok := stringSchema.Attributes["id"]
+	if ok {
+		id.Description = "The generated random string."
+		stringSchema.Attributes["id"] = id
+	}
+
+	stringSchema.Version = 1
+
 	return stringSchema
 }
 
 func createString(ctx context.Context, req tfsdk.CreateResourceRequest, resp *tfsdk.CreateResourceResponse) {
-	var plan StringModelV1
+	var plan StringModelV2
 
 	diags := req.Plan.Get(ctx, &plan)
 	resp.Diagnostics.Append(diags...)
@@ -119,7 +140,7 @@ func createString(ctx context.Context, req tfsdk.CreateResourceRequest, resp *tf
 		return
 	}
 
-	state := StringModelV1{
+	state := StringModelV2{
 		ID:              types.String{Value: string(result)},
 		Keepers:         plan.Keepers,
 		Length:          types.Int64{Value: plan.Length.Value},
@@ -146,7 +167,7 @@ func createString(ctx context.Context, req tfsdk.CreateResourceRequest, resp *tf
 func importString(ctx context.Context, req tfsdk.ImportResourceStateRequest, resp *tfsdk.ImportResourceStateResponse) {
 	id := req.ID
 
-	state := StringModelV1{
+	state := StringModelV2{
 		ID:     types.String{Value: id},
 		Result: types.String{Value: id},
 	}
@@ -158,4 +179,32 @@ func importString(ctx context.Context, req tfsdk.ImportResourceStateRequest, res
 	if resp.Diagnostics.HasError() {
 		return
 	}
+}
+
+func upgradeStringStateV1toV2(ctx context.Context, req tfsdk.UpgradeResourceStateRequest, resp *tfsdk.UpgradeResourceStateResponse) {
+	var stringDataV1 StringModelV1
+
+	resp.Diagnostics.Append(req.State.Get(ctx, &stringDataV1)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	stringDataV2 := StringModelV2{
+		Keepers:         stringDataV1.Keepers,
+		Length:          stringDataV1.Length,
+		Special:         stringDataV1.Special,
+		Upper:           stringDataV1.Upper,
+		Lower:           stringDataV1.Lower,
+		Number:          stringDataV1.Number,
+		Numeric:         stringDataV1.Number,
+		MinNumeric:      stringDataV1.MinNumeric,
+		MinLower:        stringDataV1.MinLower,
+		MinSpecial:      stringDataV1.MinSpecial,
+		OverrideSpecial: stringDataV1.OverrideSpecial,
+		Result:          stringDataV1.Result,
+		ID:              stringDataV1.ID,
+	}
+
+	diags := resp.State.Set(ctx, stringDataV2)
+	resp.Diagnostics.Append(diags...)
 }

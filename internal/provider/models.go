@@ -90,7 +90,7 @@ type ShuffleModel struct {
 	Result      types.List   `tfsdk:"result"`
 }
 
-type StringModelV1 struct {
+type StringModelV2 struct {
 	ID              types.String `tfsdk:"id"`
 	Keepers         types.Map    `tfsdk:"keepers"`
 	Length          types.Int64  `tfsdk:"length"`
@@ -107,7 +107,7 @@ type StringModelV1 struct {
 	Result          types.String `tfsdk:"result"`
 }
 
-type StringModelV0 struct {
+type StringModelV1 struct {
 	ID              types.String `tfsdk:"id"`
 	Keepers         types.Map    `tfsdk:"keepers"`
 	Length          types.Int64  `tfsdk:"length"`
