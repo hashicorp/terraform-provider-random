@@ -6,12 +6,13 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/tfsdk"
 	"github.com/hashicorp/terraform-plugin-framework/types"
+	"github.com/hashicorp/terraform-plugin-go/tftypes"
 )
 
 type resourceStringType struct{}
 
 func (r resourceStringType) GetSchema(context.Context) (tfsdk.Schema, diag.Diagnostics) {
-	return getStringSchemaV2(), nil
+	return stringSchemaV2(), nil
 }
 
 func (r resourceStringType) NewResource(_ context.Context, p tfsdk.Provider) (tfsdk.Resource, diag.Diagnostics) {
@@ -47,69 +48,335 @@ func (r resourceString) ImportState(ctx context.Context, req tfsdk.ImportResourc
 }
 
 func (r resourceString) UpgradeState(context.Context) map[int64]tfsdk.ResourceStateUpgrader {
-	stringSchemaV1 := getStringSchemaV1()
+	schemaV1 := stringSchemaV1()
 
 	return map[int64]tfsdk.ResourceStateUpgrader{
 		1: {
-			PriorSchema:   &stringSchemaV1,
+			PriorSchema:   &schemaV1,
 			StateUpgrader: upgradeStringStateV1toV2,
 		},
 	}
 }
 
-func getStringSchemaV2() tfsdk.Schema {
-	stringSchema := getStringSchemaV1()
+func stringSchemaV2() tfsdk.Schema {
+	return tfsdk.Schema{
+		Version: 2,
+		Description: "The resource `random_string` generates a random permutation of alphanumeric " +
+			"characters and optionally special characters.\n" +
+			"\n" +
+			"This resource *does* use a cryptographic random number generator.\n" +
+			"\n" +
+			"Historically this resource's intended usage has been ambiguous as the original example used " +
+			"it in a password. For backwards compatibility it will continue to exist. For unique ids please " +
+			"use [random_id](id.html), for sensitive random values please use [random_password](password.html).",
+		Attributes: map[string]tfsdk.Attribute{
+			"keepers": {
+				Description: "Arbitrary map of values that, when changed, will trigger recreation of " +
+					"resource. See [the main provider documentation](../index.html) for more information.",
+				Type: types.MapType{
+					ElemType: types.StringType,
+				},
+				Optional:      true,
+				PlanModifiers: []tfsdk.AttributePlanModifier{tfsdk.RequiresReplace()},
+			},
 
-	stringSchema.Attributes["number"] = tfsdk.Attribute{
-		Description: "Include numeric characters in the result. Default value is `true`. " +
-			"**NOTE**: This is deprecated, use `numeric` instead.",
-		Type:     types.BoolType,
-		Optional: true,
-		Computed: true,
-		PlanModifiers: []tfsdk.AttributePlanModifier{
-			tfsdk.RequiresReplace(),
-			newNumberNumericAttributePlanModifier(),
+			"length": {
+				Description: "The length of the string desired. The minimum value for length is 1 and, length " +
+					"must also be >= (`min_upper` + `min_lower` + `min_numeric` + `min_special`).",
+				Type:          types.Int64Type,
+				Required:      true,
+				PlanModifiers: []tfsdk.AttributePlanModifier{tfsdk.RequiresReplace()},
+				Validators: []tfsdk.AttributeValidator{
+					NewIntAtLeastValidator(1),
+					NewIntIsAtLeastSumOfValidator(
+						tftypes.NewAttributePath().WithAttributeName("min_upper"),
+						tftypes.NewAttributePath().WithAttributeName("min_lower"),
+						tftypes.NewAttributePath().WithAttributeName("min_numeric"),
+						tftypes.NewAttributePath().WithAttributeName("min_special"),
+					),
+				},
+			},
+
+			"special": {
+				Description: "Include special characters in the result. These are `!@#$%&*()-_=+[]{}<>:?`. Default value is `true`.",
+				Type:        types.BoolType,
+				Optional:    true,
+				Computed:    true,
+				PlanModifiers: []tfsdk.AttributePlanModifier{
+					tfsdk.RequiresReplace(),
+					newDefaultValueAttributePlanModifier(types.Bool{Value: true}),
+				},
+			},
+
+			"upper": {
+				Description: "Include uppercase alphabet characters in the result. Default value is `true`.",
+				Type:        types.BoolType,
+				Optional:    true,
+				Computed:    true,
+				PlanModifiers: []tfsdk.AttributePlanModifier{
+					tfsdk.RequiresReplace(),
+					newDefaultValueAttributePlanModifier(types.Bool{Value: true}),
+				},
+			},
+
+			"lower": {
+				Description: "Include lowercase alphabet characters in the result. Default value is `true`.",
+				Type:        types.BoolType,
+				Optional:    true,
+				Computed:    true,
+				PlanModifiers: []tfsdk.AttributePlanModifier{
+					tfsdk.RequiresReplace(),
+					newDefaultValueAttributePlanModifier(types.Bool{Value: true}),
+				},
+			},
+
+			"number": tfsdk.Attribute{
+				Description: "Include numeric characters in the result. Default value is `true`. " +
+					"**NOTE**: This is deprecated, use `numeric` instead.",
+				Type:     types.BoolType,
+				Optional: true,
+				Computed: true,
+				PlanModifiers: []tfsdk.AttributePlanModifier{
+					tfsdk.RequiresReplace(),
+					newNumberNumericAttributePlanModifier(),
+				},
+				DeprecationMessage: "**NOTE**: This is deprecated, use `numeric` instead.",
+			},
+
+			"numeric": tfsdk.Attribute{
+				Description: "Include numeric characters in the result. Default value is `true`.",
+				Type:        types.BoolType,
+				Optional:    true,
+				Computed:    true,
+				PlanModifiers: []tfsdk.AttributePlanModifier{
+					tfsdk.RequiresReplace(),
+					newNumberNumericAttributePlanModifier(),
+				},
+			},
+
+			"min_numeric": {
+				Description: "Minimum number of numeric characters in the result. Default value is `0`.",
+				Type:        types.Int64Type,
+				Optional:    true,
+				Computed:    true,
+				PlanModifiers: []tfsdk.AttributePlanModifier{
+					tfsdk.RequiresReplace(),
+					newDefaultValueAttributePlanModifier(types.Int64{Value: 0}),
+				},
+			},
+
+			"min_upper": {
+				Description: "Minimum number of uppercase alphabet characters in the result. Default value is `0`.",
+				Type:        types.Int64Type,
+				Optional:    true,
+				Computed:    true,
+				PlanModifiers: []tfsdk.AttributePlanModifier{
+					tfsdk.RequiresReplace(),
+					newDefaultValueAttributePlanModifier(types.Int64{Value: 0}),
+				},
+			},
+
+			"min_lower": {
+				Description: "Minimum number of lowercase alphabet characters in the result. Default value is `0`.",
+				Type:        types.Int64Type,
+				Optional:    true,
+				Computed:    true,
+				PlanModifiers: []tfsdk.AttributePlanModifier{
+					tfsdk.RequiresReplace(),
+					newDefaultValueAttributePlanModifier(types.Int64{Value: 0}),
+				},
+			},
+
+			"min_special": {
+				Description: "Minimum number of special characters in the result. Default value is `0`.",
+				Type:        types.Int64Type,
+				Optional:    true,
+				Computed:    true,
+				PlanModifiers: []tfsdk.AttributePlanModifier{
+					tfsdk.RequiresReplace(),
+					newDefaultValueAttributePlanModifier(types.Int64{Value: 0}),
+				},
+			},
+
+			"override_special": {
+				Description: "Supply your own list of special characters to use for string generation.  This " +
+					"overrides the default character list in the special argument.  The `special` argument must " +
+					"still be set to true for any overwritten characters to be used in generation.",
+				Type:     types.StringType,
+				Optional: true,
+				Computed: true,
+				PlanModifiers: []tfsdk.AttributePlanModifier{
+					tfsdk.RequiresReplace(),
+				},
+			},
+
+			"result": {
+				Description: "The generated random string.",
+				Type:        types.StringType,
+				Computed:    true,
+			},
+
+			"id": {
+				Description: "The generated random string.",
+				Computed:    true,
+				Type:        types.StringType,
+			},
 		},
-		DeprecationMessage: "**NOTE**: This is deprecated, use `numeric` instead.",
 	}
-
-	stringSchema.Attributes["numeric"] = tfsdk.Attribute{
-		Description: "Include numeric characters in the result. Default value is `true`.",
-		Type:        types.BoolType,
-		Optional:    true,
-		Computed:    true,
-		PlanModifiers: []tfsdk.AttributePlanModifier{
-			tfsdk.RequiresReplace(),
-			newNumberNumericAttributePlanModifier(),
-		},
-	}
-
-	stringSchema.Version = 2
-
-	return stringSchema
 }
 
-func getStringSchemaV1() tfsdk.Schema {
-	stringSchema := passwordStringSchema()
+func stringSchemaV1() tfsdk.Schema {
+	return tfsdk.Schema{
+		Version: 1,
+		Description: "The resource `random_string` generates a random permutation of alphanumeric " +
+			"characters and optionally special characters.\n" +
+			"\n" +
+			"This resource *does* use a cryptographic random number generator.\n" +
+			"\n" +
+			"Historically this resource's intended usage has been ambiguous as the original example used " +
+			"it in a password. For backwards compatibility it will continue to exist. For unique ids please " +
+			"use [random_id](id.html), for sensitive random values please use [random_password](password.html).",
+		Attributes: map[string]tfsdk.Attribute{
+			"keepers": {
+				Description: "Arbitrary map of values that, when changed, will trigger recreation of " +
+					"resource. See [the main provider documentation](../index.html) for more information.",
+				Type: types.MapType{
+					ElemType: types.StringType,
+				},
+				Optional:      true,
+				PlanModifiers: []tfsdk.AttributePlanModifier{tfsdk.RequiresReplace()},
+			},
 
-	stringSchema.Description = "The resource `random_string` generates a random permutation of alphanumeric " +
-		"characters and optionally special characters.\n" +
-		"\n" +
-		"This resource *does* use a cryptographic random number generator.\n" +
-		"\n" +
-		"Historically this resource's intended usage has been ambiguous as the original example used " +
-		"it in a password. For backwards compatibility it will continue to exist. For unique ids please " +
-		"use [random_id](id.html), for sensitive random values please use [random_password](password.html)."
+			"length": {
+				Description: "The length of the string desired. The minimum value for length is 1 and, length " +
+					"must also be >= (`min_upper` + `min_lower` + `min_numeric` + `min_special`).",
+				Type:          types.Int64Type,
+				Required:      true,
+				PlanModifiers: []tfsdk.AttributePlanModifier{tfsdk.RequiresReplace()},
+				Validators: []tfsdk.AttributeValidator{
+					NewIntAtLeastValidator(1),
+					NewIntIsAtLeastSumOfValidator(
+						tftypes.NewAttributePath().WithAttributeName("min_upper"),
+						tftypes.NewAttributePath().WithAttributeName("min_lower"),
+						tftypes.NewAttributePath().WithAttributeName("min_numeric"),
+						tftypes.NewAttributePath().WithAttributeName("min_special"),
+					),
+				},
+			},
 
-	id, ok := stringSchema.Attributes["id"]
-	if ok {
-		id.Description = "The generated random string."
-		stringSchema.Attributes["id"] = id
+			"special": {
+				Description: "Include special characters in the result. These are `!@#$%&*()-_=+[]{}<>:?`. Default value is `true`.",
+				Type:        types.BoolType,
+				Optional:    true,
+				Computed:    true,
+				PlanModifiers: []tfsdk.AttributePlanModifier{
+					tfsdk.RequiresReplace(),
+					newDefaultValueAttributePlanModifier(types.Bool{Value: true}),
+				},
+			},
+
+			"upper": {
+				Description: "Include uppercase alphabet characters in the result. Default value is `true`.",
+				Type:        types.BoolType,
+				Optional:    true,
+				Computed:    true,
+				PlanModifiers: []tfsdk.AttributePlanModifier{
+					tfsdk.RequiresReplace(),
+					newDefaultValueAttributePlanModifier(types.Bool{Value: true}),
+				},
+			},
+
+			"lower": {
+				Description: "Include lowercase alphabet characters in the result. Default value is `true`.",
+				Type:        types.BoolType,
+				Optional:    true,
+				Computed:    true,
+				PlanModifiers: []tfsdk.AttributePlanModifier{
+					tfsdk.RequiresReplace(),
+					newDefaultValueAttributePlanModifier(types.Bool{Value: true}),
+				},
+			},
+
+			"number": {
+				Description: "Include numeric characters in the result. Default value is `true`.",
+				Type:        types.BoolType,
+				Optional:    true,
+				Computed:    true,
+				PlanModifiers: []tfsdk.AttributePlanModifier{
+					tfsdk.RequiresReplace(),
+					newDefaultValueAttributePlanModifier(types.Bool{Value: true}),
+				},
+			},
+
+			"min_numeric": {
+				Description: "Minimum number of numeric characters in the result. Default value is `0`.",
+				Type:        types.Int64Type,
+				Optional:    true,
+				Computed:    true,
+				PlanModifiers: []tfsdk.AttributePlanModifier{
+					tfsdk.RequiresReplace(),
+					newDefaultValueAttributePlanModifier(types.Int64{Value: 0}),
+				},
+			},
+
+			"min_upper": {
+				Description: "Minimum number of uppercase alphabet characters in the result. Default value is `0`.",
+				Type:        types.Int64Type,
+				Optional:    true,
+				Computed:    true,
+				PlanModifiers: []tfsdk.AttributePlanModifier{
+					tfsdk.RequiresReplace(),
+					newDefaultValueAttributePlanModifier(types.Int64{Value: 0}),
+				},
+			},
+
+			"min_lower": {
+				Description: "Minimum number of lowercase alphabet characters in the result. Default value is `0`.",
+				Type:        types.Int64Type,
+				Optional:    true,
+				Computed:    true,
+				PlanModifiers: []tfsdk.AttributePlanModifier{
+					tfsdk.RequiresReplace(),
+					newDefaultValueAttributePlanModifier(types.Int64{Value: 0}),
+				},
+			},
+
+			"min_special": {
+				Description: "Minimum number of special characters in the result. Default value is `0`.",
+				Type:        types.Int64Type,
+				Optional:    true,
+				Computed:    true,
+				PlanModifiers: []tfsdk.AttributePlanModifier{
+					tfsdk.RequiresReplace(),
+					newDefaultValueAttributePlanModifier(types.Int64{Value: 0}),
+				},
+			},
+
+			"override_special": {
+				Description: "Supply your own list of special characters to use for string generation.  This " +
+					"overrides the default character list in the special argument.  The `special` argument must " +
+					"still be set to true for any overwritten characters to be used in generation.",
+				Type:     types.StringType,
+				Optional: true,
+				Computed: true,
+				PlanModifiers: []tfsdk.AttributePlanModifier{
+					tfsdk.RequiresReplace(),
+				},
+			},
+
+			"result": {
+				Description: "The generated random string.",
+				Type:        types.StringType,
+				Computed:    true,
+			},
+
+			"id": {
+				Description: "The generated random string.",
+				Computed:    true,
+				Type:        types.StringType,
+			},
+		},
 	}
-
-	stringSchema.Version = 1
-
-	return stringSchema
 }
 
 func createString(ctx context.Context, req tfsdk.CreateResourceRequest, resp *tfsdk.CreateResourceResponse) {
