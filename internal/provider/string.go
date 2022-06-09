@@ -12,7 +12,7 @@ import (
 
 // passwordStringSchema contains the common set of Attributes for both password and string resources.
 // Specific Schema descriptions, result sensitive, id descriptions and additional attributes (e.g., bcrypt_hash)
-// are added in getStringSchemaV1 and getPasswordSchemaV1.
+// are added in getStringSchemaV1 and passwordSchemaV1.
 func passwordStringSchema() tfsdk.Schema {
 	return tfsdk.Schema{
 		Attributes: map[string]tfsdk.Attribute{

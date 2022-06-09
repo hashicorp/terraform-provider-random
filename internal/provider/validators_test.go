@@ -18,7 +18,7 @@ func TestIntAtLeastValidator_Validate(t *testing.T) {
 	req := tfsdk.ValidateAttributeRequest{
 		AttributePath: tftypes.NewAttributePath().WithAttributeName("length"),
 		Config: tfsdk.Config{
-			Schema: getPasswordSchemaV1(),
+			Schema: passwordSchemaV1(),
 		},
 	}
 
@@ -85,7 +85,7 @@ func TestIsAtLeastSumOfValidator_Validate(t *testing.T) {
 		AttributePath:   tftypes.NewAttributePath().WithAttributeName("length"),
 		AttributeConfig: types.Int64{Value: 16},
 		Config: tfsdk.Config{
-			Schema: getPasswordSchemaV1(),
+			Schema: passwordSchemaV1(),
 		},
 	}
 

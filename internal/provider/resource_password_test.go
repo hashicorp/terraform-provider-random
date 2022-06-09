@@ -356,13 +356,13 @@ func TestMigratePasswordStateV0toV2(t *testing.T) {
 	req := tfsdk.UpgradeResourceStateRequest{
 		State: &tfsdk.State{
 			Raw:    raw,
-			Schema: getPasswordSchemaV0(),
+			Schema: passwordSchemaV0(),
 		},
 	}
 
 	resp := &tfsdk.UpgradeResourceStateResponse{
 		State: tfsdk.State{
-			Schema: getPasswordSchemaV2(),
+			Schema: passwordSchemaV2(),
 		},
 	}
 
@@ -425,13 +425,13 @@ func TestMigratePasswordStateV1toV2(t *testing.T) {
 	req := tfsdk.UpgradeResourceStateRequest{
 		State: &tfsdk.State{
 			Raw:    raw,
-			Schema: getPasswordSchemaV1(),
+			Schema: passwordSchemaV1(),
 		},
 	}
 
 	resp := &tfsdk.UpgradeResourceStateResponse{
 		State: tfsdk.State{
-			Schema: getPasswordSchemaV2(),
+			Schema: passwordSchemaV2(),
 		},
 	}
 
