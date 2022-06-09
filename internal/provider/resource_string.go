@@ -130,7 +130,7 @@ func stringSchemaV2() tfsdk.Schema {
 				},
 			},
 
-			"number": tfsdk.Attribute{
+			"number": {
 				Description: "Include numeric characters in the result. Default value is `true`. " +
 					"**NOTE**: This is deprecated, use `numeric` instead.",
 				Type:     types.BoolType,
@@ -143,7 +143,7 @@ func stringSchemaV2() tfsdk.Schema {
 				DeprecationMessage: "**NOTE**: This is deprecated, use `numeric` instead.",
 			},
 
-			"numeric": tfsdk.Attribute{
+			"numeric": {
 				Description: "Include numeric characters in the result. Default value is `true`.",
 				Type:        types.BoolType,
 				Optional:    true,
