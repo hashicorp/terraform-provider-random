@@ -25,8 +25,11 @@ func TestAccResourcePasswordBasic(t *testing.T) {
 							length = 12
 						}`,
 				Check: resource.ComposeTestCheckFunc(
-					testAccResourceStringCheck("random_password.basic", &customLens{
-						customLen: 12,
+					resource.TestCheckResourceAttrWith("random_password.basic", "result", func(result string) error {
+						if len(result) != 12 {
+							return fmt.Errorf("expected length 12, actual length %d", len(result))
+						}
+						return nil
 					}),
 				),
 			},
@@ -69,10 +72,13 @@ func TestAccResourcePasswordOverride(t *testing.T) {
 							numeric = false
 						}`,
 				Check: resource.ComposeTestCheckFunc(
-					testAccResourceStringCheck("random_password.override", &customLens{
-						customLen: 4,
+					resource.TestCheckResourceAttrWith("random_password.override", "result", func(result string) error {
+						if len(result) != 4 {
+							return fmt.Errorf("expected length 4, actual length %d", len(result))
+						}
+						return nil
 					}),
-					patternMatch("random_password.override", "!!!!"),
+					resource.TestCheckResourceAttr("random_password.override", "result", "!!!!"),
 				),
 			},
 		},
@@ -499,13 +505,16 @@ func TestAccResourcePasswordMin(t *testing.T) {
 							min_numeric = 4
 						}`,
 				Check: resource.ComposeTestCheckFunc(
-					testAccResourceStringCheck("random_password.min", &customLens{
-						customLen: 12,
+					resource.TestCheckResourceAttrWith("random_password.min", "result", func(result string) error {
+						if len(result) != 12 {
+							return fmt.Errorf("expected length 12, actual length %d", len(result))
+						}
+						return nil
 					}),
-					regexMatch("random_password.min", regexp.MustCompile(`([a-z])`), 2),
-					regexMatch("random_password.min", regexp.MustCompile(`([A-Z])`), 3),
-					regexMatch("random_password.min", regexp.MustCompile(`([0-9])`), 4),
-					regexMatch("random_password.min", regexp.MustCompile(`([!#@])`), 1),
+					resource.TestMatchResourceAttr("random_password.min", "result", regexp.MustCompile(`([a-z].*){2,}`)),
+					resource.TestMatchResourceAttr("random_password.min", "result", regexp.MustCompile(`([A-Z].*){3,}`)),
+					resource.TestMatchResourceAttr("random_password.min", "result", regexp.MustCompile(`([0-9].*){4,}`)),
+					resource.TestMatchResourceAttr("random_password.min", "result", regexp.MustCompile(`([!#@])`)),
 				),
 			},
 		},
