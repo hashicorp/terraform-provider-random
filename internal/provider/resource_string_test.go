@@ -18,12 +18,7 @@ func TestAccResourceString(t *testing.T) {
   							length = 12
 						}`,
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttrWith("random_string.basic", "result", func(result string) error {
-						if len(result) != 12 {
-							return fmt.Errorf("expected length 12, actual length %d", len(result))
-						}
-						return nil
-					}),
+					resource.TestCheckResourceAttrWith("random_string.basic", "result", testCheckLen(12)),
 				),
 			},
 			{
@@ -50,12 +45,7 @@ func TestAccResourceStringOverride(t *testing.T) {
 							number = false
 						}`,
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttrWith("random_string.override", "result", func(result string) error {
-						if len(result) != 4 {
-							return fmt.Errorf("expected length 12, actual length %d", len(result))
-						}
-						return nil
-					}),
+					resource.TestCheckResourceAttrWith("random_string.override", "result", testCheckLen(12)),
 					resource.TestCheckResourceAttr("random_string.override", "result", "!!!!"),
 				),
 			},
@@ -78,12 +68,7 @@ func TestAccResourceStringMin(t *testing.T) {
 							min_numeric = 4
 						}`,
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttrWith("random_string.min", "result", func(result string) error {
-						if len(result) != 12 {
-							return fmt.Errorf("expected length 12, actual length %d", len(result))
-						}
-						return nil
-					}),
+					resource.TestCheckResourceAttrWith("random_string.min", "result", testCheckLen(12)),
 					resource.TestMatchResourceAttr("random_string.min", "result", regexp.MustCompile(`([a-z].*){2,}`)),
 					resource.TestMatchResourceAttr("random_string.min", "result", regexp.MustCompile(`([A-Z].*){3,}`)),
 					resource.TestMatchResourceAttr("random_string.min", "result", regexp.MustCompile(`([0-9].*){4,}`)),
@@ -311,4 +296,24 @@ func TestAccResourceStringErrors(t *testing.T) {
 			},
 		},
 	})
+}
+
+func testCheckLen(expectedLen int) func(input string) error {
+	return func(input string) error {
+		if len(input) != expectedLen {
+			return fmt.Errorf("expected length %d, actual length %d", expectedLen, len(input))
+		}
+
+		return nil
+	}
+}
+
+func testCheckMinLen(minLen int) func(input string) error {
+	return func(input string) error {
+		if len(input) < minLen {
+			return fmt.Errorf("minimum length %d, actual length %d", minLen, len(input))
+		}
+
+		return nil
+	}
 }

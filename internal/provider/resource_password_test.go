@@ -25,12 +25,7 @@ func TestAccResourcePasswordBasic(t *testing.T) {
 							length = 12
 						}`,
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttrWith("random_password.basic", "result", func(result string) error {
-						if len(result) != 12 {
-							return fmt.Errorf("expected length 12, actual length %d", len(result))
-						}
-						return nil
-					}),
+					resource.TestCheckResourceAttrWith("random_password.basic", "result", testCheckLen(12)),
 				),
 			},
 			{
@@ -72,12 +67,7 @@ func TestAccResourcePasswordOverride(t *testing.T) {
 							numeric = false
 						}`,
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttrWith("random_password.override", "result", func(result string) error {
-						if len(result) != 4 {
-							return fmt.Errorf("expected length 4, actual length %d", len(result))
-						}
-						return nil
-					}),
+					resource.TestCheckResourceAttrWith("random_password.override", "result", testCheckLen(12)),
 					resource.TestCheckResourceAttr("random_password.override", "result", "!!!!"),
 				),
 			},
@@ -505,12 +495,7 @@ func TestAccResourcePasswordMin(t *testing.T) {
 							min_numeric = 4
 						}`,
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttrWith("random_password.min", "result", func(result string) error {
-						if len(result) != 12 {
-							return fmt.Errorf("expected length 12, actual length %d", len(result))
-						}
-						return nil
-					}),
+					resource.TestCheckResourceAttrWith("random_password.min", "result", testCheckLen(12)),
 					resource.TestMatchResourceAttr("random_password.min", "result", regexp.MustCompile(`([a-z].*){2,}`)),
 					resource.TestMatchResourceAttr("random_password.min", "result", regexp.MustCompile(`([A-Z].*){3,}`)),
 					resource.TestMatchResourceAttr("random_password.min", "result", regexp.MustCompile(`([0-9].*){4,}`)),
