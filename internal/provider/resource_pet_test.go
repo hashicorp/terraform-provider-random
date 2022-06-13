@@ -7,7 +7,6 @@ import (
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 )
 
 func TestAccResourcePet_basic(t *testing.T) {
@@ -16,9 +15,10 @@ func TestAccResourcePet_basic(t *testing.T) {
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories(),
 		Steps: []resource.TestStep{
 			{
-				Config: testAccResourcePetBasic,
+				Config: `resource "random_pet" "pet_1" {
+						}`,
 				Check: resource.ComposeTestCheckFunc(
-					testAccResourcePetLength("random_pet.pet_1", "-", 2),
+					resource.TestCheckResourceAttrWith("random_pet.pet_1", "id", testCheckPetLen("-", 2)),
 				),
 			},
 		},
@@ -31,9 +31,11 @@ func TestAccResourcePet_length(t *testing.T) {
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories(),
 		Steps: []resource.TestStep{
 			{
-				Config: testAccResourcePetLengthSet,
+				Config: `resource "random_pet" "pet_1" {
+  							length = 4
+						}`,
 				Check: resource.ComposeTestCheckFunc(
-					testAccResourcePetLength("random_pet.pet_1", "-", 4),
+					resource.TestCheckResourceAttrWith("random_pet.pet_1", "id", testCheckPetLen("-", 4)),
 				),
 			},
 		},
@@ -46,11 +48,12 @@ func TestAccResourcePet_prefix(t *testing.T) {
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories(),
 		Steps: []resource.TestStep{
 			{
-				Config: testAccResourcePetPrefix,
+				Config: `resource "random_pet" "pet_1" {
+  							prefix = "consul"
+						}`,
 				Check: resource.ComposeTestCheckFunc(
-					testAccResourcePetLength("random_pet.pet_1", "-", 3),
-					resource.TestMatchResourceAttr(
-						"random_pet.pet_1", "id", regexp.MustCompile("^consul-")),
+					resource.TestCheckResourceAttrWith("random_pet.pet_1", "id", testCheckPetLen("-", 3)),
+					resource.TestMatchResourceAttr("random_pet.pet_1", "id", regexp.MustCompile("^consul-")),
 				),
 			},
 		},
@@ -63,54 +66,26 @@ func TestAccResourcePet_separator(t *testing.T) {
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories(),
 		Steps: []resource.TestStep{
 			{
-				Config: testAccResourcePetSeparator,
+				Config: `resource "random_pet" "pet_1" {
+  							length = 3
+  							separator = "_"
+						}`,
 				Check: resource.ComposeTestCheckFunc(
-					testAccResourcePetLength("random_pet.pet_1", "_", 3),
+					resource.TestCheckResourceAttrWith("random_pet.pet_1", "id", testCheckPetLen("_", 3)),
 				),
 			},
 		},
 	})
 }
 
-// nolint:unparam
-func testAccResourcePetLength(id string, separator string, length int) resource.TestCheckFunc {
-	return func(s *terraform.State) error {
-		rs, ok := s.RootModule().Resources[id]
-		if !ok {
-			return fmt.Errorf("Not found: %s", id)
-		}
-		if rs.Primary.ID == "" {
-			return fmt.Errorf("No ID is set")
-		}
+func testCheckPetLen(separator string, expectedLen int) func(input string) error {
+	return func(input string) error {
+		petNameParts := strings.Split(input, separator)
 
-		petParts := strings.Split(rs.Primary.ID, separator)
-		if len(petParts) != length {
-			return fmt.Errorf("Length does not match")
+		if len(petNameParts) != expectedLen {
+			return fmt.Errorf("expected length %d, actual length %d", expectedLen, len(petNameParts))
 		}
 
 		return nil
 	}
 }
-
-const testAccResourcePetBasic = `
-resource "random_pet" "pet_1" {
-}
-`
-
-const testAccResourcePetLengthSet = `
-resource "random_pet" "pet_1" {
-  length = 4
-}
-`
-const testAccResourcePetPrefix = `
-resource "random_pet" "pet_1" {
-  prefix = "consul"
-}
-`
-
-const testAccResourcePetSeparator = `
-resource "random_pet" "pet_1" {
-  length = 3
-  separator = "_"
-}
-`
