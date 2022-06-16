@@ -45,7 +45,7 @@ func TestAccResourceStringOverride(t *testing.T) {
 							number = false
 						}`,
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttrWith("random_string.override", "result", testCheckLen(12)),
+					resource.TestCheckResourceAttrWith("random_string.override", "result", testCheckLen(4)),
 					resource.TestCheckResourceAttr("random_string.override", "result", "!!!!"),
 				),
 			},
@@ -83,7 +83,7 @@ func TestAccResourceStringMin(t *testing.T) {
 // This includes the deprecation of `number` and the addition of `numeric` attributes.
 // v3.2.0 was used as this is the last version before `number` was deprecated and `numeric` attribute
 // was added.
-func TestAccResourceString_StateUpgraders(t *testing.T) {
+func TestAccResourceString_StateUpgrade_V1toV2(t *testing.T) {
 	t.Parallel()
 
 	cases := []struct {

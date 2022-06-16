@@ -67,7 +67,7 @@ func TestAccResourcePasswordOverride(t *testing.T) {
 							numeric = false
 						}`,
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttrWith("random_password.override", "result", testCheckLen(12)),
+					resource.TestCheckResourceAttrWith("random_password.override", "result", testCheckLen(4)),
 					resource.TestCheckResourceAttr("random_password.override", "result", "!!!!"),
 				),
 			},

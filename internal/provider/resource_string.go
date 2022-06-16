@@ -76,8 +76,10 @@ func stringSchemaV2() tfsdk.Schema {
 				Type: types.MapType{
 					ElemType: types.StringType,
 				},
-				Optional:      true,
-				PlanModifiers: []tfsdk.AttributePlanModifier{tfsdk.RequiresReplace()},
+				Optional: true,
+				PlanModifiers: []tfsdk.AttributePlanModifier{
+					tfsdk.RequiresReplace(),
+				},
 			},
 
 			"length": {
@@ -103,8 +105,8 @@ func stringSchemaV2() tfsdk.Schema {
 				Optional:    true,
 				Computed:    true,
 				PlanModifiers: []tfsdk.AttributePlanModifier{
-					tfsdk.RequiresReplace(),
 					newDefaultValueAttributePlanModifier(types.Bool{Value: true}),
+					RequiresReplace(),
 				},
 			},
 
@@ -114,8 +116,8 @@ func stringSchemaV2() tfsdk.Schema {
 				Optional:    true,
 				Computed:    true,
 				PlanModifiers: []tfsdk.AttributePlanModifier{
-					tfsdk.RequiresReplace(),
 					newDefaultValueAttributePlanModifier(types.Bool{Value: true}),
+					RequiresReplace(),
 				},
 			},
 
@@ -125,8 +127,8 @@ func stringSchemaV2() tfsdk.Schema {
 				Optional:    true,
 				Computed:    true,
 				PlanModifiers: []tfsdk.AttributePlanModifier{
-					tfsdk.RequiresReplace(),
 					newDefaultValueAttributePlanModifier(types.Bool{Value: true}),
+					RequiresReplace(),
 				},
 			},
 
@@ -137,8 +139,8 @@ func stringSchemaV2() tfsdk.Schema {
 				Optional: true,
 				Computed: true,
 				PlanModifiers: []tfsdk.AttributePlanModifier{
-					tfsdk.RequiresReplace(),
 					newNumberNumericAttributePlanModifier(),
+					RequiresReplace(),
 				},
 				DeprecationMessage: "**NOTE**: This is deprecated, use `numeric` instead.",
 			},
@@ -149,8 +151,8 @@ func stringSchemaV2() tfsdk.Schema {
 				Optional:    true,
 				Computed:    true,
 				PlanModifiers: []tfsdk.AttributePlanModifier{
-					tfsdk.RequiresReplace(),
 					newNumberNumericAttributePlanModifier(),
+					RequiresReplace(),
 				},
 			},
 
@@ -160,8 +162,8 @@ func stringSchemaV2() tfsdk.Schema {
 				Optional:    true,
 				Computed:    true,
 				PlanModifiers: []tfsdk.AttributePlanModifier{
-					tfsdk.RequiresReplace(),
 					newDefaultValueAttributePlanModifier(types.Int64{Value: 0}),
+					RequiresReplace(),
 				},
 			},
 
@@ -171,8 +173,8 @@ func stringSchemaV2() tfsdk.Schema {
 				Optional:    true,
 				Computed:    true,
 				PlanModifiers: []tfsdk.AttributePlanModifier{
-					tfsdk.RequiresReplace(),
 					newDefaultValueAttributePlanModifier(types.Int64{Value: 0}),
+					RequiresReplace(),
 				},
 			},
 
@@ -182,8 +184,8 @@ func stringSchemaV2() tfsdk.Schema {
 				Optional:    true,
 				Computed:    true,
 				PlanModifiers: []tfsdk.AttributePlanModifier{
-					tfsdk.RequiresReplace(),
 					newDefaultValueAttributePlanModifier(types.Int64{Value: 0}),
+					RequiresReplace(),
 				},
 			},
 
@@ -193,8 +195,8 @@ func stringSchemaV2() tfsdk.Schema {
 				Optional:    true,
 				Computed:    true,
 				PlanModifiers: []tfsdk.AttributePlanModifier{
-					tfsdk.RequiresReplace(),
 					newDefaultValueAttributePlanModifier(types.Int64{Value: 0}),
+					RequiresReplace(),
 				},
 			},
 
