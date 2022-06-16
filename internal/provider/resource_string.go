@@ -3,6 +3,7 @@ package provider
 import (
 	"context"
 
+	"github.com/hashicorp/terraform-plugin-framework-validators/int64validator"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/tfsdk"
 	"github.com/hashicorp/terraform-plugin-framework/types"
@@ -89,7 +90,7 @@ func stringSchemaV2() tfsdk.Schema {
 				Required:      true,
 				PlanModifiers: []tfsdk.AttributePlanModifier{tfsdk.RequiresReplace()},
 				Validators: []tfsdk.AttributeValidator{
-					NewIntAtLeastValidator(1),
+					int64validator.AtLeast(1),
 					NewIntIsAtLeastSumOfValidator(
 						tftypes.NewAttributePath().WithAttributeName("min_upper"),
 						tftypes.NewAttributePath().WithAttributeName("min_lower"),
@@ -256,7 +257,7 @@ func stringSchemaV1() tfsdk.Schema {
 				Required:      true,
 				PlanModifiers: []tfsdk.AttributePlanModifier{tfsdk.RequiresReplace()},
 				Validators: []tfsdk.AttributeValidator{
-					NewIntAtLeastValidator(1),
+					int64validator.AtLeast(1),
 					NewIntIsAtLeastSumOfValidator(
 						tftypes.NewAttributePath().WithAttributeName("min_upper"),
 						tftypes.NewAttributePath().WithAttributeName("min_lower"),

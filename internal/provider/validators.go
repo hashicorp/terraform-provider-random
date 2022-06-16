@@ -12,62 +12,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 )
 
-// intAtLeastValidator checks that the value of the attribute in the configuration
-// (i.e., AttributeConfig in ValidateAttributeRequest) is greater than or, equal to minVal.
-type intAtLeastValidator struct {
-	minVal int64
-}
-
-var _ tfsdk.AttributeValidator = (*intAtLeastValidator)(nil)
-
-func NewIntAtLeastValidator(min int64) tfsdk.AttributeValidator {
-	return &intAtLeastValidator{min}
-}
-
-func (av *intAtLeastValidator) Description(ctx context.Context) string {
-	return "intAtLeastValidator ensures that attribute is at least minVal"
-}
-
-func (av *intAtLeastValidator) MarkdownDescription(context.Context) string {
-	return "intAtLeastValidator ensures that attribute is at least `minVal`"
-}
-
-// Validate runs the following checks:
-// 1. Determines if AttributeConfig can be reflected into types.Int64.
-// 2. Checks that the value is >= minVal.
-func (av *intAtLeastValidator) Validate(ctx context.Context, req tfsdk.ValidateAttributeRequest, resp *tfsdk.ValidateAttributeResponse) {
-	// TODO: Remove once attr.Value interface includes IsNull.
-	attribConfigValue, err := req.AttributeConfig.ToTerraformValue(ctx)
-	if err != nil {
-		resp.Diagnostics.AddError(
-			"Int at least validator failed",
-			fmt.Sprintf("Unable to convert attribute config (%s) to terraform value: %s", req.AttributeConfig.Type(ctx).String(), err),
-		)
-		return
-	}
-
-	if attribConfigValue.IsNull() || !attribConfigValue.IsKnown() {
-		return
-	}
-
-	var attrib types.Int64
-
-	resp.Diagnostics.Append(tfsdk.ValueAs(ctx, req.AttributeConfig, &attrib)...)
-	if resp.Diagnostics.HasError() {
-		return
-	}
-
-	if attrib.Value < av.minVal {
-		pathStr := attrPathToString(req.AttributePath)
-
-		resp.Diagnostics.AddAttributeError(
-			req.AttributePath,
-			fmt.Sprintf("Attribute %q is less than minimum required.", pathStr),
-			fmt.Sprintf("Attribute %q (%d) must be at least %d.", attrPathToString(req.AttributePath), attrib.Value, av.minVal),
-		)
-	}
-}
-
 // intIsAtLeastValidator checks that the value of the attribute in the configuration
 // (i.e., AttributeConfig in ValidateAttributeRequest) is greater than or, equal to the sum of the values of the
 // attributes in the slice of AttributePath.
