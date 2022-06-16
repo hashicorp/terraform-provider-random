@@ -290,9 +290,9 @@ func TestAccResourceStringErrors(t *testing.T) {
 			},
 			{
 				Config: `resource "random_string" "invalid_length" {
-  							length = 0
+							length = 0
 						}`,
-				ExpectError: regexp.MustCompile(`.*Attribute "length" \(0\) must be at least 1`),
+				ExpectError: regexp.MustCompile(`.*Value must be at least 1, got: 0`),
 			},
 		},
 	})
