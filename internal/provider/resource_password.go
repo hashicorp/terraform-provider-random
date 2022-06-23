@@ -89,9 +89,11 @@ func passwordSchemaV2() tfsdk.Schema {
 			"length": {
 				Description: "The length of the string desired. The minimum value for length is 1 and, length " +
 					"must also be >= (`min_upper` + `min_lower` + `min_numeric` + `min_special`).",
-				Type:          types.Int64Type,
-				Required:      true,
-				PlanModifiers: []tfsdk.AttributePlanModifier{tfsdk.RequiresReplace()},
+				Type:     types.Int64Type,
+				Required: true,
+				PlanModifiers: []tfsdk.AttributePlanModifier{
+					tfsdk.RequiresReplace(),
+				},
 				Validators: []tfsdk.AttributeValidator{
 					int64validator.AtLeast(1),
 					NewIntIsAtLeastSumOfValidator(
@@ -614,8 +616,18 @@ func importPassword(ctx context.Context, req tfsdk.ImportResourceStateRequest, r
 	id := req.ID
 
 	state := PasswordModelV2{
-		ID:     types.String{Value: "none"},
-		Result: types.String{Value: id},
+		ID:         types.String{Value: "none"},
+		Result:     types.String{Value: id},
+		Length:     types.Int64{Value: int64(len(id))},
+		Special:    types.Bool{Value: true},
+		Upper:      types.Bool{Value: true},
+		Lower:      types.Bool{Value: true},
+		Number:     types.Bool{Value: true},
+		Numeric:    types.Bool{Value: true},
+		MinSpecial: types.Int64{Value: 0},
+		MinUpper:   types.Int64{Value: 0},
+		MinLower:   types.Int64{Value: 0},
+		MinNumeric: types.Int64{Value: 0},
 	}
 
 	state.Keepers.ElemType = types.StringType

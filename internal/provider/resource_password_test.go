@@ -47,7 +47,7 @@ func TestAccResourcePasswordBasic(t *testing.T) {
 				},
 				ImportState:             true,
 				ImportStateVerify:       true,
-				ImportStateVerifyIgnore: []string{"bcrypt_hash", "length", "lower", "number", "numeric", "special", "upper", "min_lower", "min_numeric", "min_special", "min_upper", "override_special"},
+				ImportStateVerifyIgnore: []string{"bcrypt_hash"},
 			},
 		},
 	})

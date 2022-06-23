@@ -438,8 +438,18 @@ func importString(ctx context.Context, req tfsdk.ImportResourceStateRequest, res
 	id := req.ID
 
 	state := StringModelV2{
-		ID:     types.String{Value: id},
-		Result: types.String{Value: id},
+		ID:         types.String{Value: id},
+		Result:     types.String{Value: id},
+		Length:     types.Int64{Value: int64(len(id))},
+		Special:    types.Bool{Value: true},
+		Upper:      types.Bool{Value: true},
+		Lower:      types.Bool{Value: true},
+		Number:     types.Bool{Value: true},
+		Numeric:    types.Bool{Value: true},
+		MinSpecial: types.Int64{Value: 0},
+		MinUpper:   types.Int64{Value: 0},
+		MinLower:   types.Int64{Value: 0},
+		MinNumeric: types.Int64{Value: 0},
 	}
 
 	state.Keepers.ElemType = types.StringType
