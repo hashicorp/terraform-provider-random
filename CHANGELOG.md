@@ -17,7 +17,6 @@ BUG FIXES:
 
 * resource/random_password: When importing set defaults for all attributes that have a default defined ([256](https://github.com/hashicorp/terraform-provider-random/pull/256)).
 * resource/random_string: When importing set defaults for all attributes that have a default defined ([256](https://github.com/hashicorp/terraform-provider-random/pull/256)).
->>>>>>> main
 
 ## 3.3.1 (June 07, 2022)
 
