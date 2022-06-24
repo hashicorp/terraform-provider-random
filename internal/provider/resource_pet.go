@@ -9,6 +9,8 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/tfsdk"
 	"github.com/hashicorp/terraform-plugin-framework/types"
+
+	"github.com/terraform-providers/terraform-provider-random/internal/planmodifiers"
 )
 
 type resourcePetType struct{}
@@ -42,8 +44,8 @@ func (r resourcePetType) GetSchema(context.Context) (tfsdk.Schema, diag.Diagnost
 				Optional:    true,
 				Computed:    true,
 				PlanModifiers: []tfsdk.AttributePlanModifier{
+					planmodifiers.DefaultValue(types.Int64{Value: 2}),
 					tfsdk.RequiresReplace(),
-					newDefaultValueAttributePlanModifier(types.Int64{Value: 2}),
 				},
 			},
 			"prefix": {
@@ -58,8 +60,8 @@ func (r resourcePetType) GetSchema(context.Context) (tfsdk.Schema, diag.Diagnost
 				Optional:    true,
 				Computed:    true,
 				PlanModifiers: []tfsdk.AttributePlanModifier{
+					planmodifiers.DefaultValue(types.String{Value: "-"}),
 					tfsdk.RequiresReplace(),
-					newDefaultValueAttributePlanModifier(types.String{Value: "-"}),
 				},
 			},
 			"id": {

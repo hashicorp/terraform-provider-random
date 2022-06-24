@@ -8,6 +8,8 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/tfsdk"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-go/tftypes"
+
+	"github.com/terraform-providers/terraform-provider-random/internal/planmodifiers"
 )
 
 type resourceStringType struct{}
@@ -106,8 +108,8 @@ func stringSchemaV2() tfsdk.Schema {
 				Optional:    true,
 				Computed:    true,
 				PlanModifiers: []tfsdk.AttributePlanModifier{
-					newDefaultValueAttributePlanModifier(types.Bool{Value: true}),
-					RequiresReplace(),
+					planmodifiers.DefaultValue(types.Bool{Value: true}),
+					planmodifiers.RequiresReplace(),
 				},
 			},
 
@@ -117,8 +119,8 @@ func stringSchemaV2() tfsdk.Schema {
 				Optional:    true,
 				Computed:    true,
 				PlanModifiers: []tfsdk.AttributePlanModifier{
-					newDefaultValueAttributePlanModifier(types.Bool{Value: true}),
-					RequiresReplace(),
+					planmodifiers.DefaultValue(types.Bool{Value: true}),
+					planmodifiers.RequiresReplace(),
 				},
 			},
 
@@ -128,22 +130,9 @@ func stringSchemaV2() tfsdk.Schema {
 				Optional:    true,
 				Computed:    true,
 				PlanModifiers: []tfsdk.AttributePlanModifier{
-					newDefaultValueAttributePlanModifier(types.Bool{Value: true}),
-					RequiresReplace(),
+					planmodifiers.DefaultValue(types.Bool{Value: true}),
+					planmodifiers.RequiresReplace(),
 				},
-			},
-
-			"number": {
-				Description: "Include numeric characters in the result. Default value is `true`. " +
-					"**NOTE**: This is deprecated, use `numeric` instead.",
-				Type:     types.BoolType,
-				Optional: true,
-				Computed: true,
-				PlanModifiers: []tfsdk.AttributePlanModifier{
-					newNumberNumericAttributePlanModifier(),
-					RequiresReplace(),
-				},
-				DeprecationMessage: "**NOTE**: This is deprecated, use `numeric` instead.",
 			},
 
 			"numeric": {
@@ -152,8 +141,8 @@ func stringSchemaV2() tfsdk.Schema {
 				Optional:    true,
 				Computed:    true,
 				PlanModifiers: []tfsdk.AttributePlanModifier{
-					newNumberNumericAttributePlanModifier(),
-					RequiresReplace(),
+					planmodifiers.DefaultValue(types.Bool{Value: true}),
+					planmodifiers.RequiresReplace(),
 				},
 			},
 
@@ -163,8 +152,8 @@ func stringSchemaV2() tfsdk.Schema {
 				Optional:    true,
 				Computed:    true,
 				PlanModifiers: []tfsdk.AttributePlanModifier{
-					newDefaultValueAttributePlanModifier(types.Int64{Value: 0}),
-					RequiresReplace(),
+					planmodifiers.DefaultValue(types.Int64{Value: 0}),
+					planmodifiers.RequiresReplace(),
 				},
 			},
 
@@ -174,8 +163,8 @@ func stringSchemaV2() tfsdk.Schema {
 				Optional:    true,
 				Computed:    true,
 				PlanModifiers: []tfsdk.AttributePlanModifier{
-					newDefaultValueAttributePlanModifier(types.Int64{Value: 0}),
-					RequiresReplace(),
+					planmodifiers.DefaultValue(types.Int64{Value: 0}),
+					planmodifiers.RequiresReplace(),
 				},
 			},
 
@@ -185,8 +174,8 @@ func stringSchemaV2() tfsdk.Schema {
 				Optional:    true,
 				Computed:    true,
 				PlanModifiers: []tfsdk.AttributePlanModifier{
-					newDefaultValueAttributePlanModifier(types.Int64{Value: 0}),
-					RequiresReplace(),
+					planmodifiers.DefaultValue(types.Int64{Value: 0}),
+					planmodifiers.RequiresReplace(),
 				},
 			},
 
@@ -196,8 +185,8 @@ func stringSchemaV2() tfsdk.Schema {
 				Optional:    true,
 				Computed:    true,
 				PlanModifiers: []tfsdk.AttributePlanModifier{
-					newDefaultValueAttributePlanModifier(types.Int64{Value: 0}),
-					RequiresReplace(),
+					planmodifiers.DefaultValue(types.Int64{Value: 0}),
+					planmodifiers.RequiresReplace(),
 				},
 			},
 
@@ -273,8 +262,8 @@ func stringSchemaV1() tfsdk.Schema {
 				Optional:    true,
 				Computed:    true,
 				PlanModifiers: []tfsdk.AttributePlanModifier{
-					tfsdk.RequiresReplace(),
-					newDefaultValueAttributePlanModifier(types.Bool{Value: true}),
+					planmodifiers.DefaultValue(types.Bool{Value: true}),
+					planmodifiers.RequiresReplace(),
 				},
 			},
 
@@ -284,8 +273,8 @@ func stringSchemaV1() tfsdk.Schema {
 				Optional:    true,
 				Computed:    true,
 				PlanModifiers: []tfsdk.AttributePlanModifier{
-					tfsdk.RequiresReplace(),
-					newDefaultValueAttributePlanModifier(types.Bool{Value: true}),
+					planmodifiers.DefaultValue(types.Bool{Value: true}),
+					planmodifiers.RequiresReplace(),
 				},
 			},
 
@@ -295,8 +284,8 @@ func stringSchemaV1() tfsdk.Schema {
 				Optional:    true,
 				Computed:    true,
 				PlanModifiers: []tfsdk.AttributePlanModifier{
-					tfsdk.RequiresReplace(),
-					newDefaultValueAttributePlanModifier(types.Bool{Value: true}),
+					planmodifiers.DefaultValue(types.Bool{Value: true}),
+					planmodifiers.RequiresReplace(),
 				},
 			},
 
@@ -306,8 +295,8 @@ func stringSchemaV1() tfsdk.Schema {
 				Optional:    true,
 				Computed:    true,
 				PlanModifiers: []tfsdk.AttributePlanModifier{
-					tfsdk.RequiresReplace(),
-					newDefaultValueAttributePlanModifier(types.Bool{Value: true}),
+					planmodifiers.DefaultValue(types.Bool{Value: true}),
+					planmodifiers.RequiresReplace(),
 				},
 			},
 
@@ -317,8 +306,8 @@ func stringSchemaV1() tfsdk.Schema {
 				Optional:    true,
 				Computed:    true,
 				PlanModifiers: []tfsdk.AttributePlanModifier{
-					tfsdk.RequiresReplace(),
-					newDefaultValueAttributePlanModifier(types.Int64{Value: 0}),
+					planmodifiers.DefaultValue(types.Int64{Value: 0}),
+					planmodifiers.RequiresReplace(),
 				},
 			},
 
@@ -328,8 +317,8 @@ func stringSchemaV1() tfsdk.Schema {
 				Optional:    true,
 				Computed:    true,
 				PlanModifiers: []tfsdk.AttributePlanModifier{
-					tfsdk.RequiresReplace(),
-					newDefaultValueAttributePlanModifier(types.Int64{Value: 0}),
+					planmodifiers.DefaultValue(types.Int64{Value: 0}),
+					planmodifiers.RequiresReplace(),
 				},
 			},
 
@@ -339,8 +328,8 @@ func stringSchemaV1() tfsdk.Schema {
 				Optional:    true,
 				Computed:    true,
 				PlanModifiers: []tfsdk.AttributePlanModifier{
-					tfsdk.RequiresReplace(),
-					newDefaultValueAttributePlanModifier(types.Int64{Value: 0}),
+					planmodifiers.DefaultValue(types.Int64{Value: 0}),
+					planmodifiers.RequiresReplace(),
 				},
 			},
 
@@ -350,8 +339,8 @@ func stringSchemaV1() tfsdk.Schema {
 				Optional:    true,
 				Computed:    true,
 				PlanModifiers: []tfsdk.AttributePlanModifier{
-					tfsdk.RequiresReplace(),
-					newDefaultValueAttributePlanModifier(types.Int64{Value: 0}),
+					planmodifiers.DefaultValue(types.Int64{Value: 0}),
+					planmodifiers.RequiresReplace(),
 				},
 			},
 
@@ -417,7 +406,6 @@ func createString(ctx context.Context, req tfsdk.CreateResourceRequest, resp *tf
 		Special:         types.Bool{Value: plan.Special.Value},
 		Upper:           types.Bool{Value: plan.Upper.Value},
 		Lower:           types.Bool{Value: plan.Lower.Value},
-		Number:          types.Bool{Value: plan.Number.Value},
 		Numeric:         types.Bool{Value: plan.Numeric.Value},
 		MinNumeric:      types.Int64{Value: plan.MinNumeric.Value},
 		MinUpper:        types.Int64{Value: plan.MinUpper.Value},
@@ -444,7 +432,6 @@ func importString(ctx context.Context, req tfsdk.ImportResourceStateRequest, res
 		Special:    types.Bool{Value: true},
 		Upper:      types.Bool{Value: true},
 		Lower:      types.Bool{Value: true},
-		Number:     types.Bool{Value: true},
 		Numeric:    types.Bool{Value: true},
 		MinSpecial: types.Int64{Value: 0},
 		MinUpper:   types.Int64{Value: 0},
@@ -475,7 +462,6 @@ func upgradeStringStateV1toV2(ctx context.Context, req tfsdk.UpgradeResourceStat
 		Special:         stringDataV1.Special,
 		Upper:           stringDataV1.Upper,
 		Lower:           stringDataV1.Lower,
-		Number:          stringDataV1.Number,
 		Numeric:         stringDataV1.Number,
 		MinNumeric:      stringDataV1.MinNumeric,
 		MinLower:        stringDataV1.MinLower,

@@ -29,7 +29,6 @@ type PasswordModelV2 struct {
 	Special         types.Bool   `tfsdk:"special"`
 	Upper           types.Bool   `tfsdk:"upper"`
 	Lower           types.Bool   `tfsdk:"lower"`
-	Number          types.Bool   `tfsdk:"number"`
 	Numeric         types.Bool   `tfsdk:"numeric"`
 	MinNumeric      types.Int64  `tfsdk:"min_numeric"`
 	MinUpper        types.Int64  `tfsdk:"min_upper"`
@@ -97,7 +96,6 @@ type StringModelV2 struct {
 	Special         types.Bool   `tfsdk:"special"`
 	Upper           types.Bool   `tfsdk:"upper"`
 	Lower           types.Bool   `tfsdk:"lower"`
-	Number          types.Bool   `tfsdk:"number"`
 	Numeric         types.Bool   `tfsdk:"numeric"`
 	MinNumeric      types.Int64  `tfsdk:"min_numeric"`
 	MinUpper        types.Int64  `tfsdk:"min_upper"`

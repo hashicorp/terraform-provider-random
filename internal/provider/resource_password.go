@@ -9,6 +9,8 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-go/tftypes"
 	"golang.org/x/crypto/bcrypt"
+
+	"github.com/terraform-providers/terraform-provider-random/internal/planmodifiers"
 )
 
 type resourcePasswordType struct{}
@@ -111,8 +113,8 @@ func passwordSchemaV2() tfsdk.Schema {
 				Optional:    true,
 				Computed:    true,
 				PlanModifiers: []tfsdk.AttributePlanModifier{
-					newDefaultValueAttributePlanModifier(types.Bool{Value: true}),
-					RequiresReplace(),
+					planmodifiers.DefaultValue(types.Bool{Value: true}),
+					planmodifiers.RequiresReplace(),
 				},
 			},
 
@@ -122,8 +124,8 @@ func passwordSchemaV2() tfsdk.Schema {
 				Optional:    true,
 				Computed:    true,
 				PlanModifiers: []tfsdk.AttributePlanModifier{
-					newDefaultValueAttributePlanModifier(types.Bool{Value: true}),
-					RequiresReplace(),
+					planmodifiers.DefaultValue(types.Bool{Value: true}),
+					planmodifiers.RequiresReplace(),
 				},
 			},
 
@@ -133,22 +135,9 @@ func passwordSchemaV2() tfsdk.Schema {
 				Optional:    true,
 				Computed:    true,
 				PlanModifiers: []tfsdk.AttributePlanModifier{
-					newDefaultValueAttributePlanModifier(types.Bool{Value: true}),
-					RequiresReplace(),
+					planmodifiers.DefaultValue(types.Bool{Value: true}),
+					planmodifiers.RequiresReplace(),
 				},
-			},
-
-			"number": {
-				Description: "Include numeric characters in the result. Default value is `true`. " +
-					"**NOTE**: This is deprecated, use `numeric` instead.",
-				Type:     types.BoolType,
-				Optional: true,
-				Computed: true,
-				PlanModifiers: []tfsdk.AttributePlanModifier{
-					newNumberNumericAttributePlanModifier(),
-					RequiresReplace(),
-				},
-				DeprecationMessage: "**NOTE**: This is deprecated, use `numeric` instead.",
 			},
 
 			"numeric": {
@@ -157,8 +146,8 @@ func passwordSchemaV2() tfsdk.Schema {
 				Optional:    true,
 				Computed:    true,
 				PlanModifiers: []tfsdk.AttributePlanModifier{
-					newNumberNumericAttributePlanModifier(),
-					RequiresReplace(),
+					planmodifiers.DefaultValue(types.Bool{Value: true}),
+					planmodifiers.RequiresReplace(),
 				},
 			},
 
@@ -168,8 +157,8 @@ func passwordSchemaV2() tfsdk.Schema {
 				Optional:    true,
 				Computed:    true,
 				PlanModifiers: []tfsdk.AttributePlanModifier{
-					newDefaultValueAttributePlanModifier(types.Int64{Value: 0}),
-					RequiresReplace(),
+					planmodifiers.DefaultValue(types.Int64{Value: 0}),
+					planmodifiers.RequiresReplace(),
 				},
 			},
 
@@ -179,8 +168,8 @@ func passwordSchemaV2() tfsdk.Schema {
 				Optional:    true,
 				Computed:    true,
 				PlanModifiers: []tfsdk.AttributePlanModifier{
-					newDefaultValueAttributePlanModifier(types.Int64{Value: 0}),
-					RequiresReplace(),
+					planmodifiers.DefaultValue(types.Int64{Value: 0}),
+					planmodifiers.RequiresReplace(),
 				},
 			},
 
@@ -190,8 +179,8 @@ func passwordSchemaV2() tfsdk.Schema {
 				Optional:    true,
 				Computed:    true,
 				PlanModifiers: []tfsdk.AttributePlanModifier{
-					newDefaultValueAttributePlanModifier(types.Int64{Value: 0}),
-					RequiresReplace(),
+					planmodifiers.DefaultValue(types.Int64{Value: 0}),
+					planmodifiers.RequiresReplace(),
 				},
 			},
 
@@ -201,8 +190,8 @@ func passwordSchemaV2() tfsdk.Schema {
 				Optional:    true,
 				Computed:    true,
 				PlanModifiers: []tfsdk.AttributePlanModifier{
-					newDefaultValueAttributePlanModifier(types.Int64{Value: 0}),
-					RequiresReplace(),
+					planmodifiers.DefaultValue(types.Int64{Value: 0}),
+					planmodifiers.RequiresReplace(),
 				},
 			},
 
@@ -256,8 +245,10 @@ func passwordSchemaV1() tfsdk.Schema {
 				Type: types.MapType{
 					ElemType: types.StringType,
 				},
-				Optional:      true,
-				PlanModifiers: []tfsdk.AttributePlanModifier{tfsdk.RequiresReplace()},
+				Optional: true,
+				PlanModifiers: []tfsdk.AttributePlanModifier{
+					tfsdk.RequiresReplace(),
+				},
 			},
 
 			"length": {
@@ -283,8 +274,8 @@ func passwordSchemaV1() tfsdk.Schema {
 				Optional:    true,
 				Computed:    true,
 				PlanModifiers: []tfsdk.AttributePlanModifier{
-					tfsdk.RequiresReplace(),
-					newDefaultValueAttributePlanModifier(types.Bool{Value: true}),
+					planmodifiers.DefaultValue(types.Bool{Value: true}),
+					planmodifiers.RequiresReplace(),
 				},
 			},
 
@@ -294,8 +285,8 @@ func passwordSchemaV1() tfsdk.Schema {
 				Optional:    true,
 				Computed:    true,
 				PlanModifiers: []tfsdk.AttributePlanModifier{
-					tfsdk.RequiresReplace(),
-					newDefaultValueAttributePlanModifier(types.Bool{Value: true}),
+					planmodifiers.DefaultValue(types.Bool{Value: true}),
+					planmodifiers.RequiresReplace(),
 				},
 			},
 
@@ -305,8 +296,8 @@ func passwordSchemaV1() tfsdk.Schema {
 				Optional:    true,
 				Computed:    true,
 				PlanModifiers: []tfsdk.AttributePlanModifier{
-					tfsdk.RequiresReplace(),
-					newDefaultValueAttributePlanModifier(types.Bool{Value: true}),
+					planmodifiers.DefaultValue(types.Bool{Value: true}),
+					planmodifiers.RequiresReplace(),
 				},
 			},
 
@@ -316,8 +307,8 @@ func passwordSchemaV1() tfsdk.Schema {
 				Optional:    true,
 				Computed:    true,
 				PlanModifiers: []tfsdk.AttributePlanModifier{
-					tfsdk.RequiresReplace(),
-					newDefaultValueAttributePlanModifier(types.Bool{Value: true}),
+					planmodifiers.DefaultValue(types.Bool{Value: true}),
+					planmodifiers.RequiresReplace(),
 				},
 			},
 
@@ -327,8 +318,8 @@ func passwordSchemaV1() tfsdk.Schema {
 				Optional:    true,
 				Computed:    true,
 				PlanModifiers: []tfsdk.AttributePlanModifier{
-					tfsdk.RequiresReplace(),
-					newDefaultValueAttributePlanModifier(types.Int64{Value: 0}),
+					planmodifiers.DefaultValue(types.Int64{Value: 0}),
+					planmodifiers.RequiresReplace(),
 				},
 			},
 
@@ -338,8 +329,8 @@ func passwordSchemaV1() tfsdk.Schema {
 				Optional:    true,
 				Computed:    true,
 				PlanModifiers: []tfsdk.AttributePlanModifier{
-					tfsdk.RequiresReplace(),
-					newDefaultValueAttributePlanModifier(types.Int64{Value: 0}),
+					planmodifiers.DefaultValue(types.Int64{Value: 0}),
+					planmodifiers.RequiresReplace(),
 				},
 			},
 
@@ -349,8 +340,8 @@ func passwordSchemaV1() tfsdk.Schema {
 				Optional:    true,
 				Computed:    true,
 				PlanModifiers: []tfsdk.AttributePlanModifier{
-					tfsdk.RequiresReplace(),
-					newDefaultValueAttributePlanModifier(types.Int64{Value: 0}),
+					planmodifiers.DefaultValue(types.Int64{Value: 0}),
+					planmodifiers.RequiresReplace(),
 				},
 			},
 
@@ -360,8 +351,8 @@ func passwordSchemaV1() tfsdk.Schema {
 				Optional:    true,
 				Computed:    true,
 				PlanModifiers: []tfsdk.AttributePlanModifier{
-					tfsdk.RequiresReplace(),
-					newDefaultValueAttributePlanModifier(types.Int64{Value: 0}),
+					planmodifiers.DefaultValue(types.Int64{Value: 0}),
+					planmodifiers.RequiresReplace(),
 				},
 			},
 
@@ -441,8 +432,8 @@ func passwordSchemaV0() tfsdk.Schema {
 				Optional:    true,
 				Computed:    true,
 				PlanModifiers: []tfsdk.AttributePlanModifier{
-					tfsdk.RequiresReplace(),
-					newDefaultValueAttributePlanModifier(types.Bool{Value: true}),
+					planmodifiers.DefaultValue(types.Bool{Value: true}),
+					planmodifiers.RequiresReplace(),
 				},
 			},
 
@@ -452,8 +443,8 @@ func passwordSchemaV0() tfsdk.Schema {
 				Optional:    true,
 				Computed:    true,
 				PlanModifiers: []tfsdk.AttributePlanModifier{
-					tfsdk.RequiresReplace(),
-					newDefaultValueAttributePlanModifier(types.Bool{Value: true}),
+					planmodifiers.DefaultValue(types.Bool{Value: true}),
+					planmodifiers.RequiresReplace(),
 				},
 			},
 
@@ -463,8 +454,8 @@ func passwordSchemaV0() tfsdk.Schema {
 				Optional:    true,
 				Computed:    true,
 				PlanModifiers: []tfsdk.AttributePlanModifier{
-					tfsdk.RequiresReplace(),
-					newDefaultValueAttributePlanModifier(types.Bool{Value: true}),
+					planmodifiers.DefaultValue(types.Bool{Value: true}),
+					planmodifiers.RequiresReplace(),
 				},
 			},
 
@@ -474,8 +465,8 @@ func passwordSchemaV0() tfsdk.Schema {
 				Optional:    true,
 				Computed:    true,
 				PlanModifiers: []tfsdk.AttributePlanModifier{
-					tfsdk.RequiresReplace(),
-					newDefaultValueAttributePlanModifier(types.Bool{Value: true}),
+					planmodifiers.DefaultValue(types.Bool{Value: true}),
+					planmodifiers.RequiresReplace(),
 				},
 			},
 
@@ -485,8 +476,8 @@ func passwordSchemaV0() tfsdk.Schema {
 				Optional:    true,
 				Computed:    true,
 				PlanModifiers: []tfsdk.AttributePlanModifier{
-					tfsdk.RequiresReplace(),
-					newDefaultValueAttributePlanModifier(types.Int64{Value: 0}),
+					planmodifiers.DefaultValue(types.Int64{Value: 0}),
+					planmodifiers.RequiresReplace(),
 				},
 			},
 
@@ -496,8 +487,8 @@ func passwordSchemaV0() tfsdk.Schema {
 				Optional:    true,
 				Computed:    true,
 				PlanModifiers: []tfsdk.AttributePlanModifier{
-					tfsdk.RequiresReplace(),
-					newDefaultValueAttributePlanModifier(types.Int64{Value: 0}),
+					planmodifiers.DefaultValue(types.Int64{Value: 0}),
+					planmodifiers.RequiresReplace(),
 				},
 			},
 
@@ -507,8 +498,8 @@ func passwordSchemaV0() tfsdk.Schema {
 				Optional:    true,
 				Computed:    true,
 				PlanModifiers: []tfsdk.AttributePlanModifier{
-					tfsdk.RequiresReplace(),
-					newDefaultValueAttributePlanModifier(types.Int64{Value: 0}),
+					planmodifiers.DefaultValue(types.Int64{Value: 0}),
+					planmodifiers.RequiresReplace(),
 				},
 			},
 
@@ -518,8 +509,8 @@ func passwordSchemaV0() tfsdk.Schema {
 				Optional:    true,
 				Computed:    true,
 				PlanModifiers: []tfsdk.AttributePlanModifier{
-					tfsdk.RequiresReplace(),
-					newDefaultValueAttributePlanModifier(types.Int64{Value: 0}),
+					planmodifiers.DefaultValue(types.Int64{Value: 0}),
+					planmodifiers.RequiresReplace(),
 				},
 			},
 
@@ -551,8 +542,6 @@ func passwordSchemaV0() tfsdk.Schema {
 	}
 }
 
-// createPassword currently uses plan.Number.Value for both number and numeric.
-// TODO: Remove usage of number before release.
 func createPassword(ctx context.Context, req tfsdk.CreateResourceRequest, resp *tfsdk.CreateResourceResponse) {
 	var plan PasswordModelV2
 
@@ -588,7 +577,6 @@ func createPassword(ctx context.Context, req tfsdk.CreateResourceRequest, resp *
 		Special:         types.Bool{Value: plan.Special.Value},
 		Upper:           types.Bool{Value: plan.Upper.Value},
 		Lower:           types.Bool{Value: plan.Lower.Value},
-		Number:          types.Bool{Value: plan.Number.Value},
 		Numeric:         types.Bool{Value: plan.Numeric.Value},
 		MinNumeric:      types.Int64{Value: plan.MinNumeric.Value},
 		MinUpper:        types.Int64{Value: plan.MinUpper.Value},
@@ -622,7 +610,6 @@ func importPassword(ctx context.Context, req tfsdk.ImportResourceStateRequest, r
 		Special:    types.Bool{Value: true},
 		Upper:      types.Bool{Value: true},
 		Lower:      types.Bool{Value: true},
-		Number:     types.Bool{Value: true},
 		Numeric:    types.Bool{Value: true},
 		MinSpecial: types.Int64{Value: 0},
 		MinUpper:   types.Int64{Value: 0},
@@ -660,7 +647,6 @@ func upgradePasswordStateV0toV2(ctx context.Context, req tfsdk.UpgradeResourceSt
 		Special:         passwordDataV0.Special,
 		Upper:           passwordDataV0.Upper,
 		Lower:           passwordDataV0.Lower,
-		Number:          passwordDataV0.Number,
 		Numeric:         passwordDataV0.Number,
 		MinNumeric:      passwordDataV0.MinNumeric,
 		MinLower:        passwordDataV0.MinLower,
@@ -696,7 +682,6 @@ func upgradePasswordStateV1toV2(ctx context.Context, req tfsdk.UpgradeResourceSt
 		Special:         passwordDataV1.Special,
 		Upper:           passwordDataV1.Upper,
 		Lower:           passwordDataV1.Lower,
-		Number:          passwordDataV1.Number,
 		Numeric:         passwordDataV1.Number,
 		MinNumeric:      passwordDataV1.MinNumeric,
 		MinLower:        passwordDataV1.MinLower,
