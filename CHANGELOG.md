@@ -11,6 +11,14 @@ BREAKING CHANGES:
 * resource/random_password: Deprecated attribute `number` has been removed ([266](https://github.com/hashicorp/terraform-provider-random/issues/266)).
 * resource/random_string: Deprecated attribute `number` has been removed ([266](https://github.com/hashicorp/terraform-provider-random/issues/266)).
 
+## 3.3.2 (June 23, 2022)
+
+BUG FIXES:
+
+* resource/random_password: When importing set defaults for all attributes that have a default defined ([256](https://github.com/hashicorp/terraform-provider-random/pull/256)).
+* resource/random_string: When importing set defaults for all attributes that have a default defined ([256](https://github.com/hashicorp/terraform-provider-random/pull/256)).
+>>>>>>> main
+
 ## 3.3.1 (June 07, 2022)
 
 BUG FIXES:
