@@ -10,7 +10,7 @@ import (
 func protoV6ProviderFactories() map[string]func() (tfprotov6.ProviderServer, error) {
 	return map[string]func() (tfprotov6.ProviderServer, error){
 		"random": func() (tfprotov6.ProviderServer, error) {
-			return providerserver.NewProtocol6(NewProvider())(), nil
+			return providerserver.NewProtocol6(New())(), nil
 		},
 	}
 }

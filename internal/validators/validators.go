@@ -15,6 +15,7 @@ import (
 // intIsAtLeastSumOfValidator checks that the value of the attribute in the configuration
 // (i.e., AttributeConfig in ValidateAttributeRequest) is greater than or, equal to the sum of the values of the
 // attributes in the slice of AttributePath.
+// TODO: Remove once https://github.com/hashicorp/terraform-plugin-framework-validators/pull/29 is merged.
 type intIsAtLeastSumOfValidator struct {
 	attributesToSum []*tftypes.AttributePath
 }

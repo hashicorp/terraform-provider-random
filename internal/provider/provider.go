@@ -15,7 +15,7 @@ import (
 	"github.com/terraform-providers/terraform-provider-random/internal/resources/uuid"
 )
 
-func NewProvider() tfsdk.Provider {
+func New() tfsdk.Provider {
 	return &provider{}
 }
 

@@ -20,7 +20,7 @@ import (
 //go:generate go run github.com/hashicorp/terraform-plugin-docs/cmd/tfplugindocs
 
 func main() {
-	err := providerserver.Serve(context.Background(), provider.NewProvider, providerserver.ServeOpts{
+	err := providerserver.Serve(context.Background(), provider.New, providerserver.ServeOpts{
 		Address: "registry.terraform.io/hashicorp/random",
 	})
 	if err != nil {
