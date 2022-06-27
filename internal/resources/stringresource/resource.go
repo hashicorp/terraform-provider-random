@@ -1,4 +1,4 @@
-package string
+package stringresource
 
 import (
 	"context"
@@ -24,7 +24,159 @@ var _ tfsdk.ResourceType = (*resourceType)(nil)
 type resourceType struct{}
 
 func (r resourceType) GetSchema(context.Context) (tfsdk.Schema, diag.Diagnostics) {
-	return schemaV2(), nil
+	return tfsdk.Schema{
+		Version: 2,
+		Description: "The resource `random_string` generates a random permutation of alphanumeric " +
+			"characters and optionally special characters.\n" +
+			"\n" +
+			"This resource *does* use a cryptographic random number generator.\n" +
+			"\n" +
+			"Historically this resource's intended usage has been ambiguous as the original example used " +
+			"it in a password. For backwards compatibility it will continue to exist. For unique ids please " +
+			"use [random_id](id.html), for sensitive random values please use [random_password](password.html).",
+		Attributes: map[string]tfsdk.Attribute{
+			"keepers": {
+				Description: "Arbitrary map of values that, when changed, will trigger recreation of " +
+					"resource. See [the main provider documentation](../index.html) for more information.",
+				Type: types.MapType{
+					ElemType: types.StringType,
+				},
+				Optional: true,
+				PlanModifiers: []tfsdk.AttributePlanModifier{
+					tfsdk.RequiresReplace(),
+				},
+			},
+
+			"length": {
+				Description: "The length of the string desired. The minimum value for length is 1 and, length " +
+					"must also be >= (`min_upper` + `min_lower` + `min_numeric` + `min_special`).",
+				Type:          types.Int64Type,
+				Required:      true,
+				PlanModifiers: []tfsdk.AttributePlanModifier{tfsdk.RequiresReplace()},
+				Validators: []tfsdk.AttributeValidator{
+					int64validator.AtLeast(1),
+					validators.NewIntIsAtLeastSumOfValidator(
+						tftypes.NewAttributePath().WithAttributeName("min_upper"),
+						tftypes.NewAttributePath().WithAttributeName("min_lower"),
+						tftypes.NewAttributePath().WithAttributeName("min_numeric"),
+						tftypes.NewAttributePath().WithAttributeName("min_special"),
+					),
+				},
+			},
+
+			"special": {
+				Description: "Include special characters in the result. These are `!@#$%&*()-_=+[]{}<>:?`. Default value is `true`.",
+				Type:        types.BoolType,
+				Optional:    true,
+				Computed:    true,
+				PlanModifiers: []tfsdk.AttributePlanModifier{
+					planmodifiers.DefaultValue(types.Bool{Value: true}),
+					planmodifiers.RequiresReplace(),
+				},
+			},
+
+			"upper": {
+				Description: "Include uppercase alphabet characters in the result. Default value is `true`.",
+				Type:        types.BoolType,
+				Optional:    true,
+				Computed:    true,
+				PlanModifiers: []tfsdk.AttributePlanModifier{
+					planmodifiers.DefaultValue(types.Bool{Value: true}),
+					planmodifiers.RequiresReplace(),
+				},
+			},
+
+			"lower": {
+				Description: "Include lowercase alphabet characters in the result. Default value is `true`.",
+				Type:        types.BoolType,
+				Optional:    true,
+				Computed:    true,
+				PlanModifiers: []tfsdk.AttributePlanModifier{
+					planmodifiers.DefaultValue(types.Bool{Value: true}),
+					planmodifiers.RequiresReplace(),
+				},
+			},
+
+			"numeric": {
+				Description: "Include numeric characters in the result. Default value is `true`.",
+				Type:        types.BoolType,
+				Optional:    true,
+				Computed:    true,
+				PlanModifiers: []tfsdk.AttributePlanModifier{
+					planmodifiers.DefaultValue(types.Bool{Value: true}),
+					planmodifiers.RequiresReplace(),
+				},
+			},
+
+			"min_numeric": {
+				Description: "Minimum number of numeric characters in the result. Default value is `0`.",
+				Type:        types.Int64Type,
+				Optional:    true,
+				Computed:    true,
+				PlanModifiers: []tfsdk.AttributePlanModifier{
+					planmodifiers.DefaultValue(types.Int64{Value: 0}),
+					planmodifiers.RequiresReplace(),
+				},
+			},
+
+			"min_upper": {
+				Description: "Minimum number of uppercase alphabet characters in the result. Default value is `0`.",
+				Type:        types.Int64Type,
+				Optional:    true,
+				Computed:    true,
+				PlanModifiers: []tfsdk.AttributePlanModifier{
+					planmodifiers.DefaultValue(types.Int64{Value: 0}),
+					planmodifiers.RequiresReplace(),
+				},
+			},
+
+			"min_lower": {
+				Description: "Minimum number of lowercase alphabet characters in the result. Default value is `0`.",
+				Type:        types.Int64Type,
+				Optional:    true,
+				Computed:    true,
+				PlanModifiers: []tfsdk.AttributePlanModifier{
+					planmodifiers.DefaultValue(types.Int64{Value: 0}),
+					planmodifiers.RequiresReplace(),
+				},
+			},
+
+			"min_special": {
+				Description: "Minimum number of special characters in the result. Default value is `0`.",
+				Type:        types.Int64Type,
+				Optional:    true,
+				Computed:    true,
+				PlanModifiers: []tfsdk.AttributePlanModifier{
+					planmodifiers.DefaultValue(types.Int64{Value: 0}),
+					planmodifiers.RequiresReplace(),
+				},
+			},
+
+			"override_special": {
+				Description: "Supply your own list of special characters to use for string generation.  This " +
+					"overrides the default character list in the special argument.  The `special` argument must " +
+					"still be set to true for any overwritten characters to be used in generation.",
+				Type:     types.StringType,
+				Optional: true,
+				Computed: true,
+				PlanModifiers: []tfsdk.AttributePlanModifier{
+					tfsdk.RequiresReplace(),
+				},
+			},
+
+			"result": {
+				Description: "The generated random string.",
+				Type:        types.StringType,
+				Computed:    true,
+			},
+
+			"id": {
+				Description: "The generated random string.",
+				Computed:    true,
+				Type:        types.StringType,
+			},
+		},
+	}, nil
 }
 
 func (r resourceType) NewResource(_ context.Context, p tfsdk.Provider) (tfsdk.Resource, diag.Diagnostics) {
@@ -48,7 +200,7 @@ func (r *resource) Create(ctx context.Context, req tfsdk.CreateResourceRequest, 
 		return
 	}
 
-	params := random.RandomStringParams{
+	params := random.StringParams{
 		Length:          plan.Length.Value,
 		Upper:           plan.Upper.Value,
 		MinUpper:        plan.MinUpper.Value,
@@ -61,7 +213,7 @@ func (r *resource) Create(ctx context.Context, req tfsdk.CreateResourceRequest, 
 		OverrideSpecial: plan.OverrideSpecial.Value,
 	}
 
-	result, err := random.CreateRandomString(params)
+	result, err := random.CreateString(params)
 	if err != nil {
 		resp.Diagnostics.Append(diagnostics.RandomReadError(err.Error())...)
 		return

@@ -9,9 +9,9 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 )
 
-func TestAccResourcePasswordBasic(t *testing.T) {
+func TestAccResourcePassword(t *testing.T) {
 	resource.UnitTest(t, resource.TestCase{
-		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories(),
+		ProtoV6ProviderFactories: protoV6ProviderFactories(),
 		Steps: []resource.TestStep{
 			{
 				Config: `resource "random_password" "basic" {
@@ -46,9 +46,9 @@ func TestAccResourcePasswordBasic(t *testing.T) {
 	})
 }
 
-func TestAccResourcePasswordOverride(t *testing.T) {
+func TestAccResourcePassword_Override(t *testing.T) {
 	resource.UnitTest(t, resource.TestCase{
-		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories(),
+		ProtoV6ProviderFactories: protoV6ProviderFactories(),
 		Steps: []resource.TestStep{
 			{
 				Config: `resource "random_password" "override" {
@@ -67,11 +67,11 @@ func TestAccResourcePasswordOverride(t *testing.T) {
 	})
 }
 
-// TestAccResourcePassword_StateUpgrade_V0toV2 covers the state upgrades from V0 to V2.
+// TestAccResourcePassword_StateUpgradeV0toV2 covers the state upgrades from V0 to V2.
 // This includes the deprecation and removal of `number` and the addition of `numeric`
 // and `bcrypt_hash` attributes.
 // v3.1.3 is used as this is last version before `bcrypt_hash` attributed was added.
-func TestAccResourcePassword_StateUpgrade_V0toV2(t *testing.T) {
+func TestAccResourcePassword_StateUpgradeV0toV2(t *testing.T) {
 	t.Parallel()
 
 	cases := []struct {
@@ -275,7 +275,7 @@ func TestAccResourcePassword_StateUpgrade_V0toV2(t *testing.T) {
 						Check:  resource.ComposeTestCheckFunc(c.beforeStateUpgrade...),
 					},
 					{
-						ProtoV6ProviderFactories: testAccProtoV6ProviderFactories(),
+						ProtoV6ProviderFactories: protoV6ProviderFactories(),
 						Config:                   c.configDuringUpgrade,
 						Check:                    resource.ComposeTestCheckFunc(c.afterStateUpgrade...),
 					},
@@ -289,7 +289,7 @@ func TestAccResourcePassword_StateUpgrade_V0toV2(t *testing.T) {
 // This includes the deprecation and removal of `number` and the addition of `numeric` attributes.
 // v3.2.0 was used as this is the last version before `number` was deprecated and `numeric` attribute
 // was added.
-func TestAccResourcePassword_StateUpgrade_V1toV2(t *testing.T) {
+func TestAccResourcePassword_StateUpgradeV1toV2(t *testing.T) {
 	t.Parallel()
 
 	cases := []struct {
@@ -484,7 +484,7 @@ func TestAccResourcePassword_StateUpgrade_V1toV2(t *testing.T) {
 						Check:  resource.ComposeTestCheckFunc(c.beforeStateUpgrade...),
 					},
 					{
-						ProtoV6ProviderFactories: testAccProtoV6ProviderFactories(),
+						ProtoV6ProviderFactories: protoV6ProviderFactories(),
 						Config:                   c.configDuringUpgrade,
 						Check:                    resource.ComposeTestCheckFunc(c.afterStateUpgrade...),
 					},
@@ -494,9 +494,9 @@ func TestAccResourcePassword_StateUpgrade_V1toV2(t *testing.T) {
 	}
 }
 
-func TestAccResourcePasswordMin(t *testing.T) {
+func TestAccResourcePassword_Min(t *testing.T) {
 	resource.UnitTest(t, resource.TestCase{
-		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories(),
+		ProtoV6ProviderFactories: protoV6ProviderFactories(),
 		Steps: []resource.TestStep{
 			{
 				Config: `resource "random_password" "min" {
@@ -513,6 +513,79 @@ func TestAccResourcePasswordMin(t *testing.T) {
 					resource.TestMatchResourceAttr("random_password.min", "result", regexp.MustCompile(`([A-Z].*){3,}`)),
 					resource.TestMatchResourceAttr("random_password.min", "result", regexp.MustCompile(`([0-9].*){4,}`)),
 					resource.TestMatchResourceAttr("random_password.min", "result", regexp.MustCompile(`([!#@])`)),
+				),
+			},
+		},
+	})
+}
+
+func TestAccResourcePassword_UpgradeFromVersion3_3_2(t *testing.T) {
+	resource.Test(t, resource.TestCase{
+		Steps: []resource.TestStep{
+			{
+				ExternalProviders: providerVersion332(),
+				Config: `resource "random_password" "min" {
+							length = 12
+							override_special = "!#@"
+							min_lower = 2
+							min_upper = 3
+							min_special = 1
+							min_numeric = 4
+						}`,
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttrWith("random_password.min", "result", testCheckLen(12)),
+					resource.TestMatchResourceAttr("random_password.min", "result", regexp.MustCompile(`([a-z].*){2,}`)),
+					resource.TestMatchResourceAttr("random_password.min", "result", regexp.MustCompile(`([A-Z].*){3,}`)),
+					resource.TestMatchResourceAttr("random_password.min", "result", regexp.MustCompile(`([0-9].*){4,}`)),
+					resource.TestMatchResourceAttr("random_password.min", "result", regexp.MustCompile(`([!#@])`)),
+					resource.TestCheckResourceAttr("random_password.min", "special", "true"),
+					resource.TestCheckResourceAttr("random_password.min", "upper", "true"),
+					resource.TestCheckResourceAttr("random_password.min", "lower", "true"),
+					resource.TestCheckResourceAttr("random_password.min", "numeric", "true"),
+					resource.TestCheckResourceAttr("random_password.min", "min_special", "1"),
+					resource.TestCheckResourceAttr("random_password.min", "min_upper", "3"),
+					resource.TestCheckResourceAttr("random_password.min", "min_lower", "2"),
+					resource.TestCheckResourceAttr("random_password.min", "min_numeric", "4"),
+					resource.TestCheckResourceAttrSet("random_password.min", "bcrypt_hash"),
+				),
+			},
+			{
+				ProtoV6ProviderFactories: protoV6ProviderFactories(),
+				Config: `resource "random_password" "min" {
+							length = 12
+							override_special = "!#@"
+							min_lower = 2
+							min_upper = 3
+							min_special = 1
+							min_numeric = 4
+						}`,
+				PlanOnly: true,
+			},
+			{
+				ProtoV6ProviderFactories: protoV6ProviderFactories(),
+				Config: `resource "random_password" "min" {
+							length = 12
+							override_special = "!#@"
+							min_lower = 2
+							min_upper = 3
+							min_special = 1
+							min_numeric = 4
+						}`,
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttrWith("random_password.min", "result", testCheckLen(12)),
+					resource.TestMatchResourceAttr("random_password.min", "result", regexp.MustCompile(`([a-z].*){2,}`)),
+					resource.TestMatchResourceAttr("random_password.min", "result", regexp.MustCompile(`([A-Z].*){3,}`)),
+					resource.TestMatchResourceAttr("random_password.min", "result", regexp.MustCompile(`([0-9].*){4,}`)),
+					resource.TestMatchResourceAttr("random_password.min", "result", regexp.MustCompile(`([!#@])`)),
+					resource.TestCheckResourceAttr("random_password.min", "special", "true"),
+					resource.TestCheckResourceAttr("random_password.min", "upper", "true"),
+					resource.TestCheckResourceAttr("random_password.min", "lower", "true"),
+					resource.TestCheckResourceAttr("random_password.min", "numeric", "true"),
+					resource.TestCheckResourceAttr("random_password.min", "min_special", "1"),
+					resource.TestCheckResourceAttr("random_password.min", "min_upper", "3"),
+					resource.TestCheckResourceAttr("random_password.min", "min_lower", "2"),
+					resource.TestCheckResourceAttr("random_password.min", "min_numeric", "4"),
+					resource.TestCheckResourceAttrSet("random_password.min", "bcrypt_hash"),
 				),
 			},
 		},

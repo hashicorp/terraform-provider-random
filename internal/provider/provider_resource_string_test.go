@@ -10,7 +10,7 @@ import (
 
 func TestAccResourceString(t *testing.T) {
 	resource.UnitTest(t, resource.TestCase{
-		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories(),
+		ProtoV6ProviderFactories: protoV6ProviderFactories(),
 		Steps: []resource.TestStep{
 			{
 				Config: `resource "random_string" "basic" {
@@ -29,9 +29,9 @@ func TestAccResourceString(t *testing.T) {
 	})
 }
 
-func TestAccResourceStringOverride(t *testing.T) {
+func TestAccResourceString_Override(t *testing.T) {
 	resource.UnitTest(t, resource.TestCase{
-		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories(),
+		ProtoV6ProviderFactories: protoV6ProviderFactories(),
 		Steps: []resource.TestStep{
 			{
 				Config: `resource "random_string" "override" {
@@ -50,9 +50,9 @@ func TestAccResourceStringOverride(t *testing.T) {
 	})
 }
 
-func TestAccResourceStringMin(t *testing.T) {
+func TestAccResourceString_Min(t *testing.T) {
 	resource.UnitTest(t, resource.TestCase{
-		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories(),
+		ProtoV6ProviderFactories: protoV6ProviderFactories(),
 		Steps: []resource.TestStep{
 			{
 				Config: `resource "random_string" "min" {
@@ -75,11 +75,11 @@ func TestAccResourceStringMin(t *testing.T) {
 	})
 }
 
-// TestAccResourceString_StateUpgrade_V1toV2 covers the state upgrade from V1 to V2.
+// TestAccResourceString_StateUpgradeV1toV2 covers the state upgrade from V1 to V2.
 // This includes the deprecation and removal of `number` and the addition of `numeric` attributes.
 // v3.2.0 was used as this is the last version before `number` was deprecated and `numeric` attribute
 // was added.
-func TestAccResourceString_StateUpgrade_V1toV2(t *testing.T) {
+func TestAccResourceString_StateUpgradeV1toV2(t *testing.T) {
 	t.Parallel()
 
 	cases := []struct {
@@ -269,7 +269,7 @@ func TestAccResourceString_StateUpgrade_V1toV2(t *testing.T) {
 						Check:  resource.ComposeTestCheckFunc(c.beforeStateUpgrade...),
 					},
 					{
-						ProtoV6ProviderFactories: testAccProtoV6ProviderFactories(),
+						ProtoV6ProviderFactories: protoV6ProviderFactories(),
 						Config:                   c.configDuringUpgrade,
 						Check:                    resource.ComposeTestCheckFunc(c.afterStateUpgrade...),
 					},
@@ -279,9 +279,9 @@ func TestAccResourceString_StateUpgrade_V1toV2(t *testing.T) {
 	}
 }
 
-func TestAccResourceStringErrors(t *testing.T) {
+func TestAccResourceString_LengthErrors(t *testing.T) {
 	resource.UnitTest(t, resource.TestCase{
-		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories(),
+		ProtoV6ProviderFactories: protoV6ProviderFactories(),
 		Steps: []resource.TestStep{
 			{
 				Config: `resource "random_string" "invalid_length" {
@@ -300,6 +300,77 @@ func TestAccResourceStringErrors(t *testing.T) {
 	})
 }
 
+func TestAccResourceString_UpgradeFromVersion3_3_2(t *testing.T) {
+	resource.Test(t, resource.TestCase{
+		Steps: []resource.TestStep{
+			{
+				ExternalProviders: providerVersion332(),
+				Config: `resource "random_string" "min" {
+							length = 12
+							override_special = "!#@"
+							min_lower = 2
+							min_upper = 3
+							min_special = 1
+							min_numeric = 4
+						}`,
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttrWith("random_string.min", "result", testCheckLen(12)),
+					resource.TestMatchResourceAttr("random_string.min", "result", regexp.MustCompile(`([a-z].*){2,}`)),
+					resource.TestMatchResourceAttr("random_string.min", "result", regexp.MustCompile(`([A-Z].*){3,}`)),
+					resource.TestMatchResourceAttr("random_string.min", "result", regexp.MustCompile(`([0-9].*){4,}`)),
+					resource.TestMatchResourceAttr("random_string.min", "result", regexp.MustCompile(`([!#@])`)),
+					resource.TestCheckResourceAttr("random_string.min", "special", "true"),
+					resource.TestCheckResourceAttr("random_string.min", "upper", "true"),
+					resource.TestCheckResourceAttr("random_string.min", "lower", "true"),
+					resource.TestCheckResourceAttr("random_string.min", "numeric", "true"),
+					resource.TestCheckResourceAttr("random_string.min", "min_special", "1"),
+					resource.TestCheckResourceAttr("random_string.min", "min_upper", "3"),
+					resource.TestCheckResourceAttr("random_string.min", "min_lower", "2"),
+					resource.TestCheckResourceAttr("random_string.min", "min_numeric", "4"),
+				),
+			},
+			{
+				ProtoV6ProviderFactories: protoV6ProviderFactories(),
+				Config: `resource "random_string" "min" {
+							length = 12
+							override_special = "!#@"
+							min_lower = 2
+							min_upper = 3
+							min_special = 1
+							min_numeric = 4
+						}`,
+				PlanOnly: true,
+			},
+			{
+				ProtoV6ProviderFactories: protoV6ProviderFactories(),
+				Config: `resource "random_string" "min" {
+							length = 12
+							override_special = "!#@"
+							min_lower = 2
+							min_upper = 3
+							min_special = 1
+							min_numeric = 4
+						}`,
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttrWith("random_string.min", "result", testCheckLen(12)),
+					resource.TestMatchResourceAttr("random_string.min", "result", regexp.MustCompile(`([a-z].*){2,}`)),
+					resource.TestMatchResourceAttr("random_string.min", "result", regexp.MustCompile(`([A-Z].*){3,}`)),
+					resource.TestMatchResourceAttr("random_string.min", "result", regexp.MustCompile(`([0-9].*){4,}`)),
+					resource.TestMatchResourceAttr("random_string.min", "result", regexp.MustCompile(`([!#@])`)),
+					resource.TestCheckResourceAttr("random_string.min", "special", "true"),
+					resource.TestCheckResourceAttr("random_string.min", "upper", "true"),
+					resource.TestCheckResourceAttr("random_string.min", "lower", "true"),
+					resource.TestCheckResourceAttr("random_string.min", "numeric", "true"),
+					resource.TestCheckResourceAttr("random_string.min", "min_special", "1"),
+					resource.TestCheckResourceAttr("random_string.min", "min_upper", "3"),
+					resource.TestCheckResourceAttr("random_string.min", "min_lower", "2"),
+					resource.TestCheckResourceAttr("random_string.min", "min_numeric", "4"),
+				),
+			},
+		},
+	})
+}
+
 func testCheckLen(expectedLen int) func(input string) error {
 	return func(input string) error {
 		if len(input) != expectedLen {
@@ -310,6 +381,7 @@ func testCheckLen(expectedLen int) func(input string) error {
 	}
 }
 
+//nolint:unparam
 func testCheckMinLen(minLen int) func(input string) error {
 	return func(input string) error {
 		if len(input) < minLen {

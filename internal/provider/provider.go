@@ -11,7 +11,7 @@ import (
 	"github.com/terraform-providers/terraform-provider-random/internal/resources/password"
 	"github.com/terraform-providers/terraform-provider-random/internal/resources/pet"
 	"github.com/terraform-providers/terraform-provider-random/internal/resources/shuffle"
-	stringresource "github.com/terraform-providers/terraform-provider-random/internal/resources/string"
+	"github.com/terraform-providers/terraform-provider-random/internal/resources/stringresource"
 	"github.com/terraform-providers/terraform-provider-random/internal/resources/uuid"
 )
 

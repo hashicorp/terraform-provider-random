@@ -7,10 +7,10 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 )
 
-func TestAccResourceIntegerBasic(t *testing.T) {
+func TestAccResourceInteger(t *testing.T) {
 	t.Parallel()
 	resource.UnitTest(t, resource.TestCase{
-		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories(),
+		ProtoV6ProviderFactories: protoV6ProviderFactories(),
 		Steps: []resource.TestStep{
 			{
 				Config: `resource "random_integer" "integer_1" {
@@ -32,10 +32,10 @@ func TestAccResourceIntegerBasic(t *testing.T) {
 	})
 }
 
-func TestAccResourceIntegerUpdate(t *testing.T) {
+func TestAccResourceInteger_ChangeSeed(t *testing.T) {
 	t.Parallel()
 	resource.UnitTest(t, resource.TestCase{
-		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories(),
+		ProtoV6ProviderFactories: protoV6ProviderFactories(),
 		Steps: []resource.TestStep{
 			{
 				Config: `resource "random_integer" "integer_1" {
@@ -61,10 +61,10 @@ func TestAccResourceIntegerUpdate(t *testing.T) {
 	})
 }
 
-func TestAccResourceIntegerSeedless_to_seeded(t *testing.T) {
+func TestAccResourceInteger_SeedlessToSeeded(t *testing.T) {
 	t.Parallel()
 	resource.UnitTest(t, resource.TestCase{
-		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories(),
+		ProtoV6ProviderFactories: protoV6ProviderFactories(),
 		Steps: []resource.TestStep{
 			{
 				Config: `resource "random_integer" "integer_1" {
@@ -89,10 +89,10 @@ func TestAccResourceIntegerSeedless_to_seeded(t *testing.T) {
 	})
 }
 
-func TestAccResourceIntegerSeeded_to_seedless(t *testing.T) {
+func TestAccResourceInteger_SeededToSeedless(t *testing.T) {
 	t.Parallel()
 	resource.UnitTest(t, resource.TestCase{
-		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories(),
+		ProtoV6ProviderFactories: protoV6ProviderFactories(),
 		Steps: []resource.TestStep{
 			{
 				Config: `resource "random_integer" "integer_1" {
@@ -117,10 +117,10 @@ func TestAccResourceIntegerSeeded_to_seedless(t *testing.T) {
 	})
 }
 
-func TestAccResourceIntegerBig(t *testing.T) {
+func TestAccResourceInteger_Big(t *testing.T) {
 	t.Parallel()
 	resource.UnitTest(t, resource.TestCase{
-		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories(),
+		ProtoV6ProviderFactories: protoV6ProviderFactories(),
 		Steps: []resource.TestStep{
 			{
 				Config: `resource "random_integer" "integer_1" {
@@ -134,6 +134,44 @@ func TestAccResourceIntegerBig(t *testing.T) {
 				ImportState:       true,
 				ImportStateId:     "7227701560655103598,7227701560655103597,7227701560655103598,12345",
 				ImportStateVerify: true,
+			},
+		},
+	})
+}
+
+func TestAccResourceInteger_UpgradeFromVersion3_3_2(t *testing.T) {
+	resource.Test(t, resource.TestCase{
+		Steps: []resource.TestStep{
+			{
+				ExternalProviders: providerVersion332(),
+				Config: `resource "random_integer" "integer_1" {
+   							min  = 1
+							max  = 3
+   							seed = "12345"
+						}`,
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("random_integer.integer_1", "result", "3"),
+				),
+			},
+			{
+				ProtoV6ProviderFactories: protoV6ProviderFactories(),
+				Config: `resource "random_integer" "integer_1" {
+   							min  = 1
+							max  = 3
+   							seed = "12345"
+						}`,
+				PlanOnly: true,
+			},
+			{
+				ProtoV6ProviderFactories: protoV6ProviderFactories(),
+				Config: `resource "random_integer" "integer_1" {
+   							min  = 1
+							max  = 3
+   							seed = "12345"
+						}`,
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("random_integer.integer_1", "result", "3"),
+				),
 			},
 		},
 	})

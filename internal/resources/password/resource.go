@@ -45,7 +45,7 @@ func (r *resource) Create(ctx context.Context, req tfsdk.CreateResourceRequest, 
 		return
 	}
 
-	params := random.RandomStringParams{
+	params := random.StringParams{
 		Length:          plan.Length.Value,
 		Upper:           plan.Upper.Value,
 		MinUpper:        plan.MinUpper.Value,
@@ -58,7 +58,7 @@ func (r *resource) Create(ctx context.Context, req tfsdk.CreateResourceRequest, 
 		OverrideSpecial: plan.OverrideSpecial.Value,
 	}
 
-	result, err := random.CreateRandomString(params)
+	result, err := random.CreateString(params)
 	if err != nil {
 		resp.Diagnostics.Append(diagnostics.RandomReadError(err.Error())...)
 		return

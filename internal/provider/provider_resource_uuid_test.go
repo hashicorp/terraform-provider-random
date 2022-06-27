@@ -9,16 +9,13 @@ import (
 
 func TestAccResourceUUID(t *testing.T) {
 	resource.UnitTest(t, resource.TestCase{
-		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories(),
+		ProtoV6ProviderFactories: protoV6ProviderFactories(),
 		Steps: []resource.TestStep{
 			{
-				Config: testAccResourceUUIDConfig,
+				Config: `resource "random_uuid" "basic" { 
+						}`,
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestMatchResourceAttr(
-						"random_uuid.basic",
-						"result",
-						regexp.MustCompile(`[\da-f]{8}-[\da-f]{4}-[\da-f]{4}-[\da-f]{4}-[\da-f]{12}`),
-					),
+					resource.TestMatchResourceAttr("random_uuid.basic", "result", regexp.MustCompile(`[\da-f]{8}-[\da-f]{4}-[\da-f]{4}-[\da-f]{4}-[\da-f]{12}`)),
 				),
 			},
 			{
@@ -30,9 +27,31 @@ func TestAccResourceUUID(t *testing.T) {
 	})
 }
 
-const (
-	testAccResourceUUIDConfig = `
-resource "random_uuid" "basic" { 
+func TestAccResourceUUID_UpgradeFromVersion3_3_2(t *testing.T) {
+	resource.Test(t, resource.TestCase{
+		Steps: []resource.TestStep{
+			{
+				ExternalProviders: providerVersion332(),
+				Config: `resource "random_uuid" "basic" { 
+						}`,
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestMatchResourceAttr("random_uuid.basic", "result", regexp.MustCompile(`[\da-f]{8}-[\da-f]{4}-[\da-f]{4}-[\da-f]{4}-[\da-f]{12}`)),
+				),
+			},
+			{
+				ProtoV6ProviderFactories: protoV6ProviderFactories(),
+				Config: `resource "random_uuid" "basic" { 
+						}`,
+				PlanOnly: true,
+			},
+			{
+				ProtoV6ProviderFactories: protoV6ProviderFactories(),
+				Config: `resource "random_uuid" "basic" { 
+						}`,
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestMatchResourceAttr("random_uuid.basic", "result", regexp.MustCompile(`[\da-f]{8}-[\da-f]{4}-[\da-f]{4}-[\da-f]{4}-[\da-f]{12}`)),
+				),
+			},
+		},
+	})
 }
-`
-)

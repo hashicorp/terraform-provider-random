@@ -6,7 +6,7 @@ import (
 	"sort"
 )
 
-type RandomStringParams struct {
+type StringParams struct {
 	Length          int64
 	Upper           bool
 	MinUpper        int64
@@ -19,7 +19,7 @@ type RandomStringParams struct {
 	OverrideSpecial string
 }
 
-func CreateRandomString(input RandomStringParams) ([]byte, error) {
+func CreateString(input StringParams) ([]byte, error) {
 	const numChars = "0123456789"
 	const lowerChars = "abcdefghijklmnopqrstuvwxyz"
 	const upperChars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"

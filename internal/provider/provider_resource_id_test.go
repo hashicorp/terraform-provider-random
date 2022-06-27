@@ -8,7 +8,7 @@ import (
 
 func TestAccResourceID(t *testing.T) {
 	resource.UnitTest(t, resource.TestCase{
-		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories(),
+		ProtoV6ProviderFactories: protoV6ProviderFactories(),
 		Steps: []resource.TestStep{
 			{
 				Config: `resource "random_id" "foo" {
@@ -30,9 +30,9 @@ func TestAccResourceID(t *testing.T) {
 	})
 }
 
-func TestAccResourceID_importWithPrefix(t *testing.T) {
+func TestAccResourceID_ImportWithPrefix(t *testing.T) {
 	resource.UnitTest(t, resource.TestCase{
-		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories(),
+		ProtoV6ProviderFactories: protoV6ProviderFactories(),
 		Steps: []resource.TestStep{
 			{
 				Config: `resource "random_id" "bar" {
@@ -51,6 +51,47 @@ func TestAccResourceID_importWithPrefix(t *testing.T) {
 				ImportState:         true,
 				ImportStateIdPrefix: "cloud-,",
 				ImportStateVerify:   true,
+			},
+		},
+	})
+}
+
+func TestAccResourceID_UpgradeFromVersion3_3_2(t *testing.T) {
+	resource.Test(t, resource.TestCase{
+		Steps: []resource.TestStep{
+			{
+				ExternalProviders: providerVersion332(),
+				Config: `resource "random_id" "bar" {
+  							byte_length = 4
+  							prefix      = "cloud-"
+						}`,
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttrWith("random_id.bar", "b64_url", testCheckLen(12)),
+					resource.TestCheckResourceAttrWith("random_id.bar", "b64_std", testCheckLen(14)),
+					resource.TestCheckResourceAttrWith("random_id.bar", "hex", testCheckLen(14)),
+					resource.TestCheckResourceAttrWith("random_id.bar", "dec", testCheckMinLen(1)),
+				),
+			},
+			{
+				ProtoV6ProviderFactories: protoV6ProviderFactories(),
+				Config: `resource "random_id" "bar" {
+  							byte_length = 4
+  							prefix      = "cloud-"
+						}`,
+				PlanOnly: true,
+			},
+			{
+				ProtoV6ProviderFactories: protoV6ProviderFactories(),
+				Config: `resource "random_id" "bar" {
+  							byte_length = 4
+  							prefix      = "cloud-"
+						}`,
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttrWith("random_id.bar", "b64_url", testCheckLen(12)),
+					resource.TestCheckResourceAttrWith("random_id.bar", "b64_std", testCheckLen(14)),
+					resource.TestCheckResourceAttrWith("random_id.bar", "hex", testCheckLen(14)),
+					resource.TestCheckResourceAttrWith("random_id.bar", "dec", testCheckMinLen(1)),
+				),
 			},
 		},
 	})

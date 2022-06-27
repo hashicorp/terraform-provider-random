@@ -9,9 +9,9 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 )
 
-func TestAccResourcePet_basic(t *testing.T) {
+func TestAccResourcePet(t *testing.T) {
 	resource.UnitTest(t, resource.TestCase{
-		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories(),
+		ProtoV6ProviderFactories: protoV6ProviderFactories(),
 		Steps: []resource.TestStep{
 			{
 				Config: `resource "random_pet" "pet_1" {
@@ -24,9 +24,9 @@ func TestAccResourcePet_basic(t *testing.T) {
 	})
 }
 
-func TestAccResourcePet_length(t *testing.T) {
+func TestAccResourcePet_Length(t *testing.T) {
 	resource.UnitTest(t, resource.TestCase{
-		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories(),
+		ProtoV6ProviderFactories: protoV6ProviderFactories(),
 		Steps: []resource.TestStep{
 			{
 				Config: `resource "random_pet" "pet_1" {
@@ -40,9 +40,9 @@ func TestAccResourcePet_length(t *testing.T) {
 	})
 }
 
-func TestAccResourcePet_prefix(t *testing.T) {
+func TestAccResourcePet_Prefix(t *testing.T) {
 	resource.UnitTest(t, resource.TestCase{
-		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories(),
+		ProtoV6ProviderFactories: protoV6ProviderFactories(),
 		Steps: []resource.TestStep{
 			{
 				Config: `resource "random_pet" "pet_1" {
@@ -57,9 +57,9 @@ func TestAccResourcePet_prefix(t *testing.T) {
 	})
 }
 
-func TestAccResourcePet_separator(t *testing.T) {
+func TestAccResourcePet_Separator(t *testing.T) {
 	resource.UnitTest(t, resource.TestCase{
-		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories(),
+		ProtoV6ProviderFactories: protoV6ProviderFactories(),
 		Steps: []resource.TestStep{
 			{
 				Config: `resource "random_pet" "pet_1" {
@@ -68,6 +68,40 @@ func TestAccResourcePet_separator(t *testing.T) {
 						}`,
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttrWith("random_pet.pet_1", "id", testCheckPetLen("_", 3)),
+				),
+			},
+		},
+	})
+}
+
+func TestAccResourcePet_UpgradeFromVersion3_3_2(t *testing.T) {
+	resource.Test(t, resource.TestCase{
+		Steps: []resource.TestStep{
+			{
+				ExternalProviders: providerVersion332(),
+				Config: `resource "random_pet" "pet_1" {
+  							prefix = "consul"
+						}`,
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttrWith("random_pet.pet_1", "id", testCheckPetLen("-", 3)),
+					resource.TestMatchResourceAttr("random_pet.pet_1", "id", regexp.MustCompile("^consul-")),
+				),
+			},
+			{
+				ProtoV6ProviderFactories: protoV6ProviderFactories(),
+				Config: `resource "random_pet" "pet_1" {
+  							prefix = "consul"
+						}`,
+				PlanOnly: true,
+			},
+			{
+				ProtoV6ProviderFactories: protoV6ProviderFactories(),
+				Config: `resource "random_pet" "pet_1" {
+  							prefix = "consul"
+						}`,
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttrWith("random_pet.pet_1", "id", testCheckPetLen("-", 3)),
+					resource.TestMatchResourceAttr("random_pet.pet_1", "id", regexp.MustCompile("^consul-")),
 				),
 			},
 		},
