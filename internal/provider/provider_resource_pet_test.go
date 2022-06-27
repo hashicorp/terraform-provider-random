@@ -11,7 +11,6 @@ import (
 
 func TestAccResourcePet_basic(t *testing.T) {
 	resource.UnitTest(t, resource.TestCase{
-		PreCheck:                 func() { testAccPreCheck(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories(),
 		Steps: []resource.TestStep{
 			{
@@ -27,7 +26,6 @@ func TestAccResourcePet_basic(t *testing.T) {
 
 func TestAccResourcePet_length(t *testing.T) {
 	resource.UnitTest(t, resource.TestCase{
-		PreCheck:                 func() { testAccPreCheck(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories(),
 		Steps: []resource.TestStep{
 			{
@@ -44,7 +42,6 @@ func TestAccResourcePet_length(t *testing.T) {
 
 func TestAccResourcePet_prefix(t *testing.T) {
 	resource.UnitTest(t, resource.TestCase{
-		PreCheck:                 func() { testAccPreCheck(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories(),
 		Steps: []resource.TestStep{
 			{
@@ -62,7 +59,6 @@ func TestAccResourcePet_prefix(t *testing.T) {
 
 func TestAccResourcePet_separator(t *testing.T) {
 	resource.UnitTest(t, resource.TestCase{
-		PreCheck:                 func() { testAccPreCheck(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories(),
 		Steps: []resource.TestStep{
 			{

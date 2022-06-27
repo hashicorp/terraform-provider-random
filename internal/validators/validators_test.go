@@ -1,4 +1,4 @@
-package provider
+package validators
 
 import (
 	"context"
@@ -19,7 +19,17 @@ func TestIsAtLeastSumOfValidator_Validate(t *testing.T) {
 		AttributePath:   tftypes.NewAttributePath().WithAttributeName("length"),
 		AttributeConfig: types.Int64{Value: 16},
 		Config: tfsdk.Config{
-			Schema: passwordSchemaV1(),
+			Schema: tfsdk.Schema{
+				Attributes: map[string]tfsdk.Attribute{
+					"min_upper": {
+						Type: types.Int64Type,
+					},
+
+					"min_lower": {
+						Type: types.Int64Type,
+					},
+				},
+			},
 		},
 	}
 

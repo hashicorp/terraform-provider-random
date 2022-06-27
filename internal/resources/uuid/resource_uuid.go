@@ -1,4 +1,4 @@
-package provider
+package uuid
 
 import (
 	"context"
@@ -8,11 +8,19 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/tfsdk"
 	"github.com/hashicorp/terraform-plugin-framework/types"
+
+	"github.com/terraform-providers/terraform-provider-random/internal/diagnostics"
 )
 
-type resourceUUIDType struct{}
+func NewResourceType() *resourceType {
+	return &resourceType{}
+}
 
-func (r resourceUUIDType) GetSchema(context.Context) (tfsdk.Schema, diag.Diagnostics) {
+var _ tfsdk.ResourceType = (*resourceType)(nil)
+
+type resourceType struct{}
+
+func (r *resourceType) GetSchema(context.Context) (tfsdk.Schema, diag.Diagnostics) {
 	return tfsdk.Schema{
 		Description: "The resource `random_uuid` generates random uuid string that is intended to be " +
 			"used as unique identifiers for other resources.\n" +
@@ -26,8 +34,10 @@ func (r resourceUUIDType) GetSchema(context.Context) (tfsdk.Schema, diag.Diagnos
 				Type: types.MapType{
 					ElemType: types.StringType,
 				},
-				Optional:      true,
-				PlanModifiers: []tfsdk.AttributePlanModifier{tfsdk.RequiresReplace()},
+				Optional: true,
+				PlanModifiers: []tfsdk.AttributePlanModifier{
+					tfsdk.RequiresReplace(),
+				},
 			},
 			"result": {
 				Description: "The generated uuid presented in string format.",
@@ -43,29 +53,31 @@ func (r resourceUUIDType) GetSchema(context.Context) (tfsdk.Schema, diag.Diagnos
 	}, nil
 }
 
-func (r resourceUUIDType) NewResource(_ context.Context, p tfsdk.Provider) (tfsdk.Resource, diag.Diagnostics) {
-	return resourceUUID{
-		p: *(p.(*provider)),
-	}, nil
+func (r resourceType) NewResource(_ context.Context, p tfsdk.Provider) (tfsdk.Resource, diag.Diagnostics) {
+	return &resource{}, nil
 }
 
-type resourceUUID struct {
-	p provider
+var (
+	_ tfsdk.Resource                = (*resource)(nil)
+	_ tfsdk.ResourceWithImportState = (*resource)(nil)
+)
+
+type resource struct {
 }
 
-func (r resourceUUID) Create(ctx context.Context, req tfsdk.CreateResourceRequest, resp *tfsdk.CreateResourceResponse) {
+func (r *resource) Create(ctx context.Context, req tfsdk.CreateResourceRequest, resp *tfsdk.CreateResourceResponse) {
 	result, err := uuid.GenerateUUID()
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Create Random UUID error",
 			"There was an error during generation of a UUID.\n\n"+
-				retryMsg+
+				diagnostics.RetryMsg+
 				fmt.Sprintf("Original Error: %s", err),
 		)
 		return
 	}
 
-	var plan UUIDModel
+	var plan modelV0
 
 	diags := req.Plan.Get(ctx, &plan)
 	resp.Diagnostics.Append(diags...)
@@ -73,7 +85,7 @@ func (r resourceUUID) Create(ctx context.Context, req tfsdk.CreateResourceReques
 		return
 	}
 
-	u := &UUIDModel{
+	u := &modelV0{
 		ID:      types.String{Value: result},
 		Result:  types.String{Value: result},
 		Keepers: plan.Keepers,
@@ -87,26 +99,26 @@ func (r resourceUUID) Create(ctx context.Context, req tfsdk.CreateResourceReques
 }
 
 // Read does not need to perform any operations as the state in ReadResourceResponse is already populated.
-func (r resourceUUID) Read(ctx context.Context, req tfsdk.ReadResourceRequest, resp *tfsdk.ReadResourceResponse) {
+func (r *resource) Read(ctx context.Context, req tfsdk.ReadResourceRequest, resp *tfsdk.ReadResourceResponse) {
 }
 
 // Update is intentionally left blank as all required and optional attributes force replacement of the resource
 // through the RequiresReplace AttributePlanModifier.
-func (r resourceUUID) Update(ctx context.Context, req tfsdk.UpdateResourceRequest, resp *tfsdk.UpdateResourceResponse) {
+func (r *resource) Update(ctx context.Context, req tfsdk.UpdateResourceRequest, resp *tfsdk.UpdateResourceResponse) {
 }
 
 // Delete does not need to explicitly call resp.State.RemoveResource() as this is automatically handled by the
 // [framework](https://github.com/hashicorp/terraform-plugin-framework/pull/301).
-func (r resourceUUID) Delete(ctx context.Context, req tfsdk.DeleteResourceRequest, resp *tfsdk.DeleteResourceResponse) {
+func (r *resource) Delete(ctx context.Context, req tfsdk.DeleteResourceRequest, resp *tfsdk.DeleteResourceResponse) {
 }
 
-func (r resourceUUID) ImportState(ctx context.Context, req tfsdk.ImportResourceStateRequest, resp *tfsdk.ImportResourceStateResponse) {
+func (r *resource) ImportState(ctx context.Context, req tfsdk.ImportResourceStateRequest, resp *tfsdk.ImportResourceStateResponse) {
 	bytes, err := uuid.ParseUUID(req.ID)
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Import Random UUID Error",
 			"There was an error during the parsing of the UUID.\n\n"+
-				retryMsg+
+				diagnostics.RetryMsg+
 				fmt.Sprintf("Original Error: %s", err),
 		)
 		return
@@ -117,13 +129,13 @@ func (r resourceUUID) ImportState(ctx context.Context, req tfsdk.ImportResourceS
 		resp.Diagnostics.AddError(
 			"Import Random UUID Error",
 			"There was an error during the formatting of the UUID.\n\n"+
-				retryMsg+
+				diagnostics.RetryMsg+
 				fmt.Sprintf("Original Error: %s", err),
 		)
 		return
 	}
 
-	var state UUIDModel
+	var state modelV0
 
 	state.ID.Value = result
 	state.Result.Value = result
@@ -134,4 +146,10 @@ func (r resourceUUID) ImportState(ctx context.Context, req tfsdk.ImportResourceS
 	if resp.Diagnostics.HasError() {
 		return
 	}
+}
+
+type modelV0 struct {
+	ID      types.String `tfsdk:"id"`
+	Keepers types.Map    `tfsdk:"keepers"`
+	Result  types.String `tfsdk:"result"`
 }

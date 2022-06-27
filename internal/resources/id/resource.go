@@ -1,4 +1,4 @@
-package provider
+package id
 
 import (
 	"context"
@@ -12,11 +12,19 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/tfsdk"
 	"github.com/hashicorp/terraform-plugin-framework/types"
+
+	"github.com/terraform-providers/terraform-provider-random/internal/diagnostics"
 )
 
-type resourceIDType struct{}
+func NewResourceType() *resourceType {
+	return &resourceType{}
+}
 
-func (r resourceIDType) GetSchema(context.Context) (tfsdk.Schema, diag.Diagnostics) {
+var _ tfsdk.ResourceType = (*resourceType)(nil)
+
+type resourceType struct{}
+
+func (r *resourceType) GetSchema(context.Context) (tfsdk.Schema, diag.Diagnostics) {
 	return tfsdk.Schema{
 		Description: `
 The resource ` + "`random_id`" + ` generates random numbers that are intended to be
@@ -39,22 +47,28 @@ exist concurrently.
 				Type: types.MapType{
 					ElemType: types.StringType,
 				},
-				Optional:      true,
-				PlanModifiers: []tfsdk.AttributePlanModifier{tfsdk.RequiresReplace()},
+				Optional: true,
+				PlanModifiers: []tfsdk.AttributePlanModifier{
+					tfsdk.RequiresReplace(),
+				},
 			},
 			"byte_length": {
 				Description: "The number of random bytes to produce. The minimum value is 1, which produces " +
 					"eight bits of randomness.",
-				Type:          types.Int64Type,
-				Required:      true,
-				PlanModifiers: []tfsdk.AttributePlanModifier{tfsdk.RequiresReplace()},
+				Type:     types.Int64Type,
+				Required: true,
+				PlanModifiers: []tfsdk.AttributePlanModifier{
+					tfsdk.RequiresReplace(),
+				},
 			},
 			"prefix": {
 				Description: "Arbitrary string to prefix the output value with. This string is supplied as-is, " +
 					"meaning it is not guaranteed to be URL-safe or base64 encoded.",
-				Type:          types.StringType,
-				Optional:      true,
-				PlanModifiers: []tfsdk.AttributePlanModifier{tfsdk.RequiresReplace()},
+				Type:     types.StringType,
+				Optional: true,
+				PlanModifiers: []tfsdk.AttributePlanModifier{
+					tfsdk.RequiresReplace(),
+				},
 			},
 			"b64_url": {
 				Description: "The generated id presented in base64, using the URL-friendly character set: " +
@@ -87,18 +101,19 @@ exist concurrently.
 	}, nil
 }
 
-func (r resourceIDType) NewResource(_ context.Context, p tfsdk.Provider) (tfsdk.Resource, diag.Diagnostics) {
-	return resourceID{
-		p: *(p.(*provider)),
-	}, nil
+func (r *resourceType) NewResource(_ context.Context, p tfsdk.Provider) (tfsdk.Resource, diag.Diagnostics) {
+	return &resource{}, nil
 }
 
-type resourceID struct {
-	p provider
-}
+var (
+	_ tfsdk.Resource                = (*resource)(nil)
+	_ tfsdk.ResourceWithImportState = (*resource)(nil)
+)
 
-func (r resourceID) Create(ctx context.Context, req tfsdk.CreateResourceRequest, resp *tfsdk.CreateResourceResponse) {
-	var plan IDModel
+type resource struct{}
+
+func (r *resource) Create(ctx context.Context, req tfsdk.CreateResourceRequest, resp *tfsdk.CreateResourceResponse) {
+	var plan modelV0
 
 	diags := req.Plan.Get(ctx, &plan)
 	resp.Diagnostics.Append(diags...)
@@ -120,7 +135,7 @@ func (r resourceID) Create(ctx context.Context, req tfsdk.CreateResourceRequest,
 		return
 	}
 	if err != nil {
-		resp.Diagnostics.Append(randomReadError(err.Error())...)
+		resp.Diagnostics.Append(diagnostics.RandomReadError(err.Error())...)
 		return
 	}
 
@@ -133,7 +148,7 @@ func (r resourceID) Create(ctx context.Context, req tfsdk.CreateResourceRequest,
 	bigInt.SetBytes(bytes)
 	dec := bigInt.String()
 
-	i := IDModel{
+	i := modelV0{
 		ID:         types.String{Value: id},
 		Keepers:    plan.Keepers,
 		ByteLength: types.Int64{Value: plan.ByteLength.Value},
@@ -152,21 +167,20 @@ func (r resourceID) Create(ctx context.Context, req tfsdk.CreateResourceRequest,
 }
 
 // Read does not need to perform any operations as the state in ReadResourceResponse is already populated.
-func (r resourceID) Read(ctx context.Context, req tfsdk.ReadResourceRequest, resp *tfsdk.ReadResourceResponse) {
+func (r *resource) Read(context.Context, tfsdk.ReadResourceRequest, *tfsdk.ReadResourceResponse) {
 }
 
 // Update is intentionally left blank as all required and optional attributes force replacement of the resource
 // through the RequiresReplace AttributePlanModifier.
-func (r resourceID) Update(ctx context.Context, req tfsdk.UpdateResourceRequest, resp *tfsdk.UpdateResourceResponse) {
-	// Intentionally left blank.
+func (r *resource) Update(context.Context, tfsdk.UpdateResourceRequest, *tfsdk.UpdateResourceResponse) {
 }
 
 // Delete does not need to explicitly call resp.State.RemoveResource() as this is automatically handled by the
 // [framework](https://github.com/hashicorp/terraform-plugin-framework/pull/301).
-func (r resourceID) Delete(ctx context.Context, req tfsdk.DeleteResourceRequest, resp *tfsdk.DeleteResourceResponse) {
+func (r *resource) Delete(context.Context, tfsdk.DeleteResourceRequest, *tfsdk.DeleteResourceResponse) {
 }
 
-func (r resourceID) ImportState(ctx context.Context, req tfsdk.ImportResourceStateRequest, resp *tfsdk.ImportResourceStateResponse) {
+func (r *resource) ImportState(ctx context.Context, req tfsdk.ImportResourceStateRequest, resp *tfsdk.ImportResourceStateResponse) {
 	id := req.ID
 	var prefix string
 
@@ -181,7 +195,7 @@ func (r resourceID) ImportState(ctx context.Context, req tfsdk.ImportResourceSta
 		resp.Diagnostics.AddError(
 			"Import Random ID Error",
 			"While attempting to import a random id there was a decoding error.\n\n+"+
-				retryMsg+
+				diagnostics.RetryMsg+
 				fmt.Sprintf("Original Error: %s", err),
 		)
 		return
@@ -194,7 +208,7 @@ func (r resourceID) ImportState(ctx context.Context, req tfsdk.ImportResourceSta
 	bigInt.SetBytes(bytes)
 	dec := bigInt.String()
 
-	var state IDModel
+	var state modelV0
 
 	state.ID.Value = id
 	state.ByteLength.Value = int64(len(bytes))
@@ -215,4 +229,15 @@ func (r resourceID) ImportState(ctx context.Context, req tfsdk.ImportResourceSta
 	if resp.Diagnostics.HasError() {
 		return
 	}
+}
+
+type modelV0 struct {
+	ID         types.String `tfsdk:"id"`
+	Keepers    types.Map    `tfsdk:"keepers"`
+	ByteLength types.Int64  `tfsdk:"byte_length"`
+	Prefix     types.String `tfsdk:"prefix"`
+	B64URL     types.String `tfsdk:"b64_url"`
+	B64Std     types.String `tfsdk:"b64_std"`
+	Hex        types.String `tfsdk:"hex"`
+	Dec        types.String `tfsdk:"dec"`
 }

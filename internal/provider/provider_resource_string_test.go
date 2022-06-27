@@ -10,7 +10,6 @@ import (
 
 func TestAccResourceString(t *testing.T) {
 	resource.UnitTest(t, resource.TestCase{
-		PreCheck:                 func() { testAccPreCheck(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories(),
 		Steps: []resource.TestStep{
 			{
@@ -32,7 +31,6 @@ func TestAccResourceString(t *testing.T) {
 
 func TestAccResourceStringOverride(t *testing.T) {
 	resource.UnitTest(t, resource.TestCase{
-		PreCheck:                 func() { testAccPreCheck(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories(),
 		Steps: []resource.TestStep{
 			{
@@ -54,7 +52,6 @@ func TestAccResourceStringOverride(t *testing.T) {
 
 func TestAccResourceStringMin(t *testing.T) {
 	resource.UnitTest(t, resource.TestCase{
-		PreCheck:                 func() { testAccPreCheck(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories(),
 		Steps: []resource.TestStep{
 			{
@@ -284,7 +281,6 @@ func TestAccResourceString_StateUpgrade_V1toV2(t *testing.T) {
 
 func TestAccResourceStringErrors(t *testing.T) {
 	resource.UnitTest(t, resource.TestCase{
-		PreCheck:                 func() { testAccPreCheck(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories(),
 		Steps: []resource.TestStep{
 			{

@@ -1,4 +1,4 @@
-package provider
+package validators
 
 import (
 	"context"
@@ -12,7 +12,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 )
 
-// intIsAtLeastValidator checks that the value of the attribute in the configuration
+// intIsAtLeastSumOfValidator checks that the value of the attribute in the configuration
 // (i.e., AttributeConfig in ValidateAttributeRequest) is greater than or, equal to the sum of the values of the
 // attributes in the slice of AttributePath.
 type intIsAtLeastSumOfValidator struct {

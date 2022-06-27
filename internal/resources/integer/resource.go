@@ -1,4 +1,4 @@
-package provider
+package integer
 
 import (
 	"context"
@@ -9,11 +9,19 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/tfsdk"
 	"github.com/hashicorp/terraform-plugin-framework/types"
+
+	"github.com/terraform-providers/terraform-provider-random/internal/random"
 )
 
-type resourceIntegerType struct{}
+func NewResourceType() *resourceType {
+	return &resourceType{}
+}
 
-func (r resourceIntegerType) GetSchema(context.Context) (tfsdk.Schema, diag.Diagnostics) {
+var _ tfsdk.ResourceType = (*resourceType)(nil)
+
+type resourceType struct{}
+
+func (r *resourceType) GetSchema(context.Context) (tfsdk.Schema, diag.Diagnostics) {
 	return tfsdk.Schema{
 		Description: "The resource `random_integer` generates random values from a given range, described " +
 			"by the `min` and `max` attributes of a given resource.\n" +
@@ -63,18 +71,19 @@ func (r resourceIntegerType) GetSchema(context.Context) (tfsdk.Schema, diag.Diag
 	}, nil
 }
 
-func (r resourceIntegerType) NewResource(_ context.Context, p tfsdk.Provider) (tfsdk.Resource, diag.Diagnostics) {
-	return resourceInteger{
-		p: *(p.(*provider)),
-	}, nil
+func (r *resourceType) NewResource(_ context.Context, _ tfsdk.Provider) (tfsdk.Resource, diag.Diagnostics) {
+	return &resource{}, nil
 }
 
-type resourceInteger struct {
-	p provider
-}
+var (
+	_ tfsdk.Resource                = (*resource)(nil)
+	_ tfsdk.ResourceWithImportState = (*resource)(nil)
+)
 
-func (r resourceInteger) Create(ctx context.Context, req tfsdk.CreateResourceRequest, resp *tfsdk.CreateResourceResponse) {
-	var plan IntegerModel
+type resource struct{}
+
+func (r *resource) Create(ctx context.Context, req tfsdk.CreateResourceRequest, resp *tfsdk.CreateResourceResponse) {
+	var plan modelV0
 
 	diags := req.Plan.Get(ctx, &plan)
 	resp.Diagnostics.Append(diags...)
@@ -94,10 +103,10 @@ func (r resourceInteger) Create(ctx context.Context, req tfsdk.CreateResourceReq
 		return
 	}
 
-	rand := NewRand(seed)
+	rand := random.NewRand(seed)
 	number := rand.Intn((max+1)-min) + min
 
-	u := &IntegerModel{
+	u := &modelV0{
 		ID:      types.String{Value: strconv.Itoa(number)},
 		Keepers: plan.Keepers,
 		Min:     types.Int64{Value: int64(min)},
@@ -119,20 +128,20 @@ func (r resourceInteger) Create(ctx context.Context, req tfsdk.CreateResourceReq
 }
 
 // Read does not need to perform any operations as the state in ReadResourceResponse is already populated.
-func (r resourceInteger) Read(ctx context.Context, req tfsdk.ReadResourceRequest, resp *tfsdk.ReadResourceResponse) {
+func (r *resource) Read(ctx context.Context, req tfsdk.ReadResourceRequest, resp *tfsdk.ReadResourceResponse) {
 }
 
 // Update is intentionally left blank as all required and optional attributes force replacement of the resource
 // through the RequiresReplace AttributePlanModifier.
-func (r resourceInteger) Update(ctx context.Context, req tfsdk.UpdateResourceRequest, resp *tfsdk.UpdateResourceResponse) {
+func (r *resource) Update(ctx context.Context, req tfsdk.UpdateResourceRequest, resp *tfsdk.UpdateResourceResponse) {
 }
 
 // Delete does not need to explicitly call resp.State.RemoveResource() as this is automatically handled by the
 // [framework](https://github.com/hashicorp/terraform-plugin-framework/pull/301).
-func (r resourceInteger) Delete(ctx context.Context, req tfsdk.DeleteResourceRequest, resp *tfsdk.DeleteResourceResponse) {
+func (r *resource) Delete(ctx context.Context, req tfsdk.DeleteResourceRequest, resp *tfsdk.DeleteResourceResponse) {
 }
 
-func (r resourceInteger) ImportState(ctx context.Context, req tfsdk.ImportResourceStateRequest, resp *tfsdk.ImportResourceStateResponse) {
+func (r *resource) ImportState(ctx context.Context, req tfsdk.ImportResourceStateRequest, resp *tfsdk.ImportResourceStateResponse) {
 	parts := strings.Split(req.ID, ",")
 	if len(parts) != 3 && len(parts) != 4 {
 		resp.Diagnostics.AddError(
@@ -172,7 +181,7 @@ func (r resourceInteger) ImportState(ctx context.Context, req tfsdk.ImportResour
 		return
 	}
 
-	var state IntegerModel
+	var state modelV0
 
 	state.ID.Value = parts[0]
 	state.Keepers.ElemType = types.StringType
@@ -189,4 +198,13 @@ func (r resourceInteger) ImportState(ctx context.Context, req tfsdk.ImportResour
 	if resp.Diagnostics.HasError() {
 		return
 	}
+}
+
+type modelV0 struct {
+	ID      types.String `tfsdk:"id"`
+	Keepers types.Map    `tfsdk:"keepers"`
+	Min     types.Int64  `tfsdk:"min"`
+	Max     types.Int64  `tfsdk:"max"`
+	Seed    types.String `tfsdk:"seed"`
+	Result  types.Int64  `tfsdk:"result"`
 }

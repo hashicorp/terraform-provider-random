@@ -20,7 +20,6 @@ import (
 // guaranteed consistent across Terraform releases.
 func TestAccResourceShuffleDefault(t *testing.T) {
 	resource.UnitTest(t, resource.TestCase{
-		PreCheck:                 func() { testAccPreCheck(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories(),
 		Steps: []resource.TestStep{
 			{
@@ -38,7 +37,6 @@ func TestAccResourceShuffleDefault(t *testing.T) {
 
 func TestAccResourceShuffleShorter(t *testing.T) {
 	resource.UnitTest(t, resource.TestCase{
-		PreCheck:                 func() { testAccPreCheck(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories(),
 		Steps: []resource.TestStep{
 			{
@@ -56,7 +54,6 @@ func TestAccResourceShuffleShorter(t *testing.T) {
 
 func TestAccResourceShuffleLonger(t *testing.T) {
 	resource.UnitTest(t, resource.TestCase{
-		PreCheck:                 func() { testAccPreCheck(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories(),
 		Steps: []resource.TestStep{
 			{
@@ -74,7 +71,6 @@ func TestAccResourceShuffleLonger(t *testing.T) {
 
 func TestAccResourceShuffleEmpty(t *testing.T) {
 	resource.UnitTest(t, resource.TestCase{
-		PreCheck:                 func() { testAccPreCheck(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories(),
 		Steps: []resource.TestStep{
 			{
@@ -92,7 +88,6 @@ func TestAccResourceShuffleEmpty(t *testing.T) {
 
 func TestAccResourceShuffleOne(t *testing.T) {
 	resource.UnitTest(t, resource.TestCase{
-		PreCheck:                 func() { testAccPreCheck(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories(),
 		Steps: []resource.TestStep{
 			{

@@ -1,4 +1,4 @@
-package provider
+package random
 
 import (
 	"crypto/rand"
@@ -6,52 +6,52 @@ import (
 	"sort"
 )
 
-type randomStringParams struct {
-	length          int64
-	upper           bool
-	minUpper        int64
-	lower           bool
-	minLower        int64
-	numeric         bool
-	minNumeric      int64
-	special         bool
-	minSpecial      int64
-	overrideSpecial string
+type RandomStringParams struct {
+	Length          int64
+	Upper           bool
+	MinUpper        int64
+	Lower           bool
+	MinLower        int64
+	Numeric         bool
+	MinNumeric      int64
+	Special         bool
+	MinSpecial      int64
+	OverrideSpecial string
 }
 
-func createRandomString(input randomStringParams) ([]byte, error) {
+func CreateRandomString(input RandomStringParams) ([]byte, error) {
 	const numChars = "0123456789"
 	const lowerChars = "abcdefghijklmnopqrstuvwxyz"
 	const upperChars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
 	var specialChars = "!@#$%&*()-_=+[]{}<>:?"
 	var result []byte
 
-	if input.overrideSpecial != "" {
-		specialChars = input.overrideSpecial
+	if input.OverrideSpecial != "" {
+		specialChars = input.OverrideSpecial
 	}
 
 	var chars = ""
-	if input.upper {
+	if input.Upper {
 		chars += upperChars
 	}
-	if input.lower {
+	if input.Lower {
 		chars += lowerChars
 	}
-	if input.numeric {
+	if input.Numeric {
 		chars += numChars
 	}
-	if input.special {
+	if input.Special {
 		chars += specialChars
 	}
 
 	minMapping := map[string]int64{
-		numChars:     input.minNumeric,
-		lowerChars:   input.minLower,
-		upperChars:   input.minUpper,
-		specialChars: input.minSpecial,
+		numChars:     input.MinNumeric,
+		lowerChars:   input.MinLower,
+		upperChars:   input.MinUpper,
+		specialChars: input.MinSpecial,
 	}
 
-	result = make([]byte, 0, input.length)
+	result = make([]byte, 0, input.Length)
 
 	for k, v := range minMapping {
 		s, err := generateRandomBytes(&k, v)
@@ -61,7 +61,7 @@ func createRandomString(input randomStringParams) ([]byte, error) {
 		result = append(result, s...)
 	}
 
-	s, err := generateRandomBytes(&chars, input.length-int64(len(result)))
+	s, err := generateRandomBytes(&chars, input.Length-int64(len(result)))
 	if err != nil {
 		return nil, err
 	}

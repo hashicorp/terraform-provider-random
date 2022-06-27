@@ -10,7 +10,6 @@ import (
 func TestAccResourceIntegerBasic(t *testing.T) {
 	t.Parallel()
 	resource.UnitTest(t, resource.TestCase{
-		PreCheck:                 func() { testAccPreCheck(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories(),
 		Steps: []resource.TestStep{
 			{
@@ -36,7 +35,6 @@ func TestAccResourceIntegerBasic(t *testing.T) {
 func TestAccResourceIntegerUpdate(t *testing.T) {
 	t.Parallel()
 	resource.UnitTest(t, resource.TestCase{
-		PreCheck:                 func() { testAccPreCheck(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories(),
 		Steps: []resource.TestStep{
 			{
@@ -66,7 +64,6 @@ func TestAccResourceIntegerUpdate(t *testing.T) {
 func TestAccResourceIntegerSeedless_to_seeded(t *testing.T) {
 	t.Parallel()
 	resource.UnitTest(t, resource.TestCase{
-		PreCheck:                 func() { testAccPreCheck(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories(),
 		Steps: []resource.TestStep{
 			{
@@ -95,7 +92,6 @@ func TestAccResourceIntegerSeedless_to_seeded(t *testing.T) {
 func TestAccResourceIntegerSeeded_to_seedless(t *testing.T) {
 	t.Parallel()
 	resource.UnitTest(t, resource.TestCase{
-		PreCheck:                 func() { testAccPreCheck(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories(),
 		Steps: []resource.TestStep{
 			{
@@ -124,7 +120,6 @@ func TestAccResourceIntegerSeeded_to_seedless(t *testing.T) {
 func TestAccResourceIntegerBig(t *testing.T) {
 	t.Parallel()
 	resource.UnitTest(t, resource.TestCase{
-		PreCheck:                 func() { testAccPreCheck(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories(),
 		Steps: []resource.TestStep{
 			{
