@@ -5,14 +5,6 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/tfsdk"
-
-	"github.com/terraform-providers/terraform-provider-random/internal/resources/id"
-	"github.com/terraform-providers/terraform-provider-random/internal/resources/integer"
-	"github.com/terraform-providers/terraform-provider-random/internal/resources/password"
-	"github.com/terraform-providers/terraform-provider-random/internal/resources/pet"
-	"github.com/terraform-providers/terraform-provider-random/internal/resources/shuffle"
-	"github.com/terraform-providers/terraform-provider-random/internal/resources/stringresource"
-	"github.com/terraform-providers/terraform-provider-random/internal/resources/uuid"
 )
 
 func New() tfsdk.Provider {
@@ -32,13 +24,13 @@ func (p *provider) Configure(context.Context, tfsdk.ConfigureProviderRequest, *t
 
 func (p *provider) GetResources(context.Context) (map[string]tfsdk.ResourceType, diag.Diagnostics) {
 	return map[string]tfsdk.ResourceType{
-		"random_id":       id.NewResourceType(),
-		"random_integer":  integer.NewResourceType(),
-		"random_password": password.NewResourceType(),
-		"random_pet":      pet.NewResourceType(),
-		"random_shuffle":  shuffle.NewResourceType(),
-		"random_string":   stringresource.NewResourceType(),
-		"random_uuid":     uuid.NewResourceType(),
+		"random_id":       &idResourceType{},
+		"random_integer":  &integerResourceType{},
+		"random_password": &passwordResourceType{},
+		"random_pet":      &petResourceType{},
+		"random_shuffle":  &shuffleResourceType{},
+		"random_string":   &stringResourceType{},
+		"random_uuid":     &uuidResourceType{},
 	}, nil
 }
 

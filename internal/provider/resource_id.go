@@ -1,4 +1,4 @@
-package id
+package provider
 
 import (
 	"context"
@@ -16,15 +16,11 @@ import (
 	"github.com/terraform-providers/terraform-provider-random/internal/diagnostics"
 )
 
-func NewResourceType() *resourceType {
-	return &resourceType{}
-}
+var _ tfsdk.ResourceType = (*idResourceType)(nil)
 
-var _ tfsdk.ResourceType = (*resourceType)(nil)
+type idResourceType struct{}
 
-type resourceType struct{}
-
-func (r *resourceType) GetSchema(context.Context) (tfsdk.Schema, diag.Diagnostics) {
+func (r *idResourceType) GetSchema(context.Context) (tfsdk.Schema, diag.Diagnostics) {
 	return tfsdk.Schema{
 		Description: `
 The resource ` + "`random_id`" + ` generates random numbers that are intended to be
@@ -101,19 +97,19 @@ exist concurrently.
 	}, nil
 }
 
-func (r *resourceType) NewResource(_ context.Context, p tfsdk.Provider) (tfsdk.Resource, diag.Diagnostics) {
-	return &resource{}, nil
+func (r *idResourceType) NewResource(_ context.Context, p tfsdk.Provider) (tfsdk.Resource, diag.Diagnostics) {
+	return &idResource{}, nil
 }
 
 var (
-	_ tfsdk.Resource                = (*resource)(nil)
-	_ tfsdk.ResourceWithImportState = (*resource)(nil)
+	_ tfsdk.Resource                = (*idResource)(nil)
+	_ tfsdk.ResourceWithImportState = (*idResource)(nil)
 )
 
-type resource struct{}
+type idResource struct{}
 
-func (r *resource) Create(ctx context.Context, req tfsdk.CreateResourceRequest, resp *tfsdk.CreateResourceResponse) {
-	var plan modelV0
+func (r *idResource) Create(ctx context.Context, req tfsdk.CreateResourceRequest, resp *tfsdk.CreateResourceResponse) {
+	var plan idModelV0
 
 	diags := req.Plan.Get(ctx, &plan)
 	resp.Diagnostics.Append(diags...)
@@ -148,7 +144,7 @@ func (r *resource) Create(ctx context.Context, req tfsdk.CreateResourceRequest, 
 	bigInt.SetBytes(bytes)
 	dec := bigInt.String()
 
-	i := modelV0{
+	i := idModelV0{
 		ID:         types.String{Value: id},
 		Keepers:    plan.Keepers,
 		ByteLength: types.Int64{Value: plan.ByteLength.Value},
@@ -167,20 +163,20 @@ func (r *resource) Create(ctx context.Context, req tfsdk.CreateResourceRequest, 
 }
 
 // Read does not need to perform any operations as the state in ReadResourceResponse is already populated.
-func (r *resource) Read(context.Context, tfsdk.ReadResourceRequest, *tfsdk.ReadResourceResponse) {
+func (r *idResource) Read(context.Context, tfsdk.ReadResourceRequest, *tfsdk.ReadResourceResponse) {
 }
 
 // Update is intentionally left blank as all required and optional attributes force replacement of the resource
 // through the RequiresReplace AttributePlanModifier.
-func (r *resource) Update(context.Context, tfsdk.UpdateResourceRequest, *tfsdk.UpdateResourceResponse) {
+func (r *idResource) Update(context.Context, tfsdk.UpdateResourceRequest, *tfsdk.UpdateResourceResponse) {
 }
 
 // Delete does not need to explicitly call resp.State.RemoveResource() as this is automatically handled by the
 // [framework](https://github.com/hashicorp/terraform-plugin-framework/pull/301).
-func (r *resource) Delete(context.Context, tfsdk.DeleteResourceRequest, *tfsdk.DeleteResourceResponse) {
+func (r *idResource) Delete(context.Context, tfsdk.DeleteResourceRequest, *tfsdk.DeleteResourceResponse) {
 }
 
-func (r *resource) ImportState(ctx context.Context, req tfsdk.ImportResourceStateRequest, resp *tfsdk.ImportResourceStateResponse) {
+func (r *idResource) ImportState(ctx context.Context, req tfsdk.ImportResourceStateRequest, resp *tfsdk.ImportResourceStateResponse) {
 	id := req.ID
 	var prefix string
 
@@ -208,7 +204,7 @@ func (r *resource) ImportState(ctx context.Context, req tfsdk.ImportResourceStat
 	bigInt.SetBytes(bytes)
 	dec := bigInt.String()
 
-	var state modelV0
+	var state idModelV0
 
 	state.ID.Value = id
 	state.ByteLength.Value = int64(len(bytes))
@@ -231,7 +227,7 @@ func (r *resource) ImportState(ctx context.Context, req tfsdk.ImportResourceStat
 	}
 }
 
-type modelV0 struct {
+type idModelV0 struct {
 	ID         types.String `tfsdk:"id"`
 	Keepers    types.Map    `tfsdk:"keepers"`
 	ByteLength types.Int64  `tfsdk:"byte_length"`

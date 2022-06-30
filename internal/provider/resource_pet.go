@@ -1,4 +1,4 @@
-package pet
+package provider
 
 import (
 	"context"
@@ -13,15 +13,11 @@ import (
 	"github.com/terraform-providers/terraform-provider-random/internal/planmodifiers"
 )
 
-func NewResourceType() *resourceType {
-	return &resourceType{}
-}
+var _ tfsdk.ResourceType = (*petResourceType)(nil)
 
-var _ tfsdk.ResourceType = (*resourceType)(nil)
+type petResourceType struct{}
 
-type resourceType struct{}
-
-func (r *resourceType) GetSchema(context.Context) (tfsdk.Schema, diag.Diagnostics) {
+func (r *petResourceType) GetSchema(context.Context) (tfsdk.Schema, diag.Diagnostics) {
 	return tfsdk.Schema{
 		Description: "The resource `random_pet` generates random pet names that are intended to be used as " +
 			"unique identifiers for other resources.\n" +
@@ -76,21 +72,21 @@ func (r *resourceType) GetSchema(context.Context) (tfsdk.Schema, diag.Diagnostic
 	}, nil
 }
 
-func (r *resourceType) NewResource(_ context.Context, p tfsdk.Provider) (tfsdk.Resource, diag.Diagnostics) {
-	return &resource{}, nil
+func (r *petResourceType) NewResource(_ context.Context, p tfsdk.Provider) (tfsdk.Resource, diag.Diagnostics) {
+	return &petResource{}, nil
 }
 
-var _ tfsdk.Resource = (*resource)(nil)
+var _ tfsdk.Resource = (*petResource)(nil)
 
-type resource struct{}
+type petResource struct{}
 
-func (r *resource) Create(ctx context.Context, req tfsdk.CreateResourceRequest, resp *tfsdk.CreateResourceResponse) {
+func (r *petResource) Create(ctx context.Context, req tfsdk.CreateResourceRequest, resp *tfsdk.CreateResourceResponse) {
 	// This is necessary to ensure each call to petname is properly randomised:
 	// the library uses `rand.Intn()` and does NOT seed `rand.Seed()` by default,
 	// so this call takes care of that.
 	petname.NonDeterministicMode()
 
-	var plan modelV0
+	var plan petModelV0
 
 	diags := req.Plan.Get(ctx, &plan)
 	resp.Diagnostics.Append(diags...)
@@ -104,7 +100,7 @@ func (r *resource) Create(ctx context.Context, req tfsdk.CreateResourceRequest, 
 
 	pet := strings.ToLower(petname.Generate(int(length), separator))
 
-	pn := modelV0{
+	pn := petModelV0{
 		Keepers:   plan.Keepers,
 		Length:    types.Int64{Value: length},
 		Separator: types.String{Value: separator},
@@ -127,20 +123,20 @@ func (r *resource) Create(ctx context.Context, req tfsdk.CreateResourceRequest, 
 }
 
 // Read does not need to perform any operations as the state in ReadResourceResponse is already populated.
-func (r *resource) Read(ctx context.Context, req tfsdk.ReadResourceRequest, resp *tfsdk.ReadResourceResponse) {
+func (r *petResource) Read(ctx context.Context, req tfsdk.ReadResourceRequest, resp *tfsdk.ReadResourceResponse) {
 }
 
 // Update is intentionally left blank as all required and optional attributes force replacement of the resource
 // through the RequiresReplace AttributePlanModifier.
-func (r *resource) Update(ctx context.Context, req tfsdk.UpdateResourceRequest, resp *tfsdk.UpdateResourceResponse) {
+func (r *petResource) Update(ctx context.Context, req tfsdk.UpdateResourceRequest, resp *tfsdk.UpdateResourceResponse) {
 }
 
 // Delete does not need to explicitly call resp.State.RemoveResource() as this is automatically handled by the
 // [framework](https://github.com/hashicorp/terraform-plugin-framework/pull/301).
-func (r *resource) Delete(ctx context.Context, req tfsdk.DeleteResourceRequest, resp *tfsdk.DeleteResourceResponse) {
+func (r *petResource) Delete(ctx context.Context, req tfsdk.DeleteResourceRequest, resp *tfsdk.DeleteResourceResponse) {
 }
 
-type modelV0 struct {
+type petModelV0 struct {
 	ID        types.String `tfsdk:"id"`
 	Keepers   types.Map    `tfsdk:"keepers"`
 	Length    types.Int64  `tfsdk:"length"`

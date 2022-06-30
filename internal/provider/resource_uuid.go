@@ -1,4 +1,4 @@
-package uuid
+package provider
 
 import (
 	"context"
@@ -12,15 +12,11 @@ import (
 	"github.com/terraform-providers/terraform-provider-random/internal/diagnostics"
 )
 
-func NewResourceType() *resourceType {
-	return &resourceType{}
-}
+var _ tfsdk.ResourceType = (*uuidResourceType)(nil)
 
-var _ tfsdk.ResourceType = (*resourceType)(nil)
+type uuidResourceType struct{}
 
-type resourceType struct{}
-
-func (r *resourceType) GetSchema(context.Context) (tfsdk.Schema, diag.Diagnostics) {
+func (r *uuidResourceType) GetSchema(context.Context) (tfsdk.Schema, diag.Diagnostics) {
 	return tfsdk.Schema{
 		Description: "The resource `random_uuid` generates random uuid string that is intended to be " +
 			"used as unique identifiers for other resources.\n" +
@@ -53,19 +49,19 @@ func (r *resourceType) GetSchema(context.Context) (tfsdk.Schema, diag.Diagnostic
 	}, nil
 }
 
-func (r resourceType) NewResource(_ context.Context, p tfsdk.Provider) (tfsdk.Resource, diag.Diagnostics) {
-	return &resource{}, nil
+func (r uuidResourceType) NewResource(_ context.Context, p tfsdk.Provider) (tfsdk.Resource, diag.Diagnostics) {
+	return &uuidResource{}, nil
 }
 
 var (
-	_ tfsdk.Resource                = (*resource)(nil)
-	_ tfsdk.ResourceWithImportState = (*resource)(nil)
+	_ tfsdk.Resource                = (*uuidResource)(nil)
+	_ tfsdk.ResourceWithImportState = (*uuidResource)(nil)
 )
 
-type resource struct {
+type uuidResource struct {
 }
 
-func (r *resource) Create(ctx context.Context, req tfsdk.CreateResourceRequest, resp *tfsdk.CreateResourceResponse) {
+func (r *uuidResource) Create(ctx context.Context, req tfsdk.CreateResourceRequest, resp *tfsdk.CreateResourceResponse) {
 	result, err := uuid.GenerateUUID()
 	if err != nil {
 		resp.Diagnostics.AddError(
@@ -77,7 +73,7 @@ func (r *resource) Create(ctx context.Context, req tfsdk.CreateResourceRequest, 
 		return
 	}
 
-	var plan modelV0
+	var plan uuidModelV0
 
 	diags := req.Plan.Get(ctx, &plan)
 	resp.Diagnostics.Append(diags...)
@@ -85,7 +81,7 @@ func (r *resource) Create(ctx context.Context, req tfsdk.CreateResourceRequest, 
 		return
 	}
 
-	u := &modelV0{
+	u := &uuidModelV0{
 		ID:      types.String{Value: result},
 		Result:  types.String{Value: result},
 		Keepers: plan.Keepers,
@@ -99,20 +95,20 @@ func (r *resource) Create(ctx context.Context, req tfsdk.CreateResourceRequest, 
 }
 
 // Read does not need to perform any operations as the state in ReadResourceResponse is already populated.
-func (r *resource) Read(ctx context.Context, req tfsdk.ReadResourceRequest, resp *tfsdk.ReadResourceResponse) {
+func (r *uuidResource) Read(ctx context.Context, req tfsdk.ReadResourceRequest, resp *tfsdk.ReadResourceResponse) {
 }
 
 // Update is intentionally left blank as all required and optional attributes force replacement of the resource
 // through the RequiresReplace AttributePlanModifier.
-func (r *resource) Update(ctx context.Context, req tfsdk.UpdateResourceRequest, resp *tfsdk.UpdateResourceResponse) {
+func (r *uuidResource) Update(ctx context.Context, req tfsdk.UpdateResourceRequest, resp *tfsdk.UpdateResourceResponse) {
 }
 
 // Delete does not need to explicitly call resp.State.RemoveResource() as this is automatically handled by the
 // [framework](https://github.com/hashicorp/terraform-plugin-framework/pull/301).
-func (r *resource) Delete(ctx context.Context, req tfsdk.DeleteResourceRequest, resp *tfsdk.DeleteResourceResponse) {
+func (r *uuidResource) Delete(ctx context.Context, req tfsdk.DeleteResourceRequest, resp *tfsdk.DeleteResourceResponse) {
 }
 
-func (r *resource) ImportState(ctx context.Context, req tfsdk.ImportResourceStateRequest, resp *tfsdk.ImportResourceStateResponse) {
+func (r *uuidResource) ImportState(ctx context.Context, req tfsdk.ImportResourceStateRequest, resp *tfsdk.ImportResourceStateResponse) {
 	bytes, err := uuid.ParseUUID(req.ID)
 	if err != nil {
 		resp.Diagnostics.AddError(
@@ -135,7 +131,7 @@ func (r *resource) ImportState(ctx context.Context, req tfsdk.ImportResourceStat
 		return
 	}
 
-	var state modelV0
+	var state uuidModelV0
 
 	state.ID.Value = result
 	state.Result.Value = result
@@ -148,7 +144,7 @@ func (r *resource) ImportState(ctx context.Context, req tfsdk.ImportResourceStat
 	}
 }
 
-type modelV0 struct {
+type uuidModelV0 struct {
 	ID      types.String `tfsdk:"id"`
 	Keepers types.Map    `tfsdk:"keepers"`
 	Result  types.String `tfsdk:"result"`

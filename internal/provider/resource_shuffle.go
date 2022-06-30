@@ -1,4 +1,4 @@
-package shuffle
+package provider
 
 import (
 	"context"
@@ -11,15 +11,11 @@ import (
 	"github.com/terraform-providers/terraform-provider-random/internal/random"
 )
 
-func NewResourceType() *resourceType {
-	return &resourceType{}
-}
+var _ tfsdk.ResourceType = (*shuffleResourceType)(nil)
 
-var _ tfsdk.ResourceType = (*resourceType)(nil)
+type shuffleResourceType struct{}
 
-type resourceType struct{}
-
-func (r *resourceType) GetSchema(context.Context) (tfsdk.Schema, diag.Diagnostics) {
+func (r *shuffleResourceType) GetSchema(context.Context) (tfsdk.Schema, diag.Diagnostics) {
 	return tfsdk.Schema{
 		Description: "The resource `random_shuffle` generates a random permutation of a list of strings " +
 			"given as an argument.",
@@ -85,16 +81,16 @@ func (r *resourceType) GetSchema(context.Context) (tfsdk.Schema, diag.Diagnostic
 	}, nil
 }
 
-func (r *resourceType) NewResource(_ context.Context, p tfsdk.Provider) (tfsdk.Resource, diag.Diagnostics) {
-	return &resource{}, nil
+func (r *shuffleResourceType) NewResource(_ context.Context, p tfsdk.Provider) (tfsdk.Resource, diag.Diagnostics) {
+	return &shuffleResource{}, nil
 }
 
-var _ tfsdk.Resource = (*resource)(nil)
+var _ tfsdk.Resource = (*shuffleResource)(nil)
 
-type resource struct{}
+type shuffleResource struct{}
 
-func (r *resource) Create(ctx context.Context, req tfsdk.CreateResourceRequest, resp *tfsdk.CreateResourceResponse) {
-	var plan modelV0
+func (r *shuffleResource) Create(ctx context.Context, req tfsdk.CreateResourceRequest, resp *tfsdk.CreateResourceResponse) {
+	var plan shuffleModelV0
 	diags := req.Plan.Get(ctx, &plan)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
@@ -129,7 +125,7 @@ func (r *resource) Create(ctx context.Context, req tfsdk.CreateResourceRequest, 
 		}
 	}
 
-	s := modelV0{
+	s := shuffleModelV0{
 		ID:      types.String{Value: "-"},
 		Keepers: plan.Keepers,
 		Input:   plan.Input,
@@ -161,20 +157,20 @@ func (r *resource) Create(ctx context.Context, req tfsdk.CreateResourceRequest, 
 }
 
 // Read does not need to perform any operations as the state in ReadResourceResponse is already populated.
-func (r *resource) Read(ctx context.Context, req tfsdk.ReadResourceRequest, resp *tfsdk.ReadResourceResponse) {
+func (r *shuffleResource) Read(ctx context.Context, req tfsdk.ReadResourceRequest, resp *tfsdk.ReadResourceResponse) {
 }
 
 // Update is intentionally left blank as all required and optional attributes force replacement of the resource
 // through the RequiresReplace AttributePlanModifier.
-func (r *resource) Update(ctx context.Context, req tfsdk.UpdateResourceRequest, resp *tfsdk.UpdateResourceResponse) {
+func (r *shuffleResource) Update(ctx context.Context, req tfsdk.UpdateResourceRequest, resp *tfsdk.UpdateResourceResponse) {
 }
 
 // Delete does not need to explicitly call resp.State.RemoveResource() as this is automatically handled by the
 // [framework](https://github.com/hashicorp/terraform-plugin-framework/pull/301).
-func (r *resource) Delete(ctx context.Context, req tfsdk.DeleteResourceRequest, resp *tfsdk.DeleteResourceResponse) {
+func (r *shuffleResource) Delete(ctx context.Context, req tfsdk.DeleteResourceRequest, resp *tfsdk.DeleteResourceResponse) {
 }
 
-type modelV0 struct {
+type shuffleModelV0 struct {
 	ID          types.String `tfsdk:"id"`
 	Keepers     types.Map    `tfsdk:"keepers"`
 	Seed        types.String `tfsdk:"seed"`
