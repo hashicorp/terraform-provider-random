@@ -33,3 +33,16 @@ func HashGenerationError(errMsg string) diag.Diagnostics {
 
 	return diags
 }
+
+func RandomnessGenerationError(errMsg string) diag.Diagnostics {
+	var diags diag.Diagnostics
+
+	diags.AddError(
+		"Randomness Generation Error",
+		"While attempting to generate a random value for this resource, an insufficient number of random bytes were generated.\n\n"+
+			RetryMsg+
+			fmt.Sprintf("Original Error: %s", errMsg),
+	)
+
+	return diags
+}

@@ -122,12 +122,7 @@ func (r *idResource) Create(ctx context.Context, req tfsdk.CreateResourceRequest
 
 	n, err := rand.Reader.Read(bytes)
 	if int64(n) != byteLength {
-		resp.Diagnostics.AddError(
-			"Randomness Generation Error",
-			"While attempting to generate a random value for this resource, an insufficient number of random bytes were generated. Most commonly, this is a hardware or operating system issue where their random number generator does not provide a sufficient randomness source. Otherwise, it may represent an issue in the randomness handling of the provider.\n\n"+
-				"Retry the Terraform operation. If the error still occurs or happens regularly, please contact the provider developer with hardware and operating system information.\n\n"+
-				fmt.Sprintf("Original Error: %s", err),
-		)
+		resp.Diagnostics.Append(diagnostics.RandomnessGenerationError(err.Error())...)
 		return
 	}
 	if err != nil {
