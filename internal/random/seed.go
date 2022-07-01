@@ -1,4 +1,4 @@
-package provider
+package random
 
 import (
 	"hash/crc64"

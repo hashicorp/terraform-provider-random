@@ -5,19 +5,21 @@ import (
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 )
 
-func TestAccResourceIntegerBasic(t *testing.T) {
+func TestAccResourceInteger(t *testing.T) {
 	t.Parallel()
 	resource.UnitTest(t, resource.TestCase{
-		PreCheck:          func() { testAccPreCheck(t) },
-		ProviderFactories: testAccProviders,
+		ProtoV6ProviderFactories: protoV6ProviderFactories(),
 		Steps: []resource.TestStep{
 			{
-				Config: testRandomIntegerBasic,
+				Config: `resource "random_integer" "integer_1" {
+   							min  = 1
+							max  = 3
+   							seed = "12345"
+						}`,
 				Check: resource.ComposeTestCheckFunc(
-					testAccResourceIntegerBasic("random_integer.integer_1"),
+					resource.TestCheckResourceAttr("random_integer.integer_1", "result", "3"),
 				),
 			},
 			{
@@ -30,80 +32,102 @@ func TestAccResourceIntegerBasic(t *testing.T) {
 	})
 }
 
-func TestAccResourceIntegerUpdate(t *testing.T) {
+func TestAccResourceInteger_ChangeSeed(t *testing.T) {
 	t.Parallel()
 	resource.UnitTest(t, resource.TestCase{
-		PreCheck:          func() { testAccPreCheck(t) },
-		ProviderFactories: testAccProviders,
+		ProtoV6ProviderFactories: protoV6ProviderFactories(),
 		Steps: []resource.TestStep{
 			{
-				Config: testRandomIntegerBasic,
+				Config: `resource "random_integer" "integer_1" {
+   							min  = 1
+							max  = 3
+   							seed = "12345"
+						}`,
 				Check: resource.ComposeTestCheckFunc(
-					testAccResourceIntegerBasic("random_integer.integer_1"),
+					resource.TestCheckResourceAttr("random_integer.integer_1", "result", "3"),
 				),
 			},
 			{
-				Config: testRandomIntegerUpdate,
+				Config: `resource "random_integer" "integer_1" {
+							min  = 1
+   							max  = 3
+   							seed = "123456"
+						}`,
 				Check: resource.ComposeTestCheckFunc(
-					testAccResourceIntegerUpdate("random_integer.integer_1"),
+					resource.TestCheckResourceAttr("random_integer.integer_1", "result", "2"),
 				),
 			},
 		},
 	})
 }
 
-func TestAccResourceIntegerSeedless_to_seeded(t *testing.T) {
+func TestAccResourceInteger_SeedlessToSeeded(t *testing.T) {
 	t.Parallel()
 	resource.UnitTest(t, resource.TestCase{
-		PreCheck:          func() { testAccPreCheck(t) },
-		ProviderFactories: testAccProviders,
+		ProtoV6ProviderFactories: protoV6ProviderFactories(),
 		Steps: []resource.TestStep{
 			{
-				Config: testRandomIntegerSeedless,
+				Config: `resource "random_integer" "integer_1" {
+   							min  = 1
+   							max  = 3
+						}`,
 				Check: resource.ComposeTestCheckFunc(
-					testAccResourceIntegerSeedless("random_integer.integer_1"),
+					resource.TestCheckResourceAttrWith("random_integer.integer_1", "result", testCheckNotEmptyString("result")),
 				),
 			},
 			{
-				Config: testRandomIntegerUpdate,
+				Config: `resource "random_integer" "integer_1" {
+							min  = 1
+   							max  = 3
+   							seed = "123456"
+						}`,
 				Check: resource.ComposeTestCheckFunc(
-					testAccResourceIntegerUpdate("random_integer.integer_1"),
+					resource.TestCheckResourceAttr("random_integer.integer_1", "result", "2"),
 				),
 			},
 		},
 	})
 }
 
-func TestAccResourceIntegerSeeded_to_seedless(t *testing.T) {
+func TestAccResourceInteger_SeededToSeedless(t *testing.T) {
 	t.Parallel()
 	resource.UnitTest(t, resource.TestCase{
-		PreCheck:          func() { testAccPreCheck(t) },
-		ProviderFactories: testAccProviders,
+		ProtoV6ProviderFactories: protoV6ProviderFactories(),
 		Steps: []resource.TestStep{
 			{
-				Config: testRandomIntegerBasic,
+				Config: `resource "random_integer" "integer_1" {
+   							min  = 1
+							max  = 3
+   							seed = "12345"
+						}`,
 				Check: resource.ComposeTestCheckFunc(
-					testAccResourceIntegerBasic("random_integer.integer_1"),
+					resource.TestCheckResourceAttr("random_integer.integer_1", "result", "3"),
 				),
 			},
 			{
-				Config: testRandomIntegerSeedless,
+				Config: `resource "random_integer" "integer_1" {
+   							min  = 1
+   							max  = 3
+						}`,
 				Check: resource.ComposeTestCheckFunc(
-					testAccResourceIntegerSeedless("random_integer.integer_1"),
+					resource.TestCheckResourceAttrWith("random_integer.integer_1", "result", testCheckNotEmptyString("result")),
 				),
 			},
 		},
 	})
 }
 
-func TestAccResourceIntegerBig(t *testing.T) {
+func TestAccResourceInteger_Big(t *testing.T) {
 	t.Parallel()
 	resource.UnitTest(t, resource.TestCase{
-		PreCheck:          func() { testAccPreCheck(t) },
-		ProviderFactories: testAccProviders,
+		ProtoV6ProviderFactories: protoV6ProviderFactories(),
 		Steps: []resource.TestStep{
 			{
-				Config: testRandomIntegerBig,
+				Config: `resource "random_integer" "integer_1" {
+   							max  = 7227701560655103598
+   							min  = 7227701560655103597
+   							seed = 12345
+						}`,
 			},
 			{
 				ResourceName:      "random_integer.integer_1",
@@ -115,101 +139,50 @@ func TestAccResourceIntegerBig(t *testing.T) {
 	})
 }
 
-func testAccResourceIntegerBasic(id string) resource.TestCheckFunc {
-	return func(s *terraform.State) error {
-		rs, ok := s.RootModule().Resources[id]
-		if !ok {
-			return fmt.Errorf("Not found: %s", id)
-		}
-		result := rs.Primary.Attributes["result"]
-
-		if rs.Primary.ID == "" {
-			return fmt.Errorf("No ID is set")
-		}
-
-		if result == "" {
-			return fmt.Errorf("Result not found")
-		}
-
-		if result != "3" {
-			return fmt.Errorf("Invalid result %s. Seed does not result in correct value", result)
-		}
-		return nil
-	}
+func TestAccResourceInteger_UpgradeFromVersion3_3_2(t *testing.T) {
+	resource.Test(t, resource.TestCase{
+		Steps: []resource.TestStep{
+			{
+				ExternalProviders: providerVersion332(),
+				Config: `resource "random_integer" "integer_1" {
+   							min  = 1
+							max  = 3
+   							seed = "12345"
+						}`,
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("random_integer.integer_1", "result", "3"),
+				),
+			},
+			{
+				ProtoV6ProviderFactories: protoV6ProviderFactories(),
+				Config: `resource "random_integer" "integer_1" {
+   							min  = 1
+							max  = 3
+   							seed = "12345"
+						}`,
+				PlanOnly: true,
+			},
+			{
+				ProtoV6ProviderFactories: protoV6ProviderFactories(),
+				Config: `resource "random_integer" "integer_1" {
+   							min  = 1
+							max  = 3
+   							seed = "12345"
+						}`,
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("random_integer.integer_1", "result", "3"),
+				),
+			},
+		},
+	})
 }
 
-func testAccResourceIntegerUpdate(id string) resource.TestCheckFunc {
-	return func(s *terraform.State) error {
-		rs, ok := s.RootModule().Resources[id]
-		if !ok {
-			return fmt.Errorf("Not found: %s", id)
-		}
-		result := rs.Primary.Attributes["result"]
-
-		if rs.Primary.ID == "" {
-			return fmt.Errorf("No ID is set")
-		}
-
-		if result == "" {
-			return fmt.Errorf("Result not found")
-		}
-
-		if result != "2" {
-			return fmt.Errorf("Invalid result %s. Seed does not result in correct value", result)
-		}
-		return nil
-	}
-}
-
-// testAccResourceIntegerSeedless only checks that some result was returned, and does not validate the value.
-func testAccResourceIntegerSeedless(id string) resource.TestCheckFunc {
-	return func(s *terraform.State) error {
-		rs, ok := s.RootModule().Resources[id]
-		if !ok {
-			return fmt.Errorf("Not found: %s", id)
-		}
-		result := rs.Primary.Attributes["result"]
-
-		if rs.Primary.ID == "" {
-			return fmt.Errorf("No ID is set")
-		}
-
-		if result == "" {
-			return fmt.Errorf("Result not found")
+func testCheckNotEmptyString(field string) func(input string) error {
+	return func(input string) error {
+		if input == "" {
+			return fmt.Errorf("%s is empty string", field)
 		}
 
 		return nil
 	}
 }
-
-const (
-	testRandomIntegerBasic = `
-resource "random_integer" "integer_1" {
-   min  = 1
-   max  = 3
-   seed = "12345"
-}
-`
-
-	testRandomIntegerUpdate = `
-resource "random_integer" "integer_1" {
-   min  = 1
-   max  = 3
-   seed = "123456"
-}
-`
-
-	testRandomIntegerSeedless = `
-resource "random_integer" "integer_1" {
-   min  = 1
-   max  = 3
-}
-`
-
-	testRandomIntegerBig = `
-resource "random_integer" "integer_1" {
-   max  = 7227701560655103598
-   min  = 7227701560655103597
-   seed = 12345
-}`
-)

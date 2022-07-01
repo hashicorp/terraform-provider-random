@@ -9,12 +9,19 @@ import (
 	"math/big"
 	"strings"
 
-	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/hashicorp/terraform-plugin-framework/diag"
+	"github.com/hashicorp/terraform-plugin-framework/tfsdk"
+	"github.com/hashicorp/terraform-plugin-framework/types"
+
+	"github.com/terraform-providers/terraform-provider-random/internal/diagnostics"
 )
 
-func resourceId() *schema.Resource {
-	return &schema.Resource{
+var _ tfsdk.ResourceType = (*idResourceType)(nil)
+
+type idResourceType struct{}
+
+func (r *idResourceType) GetSchema(context.Context) (tfsdk.Schema, diag.Diagnostics) {
+	return tfsdk.Schema{
 		Description: `
 The resource ` + "`random_id`" + ` generates random numbers that are intended to be
 used as unique identifiers for other resources.
@@ -29,152 +36,199 @@ the ` + "`create_before_destroy`" + ` lifecycle flag set to avoid conflicts with
 unique names during the brief period where both the old and new resources
 exist concurrently.
 `,
-		CreateContext: CreateID,
-		ReadContext:   RepopulateEncodings,
-		DeleteContext: RemoveResourceFromState,
-		Importer: &schema.ResourceImporter{
-			StateContext: ImportID,
-		},
-
-		Schema: map[string]*schema.Schema{
+		Attributes: map[string]tfsdk.Attribute{
 			"keepers": {
 				Description: "Arbitrary map of values that, when changed, will trigger recreation of " +
 					"resource. See [the main provider documentation](../index.html) for more information.",
-				Type:     schema.TypeMap,
+				Type: types.MapType{
+					ElemType: types.StringType,
+				},
 				Optional: true,
-				ForceNew: true,
+				PlanModifiers: []tfsdk.AttributePlanModifier{
+					tfsdk.RequiresReplace(),
+				},
 			},
-
 			"byte_length": {
 				Description: "The number of random bytes to produce. The minimum value is 1, which produces " +
 					"eight bits of randomness.",
-				Type:     schema.TypeInt,
+				Type:     types.Int64Type,
 				Required: true,
-				ForceNew: true,
+				PlanModifiers: []tfsdk.AttributePlanModifier{
+					tfsdk.RequiresReplace(),
+				},
 			},
-
 			"prefix": {
 				Description: "Arbitrary string to prefix the output value with. This string is supplied as-is, " +
 					"meaning it is not guaranteed to be URL-safe or base64 encoded.",
-				Type:     schema.TypeString,
+				Type:     types.StringType,
 				Optional: true,
-				ForceNew: true,
+				PlanModifiers: []tfsdk.AttributePlanModifier{
+					tfsdk.RequiresReplace(),
+				},
 			},
-
 			"b64_url": {
 				Description: "The generated id presented in base64, using the URL-friendly character set: " +
 					"case-sensitive letters, digits and the characters `_` and `-`.",
-				Type:     schema.TypeString,
+				Type:     types.StringType,
 				Computed: true,
 			},
-
 			"b64_std": {
 				Description: "The generated id presented in base64 without additional transformations.",
-				Type:        schema.TypeString,
+				Type:        types.StringType,
 				Computed:    true,
 			},
-
 			"hex": {
 				Description: "The generated id presented in padded hexadecimal digits. This result will " +
 					"always be twice as long as the requested byte length.",
-				Type:     schema.TypeString,
+				Type:     types.StringType,
 				Computed: true,
 			},
-
 			"dec": {
 				Description: "The generated id presented in non-padded decimal digits.",
-				Type:        schema.TypeString,
+				Type:        types.StringType,
 				Computed:    true,
 			},
-
 			"id": {
 				Description: "The generated id presented in base64 without additional transformations or prefix.",
-				Type:        schema.TypeString,
+				Type:        types.StringType,
 				Computed:    true,
 			},
 		},
-	}
+	}, nil
 }
 
-func CreateID(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	var diags diag.Diagnostics
-	byteLength := d.Get("byte_length").(int)
+func (r *idResourceType) NewResource(_ context.Context, p tfsdk.Provider) (tfsdk.Resource, diag.Diagnostics) {
+	return &idResource{}, nil
+}
+
+var (
+	_ tfsdk.Resource                = (*idResource)(nil)
+	_ tfsdk.ResourceWithImportState = (*idResource)(nil)
+)
+
+type idResource struct{}
+
+func (r *idResource) Create(ctx context.Context, req tfsdk.CreateResourceRequest, resp *tfsdk.CreateResourceResponse) {
+	var plan idModelV0
+
+	diags := req.Plan.Get(ctx, &plan)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	byteLength := plan.ByteLength.Value
 	bytes := make([]byte, byteLength)
 
 	n, err := rand.Reader.Read(bytes)
-	if n != byteLength {
-		return append(diags, diag.Errorf("generated insufficient random bytes: %s", err)...)
+	if int64(n) != byteLength {
+		resp.Diagnostics.Append(diagnostics.RandomnessGenerationError(err.Error())...)
+		return
 	}
 	if err != nil {
-		return append(diags, diag.Errorf("error generating random bytes: %s", err)...)
+		resp.Diagnostics.Append(diagnostics.RandomReadError(err.Error())...)
+		return
 	}
 
-	b64Str := base64.RawURLEncoding.EncodeToString(bytes)
-	d.SetId(b64Str)
-
-	repopEncsDiags := RepopulateEncodings(ctx, d, meta)
-	if repopEncsDiags != nil {
-		return append(diags, repopEncsDiags...)
-	}
-
-	return diags
-}
-
-func RepopulateEncodings(_ context.Context, d *schema.ResourceData, _ interface{}) diag.Diagnostics {
-	var diags diag.Diagnostics
-	prefix := d.Get("prefix").(string)
-	base64Str := d.Id()
-
-	bytes, err := base64.RawURLEncoding.DecodeString(base64Str)
-	if err != nil {
-		return append(diags, diag.Errorf("error decoding ID: %s", err)...)
-	}
-
-	b64StdStr := base64.StdEncoding.EncodeToString(bytes)
+	id := base64.RawURLEncoding.EncodeToString(bytes)
+	prefix := plan.Prefix.Value
+	b64Std := base64.StdEncoding.EncodeToString(bytes)
 	hexStr := hex.EncodeToString(bytes)
 
 	bigInt := big.Int{}
 	bigInt.SetBytes(bytes)
-	decStr := bigInt.String()
+	dec := bigInt.String()
 
-	if err := d.Set("b64_url", prefix+base64Str); err != nil {
-		return append(diags, diag.Errorf("error setting b64_url: %s", err)...)
-	}
-	if err := d.Set("b64_std", prefix+b64StdStr); err != nil {
-		return append(diags, diag.Errorf("error setting b64_std: %s", err)...)
-	}
-	if err := d.Set("hex", prefix+hexStr); err != nil {
-		return append(diags, diag.Errorf("error setting hex: %s", err)...)
-	}
-	if err := d.Set("dec", prefix+decStr); err != nil {
-		return append(diags, diag.Errorf("error setting dec: %s", err)...)
+	i := idModelV0{
+		ID:         types.String{Value: id},
+		Keepers:    plan.Keepers,
+		ByteLength: types.Int64{Value: plan.ByteLength.Value},
+		Prefix:     plan.Prefix,
+		B64URL:     types.String{Value: prefix + id},
+		B64Std:     types.String{Value: prefix + b64Std},
+		Hex:        types.String{Value: prefix + hexStr},
+		Dec:        types.String{Value: prefix + dec},
 	}
 
-	return nil
+	diags = resp.State.Set(ctx, i)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
 }
 
-func ImportID(_ context.Context, d *schema.ResourceData, _ interface{}) ([]*schema.ResourceData, error) {
-	id := d.Id()
+// Read does not need to perform any operations as the state in ReadResourceResponse is already populated.
+func (r *idResource) Read(context.Context, tfsdk.ReadResourceRequest, *tfsdk.ReadResourceResponse) {
+}
+
+// Update is intentionally left blank as all required and optional attributes force replacement of the resource
+// through the RequiresReplace AttributePlanModifier.
+func (r *idResource) Update(context.Context, tfsdk.UpdateResourceRequest, *tfsdk.UpdateResourceResponse) {
+}
+
+// Delete does not need to explicitly call resp.State.RemoveResource() as this is automatically handled by the
+// [framework](https://github.com/hashicorp/terraform-plugin-framework/pull/301).
+func (r *idResource) Delete(context.Context, tfsdk.DeleteResourceRequest, *tfsdk.DeleteResourceResponse) {
+}
+
+func (r *idResource) ImportState(ctx context.Context, req tfsdk.ImportResourceStateRequest, resp *tfsdk.ImportResourceStateResponse) {
+	id := req.ID
+	var prefix string
 
 	sep := strings.LastIndex(id, ",")
 	if sep != -1 {
-		if err := d.Set("prefix", id[:sep]); err != nil {
-			return nil, fmt.Errorf("error setting prefix: %w", err)
-		}
-
+		prefix = id[:sep]
 		id = id[sep+1:]
 	}
 
 	bytes, err := base64.RawURLEncoding.DecodeString(id)
 	if err != nil {
-		return nil, fmt.Errorf("error decoding ID: %w", err)
+		resp.Diagnostics.AddError(
+			"Import Random ID Error",
+			"While attempting to import a random id there was a decoding error.\n\n+"+
+				diagnostics.RetryMsg+
+				fmt.Sprintf("Original Error: %s", err),
+		)
+		return
 	}
 
-	if err := d.Set("byte_length", len(bytes)); err != nil {
-		return nil, fmt.Errorf("error setting byte_length: %w", err)
+	b64Std := base64.StdEncoding.EncodeToString(bytes)
+	hexStr := hex.EncodeToString(bytes)
+
+	bigInt := big.Int{}
+	bigInt.SetBytes(bytes)
+	dec := bigInt.String()
+
+	var state idModelV0
+
+	state.ID.Value = id
+	state.ByteLength.Value = int64(len(bytes))
+	state.Keepers.ElemType = types.StringType
+	state.B64Std.Value = prefix + b64Std
+	state.B64URL.Value = prefix + id
+	state.Hex.Value = prefix + hexStr
+	state.Dec.Value = prefix + dec
+
+	if prefix == "" {
+		state.Prefix.Null = true
+	} else {
+		state.Prefix.Value = prefix
 	}
 
-	d.SetId(id)
+	diags := resp.State.Set(ctx, &state)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+}
 
-	return []*schema.ResourceData{d}, nil
+type idModelV0 struct {
+	ID         types.String `tfsdk:"id"`
+	Keepers    types.Map    `tfsdk:"keepers"`
+	ByteLength types.Int64  `tfsdk:"byte_length"`
+	Prefix     types.String `tfsdk:"prefix"`
+	B64URL     types.String `tfsdk:"b64_url"`
+	B64Std     types.String `tfsdk:"b64_std"`
+	Hex        types.String `tfsdk:"hex"`
+	Dec        types.String `tfsdk:"dec"`
 }

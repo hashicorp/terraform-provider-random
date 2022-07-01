@@ -2,32 +2,38 @@ package provider
 
 import (
 	"context"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+
+	"github.com/hashicorp/terraform-plugin-framework/diag"
+	"github.com/hashicorp/terraform-plugin-framework/tfsdk"
 )
 
-func init() {
-	schema.DescriptionKind = schema.StringMarkdown
+func New() tfsdk.Provider {
+	return &provider{}
 }
 
-// New returns a *schema.Provider.
-func New() *schema.Provider {
-	return &schema.Provider{
-		Schema: map[string]*schema.Schema{},
+var _ tfsdk.Provider = (*provider)(nil)
 
-		ResourcesMap: map[string]*schema.Resource{
-			"random_id":       resourceId(),
-			"random_shuffle":  resourceShuffle(),
-			"random_pet":      resourcePet(),
-			"random_string":   resourceString(),
-			"random_password": resourcePassword(),
-			"random_integer":  resourceInteger(),
-			"random_uuid":     resourceUuid(),
-		},
-	}
+type provider struct{}
+
+func (p *provider) GetSchema(context.Context) (tfsdk.Schema, diag.Diagnostics) {
+	return tfsdk.Schema{}, nil
 }
 
-func RemoveResourceFromState(_ context.Context, d *schema.ResourceData, _ interface{}) diag.Diagnostics {
-	d.SetId("")
-	return nil
+func (p *provider) Configure(context.Context, tfsdk.ConfigureProviderRequest, *tfsdk.ConfigureProviderResponse) {
+}
+
+func (p *provider) GetResources(context.Context) (map[string]tfsdk.ResourceType, diag.Diagnostics) {
+	return map[string]tfsdk.ResourceType{
+		"random_id":       &idResourceType{},
+		"random_integer":  &integerResourceType{},
+		"random_password": &passwordResourceType{},
+		"random_pet":      &petResourceType{},
+		"random_shuffle":  &shuffleResourceType{},
+		"random_string":   &stringResourceType{},
+		"random_uuid":     &uuidResourceType{},
+	}, nil
+}
+
+func (p *provider) GetDataSources(context.Context) (map[string]tfsdk.DataSourceType, diag.Diagnostics) {
+	return map[string]tfsdk.DataSourceType{}, nil
 }

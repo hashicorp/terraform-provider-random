@@ -2,11 +2,9 @@ package provider
 
 import (
 	"fmt"
-	"strconv"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 )
 
 // These results are current as of Go 1.6. The Go
@@ -18,161 +16,167 @@ import (
 // document them when they arise, but the docs for this
 // resource specifically warn that results are not
 // guaranteed consistent across Terraform releases.
-func TestAccResourceShuffleDefault(t *testing.T) {
+func TestAccResourceShuffle(t *testing.T) {
 	resource.UnitTest(t, resource.TestCase{
-		PreCheck:          func() { testAccPreCheck(t) },
-		ProviderFactories: testAccProviders,
+		ProtoV6ProviderFactories: protoV6ProviderFactories(),
 		Steps: []resource.TestStep{
 			{
-				Config: testAccResourceShuffleConfigDefault,
+				Config: `resource "random_shuffle" "default_length" {
+    						input = ["a", "b", "c", "d", "e"]
+    						seed = "-"
+						}`,
 				Check: resource.ComposeTestCheckFunc(
-					testAccResourceShuffleCheck(
-						"random_shuffle.default_length",
-						[]string{"a", "c", "b", "e", "d"},
-					),
+					resource.TestCheckResourceAttrWith("random_shuffle.default_length", "result.#", testAccResourceShuffleCheckLength("5")),
+					resource.TestCheckResourceAttr("random_shuffle.default_length", "result.0", "a"),
+					resource.TestCheckResourceAttr("random_shuffle.default_length", "result.1", "c"),
+					resource.TestCheckResourceAttr("random_shuffle.default_length", "result.2", "b"),
+					resource.TestCheckResourceAttr("random_shuffle.default_length", "result.3", "e"),
+					resource.TestCheckResourceAttr("random_shuffle.default_length", "result.4", "d"),
 				),
 			},
 		},
 	})
 }
 
-func TestAccResourceShuffleShorter(t *testing.T) {
+func TestAccResourceShuffle_Shorter(t *testing.T) {
 	resource.UnitTest(t, resource.TestCase{
-		PreCheck:          func() { testAccPreCheck(t) },
-		ProviderFactories: testAccProviders,
+		ProtoV6ProviderFactories: protoV6ProviderFactories(),
 		Steps: []resource.TestStep{
 			{
-				Config: testAccResourceShuffleConfigShorter,
+				Config: `resource "random_shuffle" "shorter_length" {
+    						input = ["a", "b", "c", "d", "e"]
+    						seed = "-"
+    						result_count = 3
+						}`,
 				Check: resource.ComposeTestCheckFunc(
-					testAccResourceShuffleCheck(
-						"random_shuffle.shorter_length",
-						[]string{"a", "c", "b"},
-					),
+					resource.TestCheckResourceAttrWith("random_shuffle.shorter_length", "result.#", testAccResourceShuffleCheckLength("3")),
+					resource.TestCheckResourceAttr("random_shuffle.shorter_length", "result.0", "a"),
+					resource.TestCheckResourceAttr("random_shuffle.shorter_length", "result.1", "c"),
+					resource.TestCheckResourceAttr("random_shuffle.shorter_length", "result.2", "b"),
 				),
 			},
 		},
 	})
 }
 
-func TestAccResourceShuffleLonger(t *testing.T) {
+func TestAccResourceShuffle_Longer(t *testing.T) {
 	resource.UnitTest(t, resource.TestCase{
-		PreCheck:          func() { testAccPreCheck(t) },
-		ProviderFactories: testAccProviders,
+		ProtoV6ProviderFactories: protoV6ProviderFactories(),
 		Steps: []resource.TestStep{
 			{
-				Config: testAccResourceShuffleConfigLonger,
+				Config: `resource "random_shuffle" "longer_length" {
+    						input = ["a", "b", "c", "d", "e"]
+    						seed = "-"
+    						result_count = 12
+						}`,
 				Check: resource.ComposeTestCheckFunc(
-					testAccResourceShuffleCheck(
-						"random_shuffle.longer_length",
-						[]string{"a", "c", "b", "e", "d", "a", "e", "d", "c", "b", "a", "b"},
-					),
+					resource.TestCheckResourceAttrWith("random_shuffle.longer_length", "result.#", testAccResourceShuffleCheckLength("12")),
+					resource.TestCheckResourceAttr("random_shuffle.longer_length", "result.0", "a"),
+					resource.TestCheckResourceAttr("random_shuffle.longer_length", "result.1", "c"),
+					resource.TestCheckResourceAttr("random_shuffle.longer_length", "result.2", "b"),
+					resource.TestCheckResourceAttr("random_shuffle.longer_length", "result.3", "e"),
+					resource.TestCheckResourceAttr("random_shuffle.longer_length", "result.4", "d"),
+					resource.TestCheckResourceAttr("random_shuffle.longer_length", "result.5", "a"),
+					resource.TestCheckResourceAttr("random_shuffle.longer_length", "result.6", "e"),
+					resource.TestCheckResourceAttr("random_shuffle.longer_length", "result.7", "d"),
+					resource.TestCheckResourceAttr("random_shuffle.longer_length", "result.8", "c"),
+					resource.TestCheckResourceAttr("random_shuffle.longer_length", "result.9", "b"),
+					resource.TestCheckResourceAttr("random_shuffle.longer_length", "result.10", "a"),
+					resource.TestCheckResourceAttr("random_shuffle.longer_length", "result.11", "b"),
 				),
 			},
 		},
 	})
 }
 
-func TestAccResourceShuffleEmpty(t *testing.T) {
+func TestAccResourceShuffle_Empty(t *testing.T) {
 	resource.UnitTest(t, resource.TestCase{
-		PreCheck:          func() { testAccPreCheck(t) },
-		ProviderFactories: testAccProviders,
+		ProtoV6ProviderFactories: protoV6ProviderFactories(),
 		Steps: []resource.TestStep{
 			{
-				Config: testAccResourceShuffleConfigEmpty,
+				Config: `resource "random_shuffle" "empty_length" {
+    						input = []
+    						seed = "-"
+    						result_count = 12
+						}`,
 				Check: resource.ComposeTestCheckFunc(
-					testAccResourceShuffleCheck(
-						"random_shuffle.empty_length",
-						[]string{},
-					),
+					resource.TestCheckResourceAttrWith("random_shuffle.empty_length", "result.#", testAccResourceShuffleCheckLength("0")),
 				),
 			},
 		},
 	})
 }
 
-func TestAccResourceShuffleOne(t *testing.T) {
+func TestAccResourceShuffle_One(t *testing.T) {
 	resource.UnitTest(t, resource.TestCase{
-		PreCheck:          func() { testAccPreCheck(t) },
-		ProviderFactories: testAccProviders,
+		ProtoV6ProviderFactories: protoV6ProviderFactories(),
 		Steps: []resource.TestStep{
 			{
-				Config: testAccResourceShuffleConfigOne,
+				Config: `resource "random_shuffle" "one_length" {
+    						input = ["a"]
+    						seed = "-"
+    						result_count = 1
+						}`,
 				Check: resource.ComposeTestCheckFunc(
-					testAccResourceShuffleCheck(
-						"random_shuffle.one_length",
-						[]string{"a"},
-					),
+					resource.TestCheckResourceAttrWith("random_shuffle.one_length", "result.#", testAccResourceShuffleCheckLength("1")),
+					resource.TestCheckResourceAttr("random_shuffle.one_length", "result.0", "a"),
 				),
 			},
 		},
 	})
 }
 
-func testAccResourceShuffleCheck(id string, wants []string) resource.TestCheckFunc {
-	return func(s *terraform.State) error {
-		rs, ok := s.RootModule().Resources[id]
-		if !ok {
-			return fmt.Errorf("Not found: %s", id)
-		}
-		if rs.Primary.ID == "" {
-			return fmt.Errorf("No ID is set")
-		}
+func TestAccResourceShuffle_UpgradeFromVersion3_3_2(t *testing.T) {
+	resource.Test(t, resource.TestCase{
+		Steps: []resource.TestStep{
+			{
+				ExternalProviders: providerVersion332(),
+				Config: `resource "random_shuffle" "default_length" {
+    						input = ["a", "b", "c", "d", "e"]
+    						seed = "-"
+						}`,
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttrWith("random_shuffle.default_length", "result.#", testAccResourceShuffleCheckLength("5")),
+					resource.TestCheckResourceAttr("random_shuffle.default_length", "result.0", "a"),
+					resource.TestCheckResourceAttr("random_shuffle.default_length", "result.1", "c"),
+					resource.TestCheckResourceAttr("random_shuffle.default_length", "result.2", "b"),
+					resource.TestCheckResourceAttr("random_shuffle.default_length", "result.3", "e"),
+					resource.TestCheckResourceAttr("random_shuffle.default_length", "result.4", "d"),
+				),
+			},
+			{
+				ProtoV6ProviderFactories: protoV6ProviderFactories(),
+				Config: `resource "random_shuffle" "default_length" {
+    						input = ["a", "b", "c", "d", "e"]
+    						seed = "-"
+						}`,
+				PlanOnly: true,
+			},
+			{
+				ProtoV6ProviderFactories: protoV6ProviderFactories(),
+				Config: `resource "random_shuffle" "default_length" {
+    						input = ["a", "b", "c", "d", "e"]
+    						seed = "-"
+						}`,
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttrWith("random_shuffle.default_length", "result.#", testAccResourceShuffleCheckLength("5")),
+					resource.TestCheckResourceAttr("random_shuffle.default_length", "result.0", "a"),
+					resource.TestCheckResourceAttr("random_shuffle.default_length", "result.1", "c"),
+					resource.TestCheckResourceAttr("random_shuffle.default_length", "result.2", "b"),
+					resource.TestCheckResourceAttr("random_shuffle.default_length", "result.3", "e"),
+					resource.TestCheckResourceAttr("random_shuffle.default_length", "result.4", "d"),
+				),
+			},
+		},
+	})
+}
 
-		attrs := rs.Primary.Attributes
-
-		gotLen := attrs["result.#"]
-		wantLen := strconv.Itoa(len(wants))
-		if gotLen != wantLen {
-			return fmt.Errorf("got %s result items; want %s", gotLen, wantLen)
-		}
-
-		for i, want := range wants {
-			key := fmt.Sprintf("result.%d", i)
-			if got := attrs[key]; got != want {
-				return fmt.Errorf("index %d is %q; want %q", i, got, want)
-			}
+func testAccResourceShuffleCheckLength(expectedLength string) func(input string) error {
+	return func(input string) error {
+		if input != expectedLength {
+			return fmt.Errorf("got length %s; expected length %s", input, expectedLength)
 		}
 
 		return nil
 	}
 }
-
-const (
-	testAccResourceShuffleConfigDefault = `
-resource "random_shuffle" "default_length" {
-    input = ["a", "b", "c", "d", "e"]
-    seed = "-"
-}`
-
-	testAccResourceShuffleConfigShorter = `
-resource "random_shuffle" "shorter_length" {
-    input = ["a", "b", "c", "d", "e"]
-    seed = "-"
-    result_count = 3
-}
-`
-
-	testAccResourceShuffleConfigLonger = `
-resource "random_shuffle" "longer_length" {
-    input = ["a", "b", "c", "d", "e"]
-    seed = "-"
-    result_count = 12
-}
-`
-
-	testAccResourceShuffleConfigEmpty = `
-resource "random_shuffle" "empty_length" {
-    input = []
-    seed = "-"
-    result_count = 12
-}
-`
-
-	testAccResourceShuffleConfigOne = `
-resource "random_shuffle" "one_length" {
-    input = ["a"]
-    seed = "-"
-    result_count = 1
-}
-`
-)
