@@ -11,7 +11,7 @@ import (
 
 func TestAccResourcePet(t *testing.T) {
 	resource.UnitTest(t, resource.TestCase{
-		ProtoV6ProviderFactories: protoV6ProviderFactories(),
+		ProtoV5ProviderFactories: protoV5ProviderFactories(),
 		Steps: []resource.TestStep{
 			{
 				Config: `resource "random_pet" "pet_1" {
@@ -26,7 +26,7 @@ func TestAccResourcePet(t *testing.T) {
 
 func TestAccResourcePet_Length(t *testing.T) {
 	resource.UnitTest(t, resource.TestCase{
-		ProtoV6ProviderFactories: protoV6ProviderFactories(),
+		ProtoV5ProviderFactories: protoV5ProviderFactories(),
 		Steps: []resource.TestStep{
 			{
 				Config: `resource "random_pet" "pet_1" {
@@ -42,7 +42,7 @@ func TestAccResourcePet_Length(t *testing.T) {
 
 func TestAccResourcePet_Prefix(t *testing.T) {
 	resource.UnitTest(t, resource.TestCase{
-		ProtoV6ProviderFactories: protoV6ProviderFactories(),
+		ProtoV5ProviderFactories: protoV5ProviderFactories(),
 		Steps: []resource.TestStep{
 			{
 				Config: `resource "random_pet" "pet_1" {
@@ -59,7 +59,7 @@ func TestAccResourcePet_Prefix(t *testing.T) {
 
 func TestAccResourcePet_Separator(t *testing.T) {
 	resource.UnitTest(t, resource.TestCase{
-		ProtoV6ProviderFactories: protoV6ProviderFactories(),
+		ProtoV5ProviderFactories: protoV5ProviderFactories(),
 		Steps: []resource.TestStep{
 			{
 				Config: `resource "random_pet" "pet_1" {
@@ -88,14 +88,14 @@ func TestAccResourcePet_UpgradeFromVersion3_3_2(t *testing.T) {
 				),
 			},
 			{
-				ProtoV6ProviderFactories: protoV6ProviderFactories(),
+				ProtoV5ProviderFactories: protoV5ProviderFactories(),
 				Config: `resource "random_pet" "pet_1" {
   							prefix = "consul"
 						}`,
 				PlanOnly: true,
 			},
 			{
-				ProtoV6ProviderFactories: protoV6ProviderFactories(),
+				ProtoV5ProviderFactories: protoV5ProviderFactories(),
 				Config: `resource "random_pet" "pet_1" {
   							prefix = "consul"
 						}`,

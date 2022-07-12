@@ -10,7 +10,7 @@ import (
 
 func TestAccResourceString(t *testing.T) {
 	resource.UnitTest(t, resource.TestCase{
-		ProtoV6ProviderFactories: protoV6ProviderFactories(),
+		ProtoV5ProviderFactories: protoV5ProviderFactories(),
 		Steps: []resource.TestStep{
 			{
 				Config: `resource "random_string" "basic" {
@@ -31,7 +31,7 @@ func TestAccResourceString(t *testing.T) {
 
 func TestAccResourceString_Override(t *testing.T) {
 	resource.UnitTest(t, resource.TestCase{
-		ProtoV6ProviderFactories: protoV6ProviderFactories(),
+		ProtoV5ProviderFactories: protoV5ProviderFactories(),
 		Steps: []resource.TestStep{
 			{
 				Config: `resource "random_string" "override" {
@@ -52,7 +52,7 @@ func TestAccResourceString_Override(t *testing.T) {
 
 func TestAccResourceString_Min(t *testing.T) {
 	resource.UnitTest(t, resource.TestCase{
-		ProtoV6ProviderFactories: protoV6ProviderFactories(),
+		ProtoV5ProviderFactories: protoV5ProviderFactories(),
 		Steps: []resource.TestStep{
 			{
 				Config: `resource "random_string" "min" {
@@ -269,7 +269,7 @@ func TestAccResourceString_StateUpgradeV1toV2(t *testing.T) {
 						Check:  resource.ComposeTestCheckFunc(c.beforeStateUpgrade...),
 					},
 					{
-						ProtoV6ProviderFactories: protoV6ProviderFactories(),
+						ProtoV5ProviderFactories: protoV5ProviderFactories(),
 						Config:                   c.configDuringUpgrade,
 						Check:                    resource.ComposeTestCheckFunc(c.afterStateUpgrade...),
 					},
@@ -281,7 +281,7 @@ func TestAccResourceString_StateUpgradeV1toV2(t *testing.T) {
 
 func TestAccResourceString_LengthErrors(t *testing.T) {
 	resource.UnitTest(t, resource.TestCase{
-		ProtoV6ProviderFactories: protoV6ProviderFactories(),
+		ProtoV5ProviderFactories: protoV5ProviderFactories(),
 		Steps: []resource.TestStep{
 			{
 				Config: `resource "random_string" "invalid_length" {
@@ -330,7 +330,7 @@ func TestAccResourceString_UpgradeFromVersion3_3_2(t *testing.T) {
 				),
 			},
 			{
-				ProtoV6ProviderFactories: protoV6ProviderFactories(),
+				ProtoV5ProviderFactories: protoV5ProviderFactories(),
 				Config: `resource "random_string" "min" {
 							length = 12
 							override_special = "!#@"
@@ -342,7 +342,7 @@ func TestAccResourceString_UpgradeFromVersion3_3_2(t *testing.T) {
 				PlanOnly: true,
 			},
 			{
-				ProtoV6ProviderFactories: protoV6ProviderFactories(),
+				ProtoV5ProviderFactories: protoV5ProviderFactories(),
 				Config: `resource "random_string" "min" {
 							length = 12
 							override_special = "!#@"

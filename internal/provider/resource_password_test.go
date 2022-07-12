@@ -17,7 +17,7 @@ import (
 
 func TestAccResourcePassword(t *testing.T) {
 	resource.UnitTest(t, resource.TestCase{
-		ProtoV6ProviderFactories: protoV6ProviderFactories(),
+		ProtoV5ProviderFactories: protoV5ProviderFactories(),
 		Steps: []resource.TestStep{
 			{
 				Config: `resource "random_password" "basic" {
@@ -54,7 +54,7 @@ func TestAccResourcePassword(t *testing.T) {
 
 func TestAccResourcePassword_Override(t *testing.T) {
 	resource.UnitTest(t, resource.TestCase{
-		ProtoV6ProviderFactories: protoV6ProviderFactories(),
+		ProtoV5ProviderFactories: protoV5ProviderFactories(),
 		Steps: []resource.TestStep{
 			{
 				Config: `resource "random_password" "override" {
@@ -281,7 +281,7 @@ func TestAccResourcePassword_StateUpgradeV0toV2(t *testing.T) {
 						Check:  resource.ComposeTestCheckFunc(c.beforeStateUpgrade...),
 					},
 					{
-						ProtoV6ProviderFactories: protoV6ProviderFactories(),
+						ProtoV5ProviderFactories: protoV5ProviderFactories(),
 						Config:                   c.configDuringUpgrade,
 						Check:                    resource.ComposeTestCheckFunc(c.afterStateUpgrade...),
 					},
@@ -490,7 +490,7 @@ func TestAccResourcePassword_StateUpgradeV1toV2(t *testing.T) {
 						Check:  resource.ComposeTestCheckFunc(c.beforeStateUpgrade...),
 					},
 					{
-						ProtoV6ProviderFactories: protoV6ProviderFactories(),
+						ProtoV5ProviderFactories: protoV5ProviderFactories(),
 						Config:                   c.configDuringUpgrade,
 						Check:                    resource.ComposeTestCheckFunc(c.afterStateUpgrade...),
 					},
@@ -502,7 +502,7 @@ func TestAccResourcePassword_StateUpgradeV1toV2(t *testing.T) {
 
 func TestAccResourcePassword_Min(t *testing.T) {
 	resource.UnitTest(t, resource.TestCase{
-		ProtoV6ProviderFactories: protoV6ProviderFactories(),
+		ProtoV5ProviderFactories: protoV5ProviderFactories(),
 		Steps: []resource.TestStep{
 			{
 				Config: `resource "random_password" "min" {
@@ -556,7 +556,7 @@ func TestAccResourcePassword_UpgradeFromVersion3_3_2(t *testing.T) {
 				),
 			},
 			{
-				ProtoV6ProviderFactories: protoV6ProviderFactories(),
+				ProtoV5ProviderFactories: protoV5ProviderFactories(),
 				Config: `resource "random_password" "min" {
 							length = 12
 							override_special = "!#@"
@@ -568,7 +568,7 @@ func TestAccResourcePassword_UpgradeFromVersion3_3_2(t *testing.T) {
 				PlanOnly: true,
 			},
 			{
-				ProtoV6ProviderFactories: protoV6ProviderFactories(),
+				ProtoV5ProviderFactories: protoV5ProviderFactories(),
 				Config: `resource "random_password" "min" {
 							length = 12
 							override_special = "!#@"

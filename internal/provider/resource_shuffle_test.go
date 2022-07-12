@@ -18,7 +18,7 @@ import (
 // guaranteed consistent across Terraform releases.
 func TestAccResourceShuffle(t *testing.T) {
 	resource.UnitTest(t, resource.TestCase{
-		ProtoV6ProviderFactories: protoV6ProviderFactories(),
+		ProtoV5ProviderFactories: protoV5ProviderFactories(),
 		Steps: []resource.TestStep{
 			{
 				Config: `resource "random_shuffle" "default_length" {
@@ -40,7 +40,7 @@ func TestAccResourceShuffle(t *testing.T) {
 
 func TestAccResourceShuffle_Shorter(t *testing.T) {
 	resource.UnitTest(t, resource.TestCase{
-		ProtoV6ProviderFactories: protoV6ProviderFactories(),
+		ProtoV5ProviderFactories: protoV5ProviderFactories(),
 		Steps: []resource.TestStep{
 			{
 				Config: `resource "random_shuffle" "shorter_length" {
@@ -61,7 +61,7 @@ func TestAccResourceShuffle_Shorter(t *testing.T) {
 
 func TestAccResourceShuffle_Longer(t *testing.T) {
 	resource.UnitTest(t, resource.TestCase{
-		ProtoV6ProviderFactories: protoV6ProviderFactories(),
+		ProtoV5ProviderFactories: protoV5ProviderFactories(),
 		Steps: []resource.TestStep{
 			{
 				Config: `resource "random_shuffle" "longer_length" {
@@ -91,7 +91,7 @@ func TestAccResourceShuffle_Longer(t *testing.T) {
 
 func TestAccResourceShuffle_Empty(t *testing.T) {
 	resource.UnitTest(t, resource.TestCase{
-		ProtoV6ProviderFactories: protoV6ProviderFactories(),
+		ProtoV5ProviderFactories: protoV5ProviderFactories(),
 		Steps: []resource.TestStep{
 			{
 				Config: `resource "random_shuffle" "empty_length" {
@@ -109,7 +109,7 @@ func TestAccResourceShuffle_Empty(t *testing.T) {
 
 func TestAccResourceShuffle_One(t *testing.T) {
 	resource.UnitTest(t, resource.TestCase{
-		ProtoV6ProviderFactories: protoV6ProviderFactories(),
+		ProtoV5ProviderFactories: protoV5ProviderFactories(),
 		Steps: []resource.TestStep{
 			{
 				Config: `resource "random_shuffle" "one_length" {
@@ -145,7 +145,7 @@ func TestAccResourceShuffle_UpgradeFromVersion3_3_2(t *testing.T) {
 				),
 			},
 			{
-				ProtoV6ProviderFactories: protoV6ProviderFactories(),
+				ProtoV5ProviderFactories: protoV5ProviderFactories(),
 				Config: `resource "random_shuffle" "default_length" {
     						input = ["a", "b", "c", "d", "e"]
     						seed = "-"
@@ -153,7 +153,7 @@ func TestAccResourceShuffle_UpgradeFromVersion3_3_2(t *testing.T) {
 				PlanOnly: true,
 			},
 			{
-				ProtoV6ProviderFactories: protoV6ProviderFactories(),
+				ProtoV5ProviderFactories: protoV5ProviderFactories(),
 				Config: `resource "random_shuffle" "default_length" {
     						input = ["a", "b", "c", "d", "e"]
     						seed = "-"
