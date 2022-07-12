@@ -15,7 +15,7 @@ func protoV5ProviderFactories() map[string]func() (tfprotov5.ProviderServer, err
 
 func providerVersion332() map[string]resource.ExternalProvider {
 	return map[string]resource.ExternalProvider{
-		"tls": {
+		"random": {
 			VersionConstraint: "3.3.2",
 			Source:            "hashicorp/random",
 		},
