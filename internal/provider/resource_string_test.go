@@ -14,7 +14,7 @@ func TestAccResourceString(t *testing.T) {
 		Steps: []resource.TestStep{
 			{
 				Config: `resource "random_string" "basic" {
-  							length = 12
+							length = 12
 						}`,
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttrWith("random_string.basic", "result", testCheckLen(12)),
@@ -288,7 +288,7 @@ func TestAccResourceString_LengthErrors(t *testing.T) {
   							length = 2
   							min_lower = 3
 						}`,
-				ExpectError: regexp.MustCompile(`.*Attribute "length" \(2\) cannot be less than min_upper \+ min_lower \+\nmin_numeric \+ min_special \(3\).`),
+				ExpectError: regexp.MustCompile(`.*Value must be at least sum of min_upper \+ min_lower \+ min_numeric \+\nmin_special, got: 2`),
 			},
 			{
 				Config: `resource "random_string" "invalid_length" {

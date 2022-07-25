@@ -5,14 +5,13 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-framework-validators/int64validator"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
+	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/tfsdk"
 	"github.com/hashicorp/terraform-plugin-framework/types"
-	"github.com/hashicorp/terraform-plugin-go/tftypes"
 
 	"github.com/terraform-providers/terraform-provider-random/internal/diagnostics"
 	"github.com/terraform-providers/terraform-provider-random/internal/planmodifiers"
 	"github.com/terraform-providers/terraform-provider-random/internal/random"
-	"github.com/terraform-providers/terraform-provider-random/internal/validators"
 )
 
 var _ tfsdk.ResourceType = (*stringResourceType)(nil)
@@ -51,11 +50,11 @@ func (r stringResourceType) GetSchema(context.Context) (tfsdk.Schema, diag.Diagn
 				PlanModifiers: []tfsdk.AttributePlanModifier{tfsdk.RequiresReplace()},
 				Validators: []tfsdk.AttributeValidator{
 					int64validator.AtLeast(1),
-					validators.NewIntIsAtLeastSumOfValidator(
-						tftypes.NewAttributePath().WithAttributeName("min_upper"),
-						tftypes.NewAttributePath().WithAttributeName("min_lower"),
-						tftypes.NewAttributePath().WithAttributeName("min_numeric"),
-						tftypes.NewAttributePath().WithAttributeName("min_special"),
+					int64validator.AtLeastSumOf(
+						path.MatchRoot("min_upper"),
+						path.MatchRoot("min_lower"),
+						path.MatchRoot("min_numeric"),
+						path.MatchRoot("min_special"),
 					),
 				},
 			},
@@ -310,11 +309,11 @@ func (r *stringResource) UpgradeState(context.Context) map[int64]tfsdk.ResourceS
 				PlanModifiers: []tfsdk.AttributePlanModifier{tfsdk.RequiresReplace()},
 				Validators: []tfsdk.AttributeValidator{
 					int64validator.AtLeast(1),
-					validators.NewIntIsAtLeastSumOfValidator(
-						tftypes.NewAttributePath().WithAttributeName("min_upper"),
-						tftypes.NewAttributePath().WithAttributeName("min_lower"),
-						tftypes.NewAttributePath().WithAttributeName("min_numeric"),
-						tftypes.NewAttributePath().WithAttributeName("min_special"),
+					int64validator.AtLeastSumOf(
+						path.MatchRoot("min_upper"),
+						path.MatchRoot("min_lower"),
+						path.MatchRoot("min_numeric"),
+						path.MatchRoot("min_special"),
 					),
 				},
 			},
