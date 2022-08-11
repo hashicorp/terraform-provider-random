@@ -76,7 +76,7 @@ func TestAccResourceString_Min(t *testing.T) {
 }
 
 // TestAccResourceString_StateUpgradeV1toV2 covers the state upgrade from V1 to V2.
-// This includes the deprecation and removal of `number` and the addition of `numeric` attributes.
+// This includes the deprecation of `number` and the addition of `numeric` attributes.
 // v3.2.0 was used as this is the last version before `number` was deprecated and `numeric` attribute
 // was added.
 func TestAccResourceString_StateUpgradeV1toV2(t *testing.T) {
@@ -90,7 +90,7 @@ func TestAccResourceString_StateUpgradeV1toV2(t *testing.T) {
 		afterStateUpgrade   []resource.TestCheckFunc
 	}{
 		{
-			name: "number is absent before numeric is absent during",
+			name: "number is absent before number and numeric are absent during",
 			configBeforeUpgrade: `resource "random_string" "default" {
 						length = 12
 					}`,
@@ -102,8 +102,8 @@ func TestAccResourceString_StateUpgradeV1toV2(t *testing.T) {
 				resource.TestCheckNoResourceAttr("random_string.default", "numeric"),
 			},
 			afterStateUpgrade: []resource.TestCheckFunc{
-				resource.TestCheckResourceAttr("random_string.default", "numeric", "true"),
-				resource.TestCheckNoResourceAttr("random_string.default", "number"),
+				resource.TestCheckResourceAttr("random_string.default", "number", "true"),
+				resource.TestCheckResourceAttrPair("random_string.default", "number", "random_string.default", "numeric"),
 			},
 		},
 		{
@@ -120,8 +120,8 @@ func TestAccResourceString_StateUpgradeV1toV2(t *testing.T) {
 				resource.TestCheckNoResourceAttr("random_string.default", "numeric"),
 			},
 			afterStateUpgrade: []resource.TestCheckFunc{
-				resource.TestCheckResourceAttr("random_string.default", "numeric", "true"),
-				resource.TestCheckNoResourceAttr("random_string.default", "number"),
+				resource.TestCheckResourceAttr("random_string.default", "number", "true"),
+				resource.TestCheckResourceAttrPair("random_string.default", "number", "random_string.default", "numeric"),
 			},
 		},
 		{
@@ -138,8 +138,8 @@ func TestAccResourceString_StateUpgradeV1toV2(t *testing.T) {
 				resource.TestCheckNoResourceAttr("random_string.default", "numeric"),
 			},
 			afterStateUpgrade: []resource.TestCheckFunc{
-				resource.TestCheckResourceAttr("random_string.default", "numeric", "false"),
-				resource.TestCheckNoResourceAttr("random_string.default", "number"),
+				resource.TestCheckResourceAttr("random_string.default", "number", "false"),
+				resource.TestCheckResourceAttrPair("random_string.default", "number", "random_string.default", "numeric"),
 			},
 		},
 		{
@@ -157,12 +157,12 @@ func TestAccResourceString_StateUpgradeV1toV2(t *testing.T) {
 				resource.TestCheckNoResourceAttr("random_string.default", "numeric"),
 			},
 			afterStateUpgrade: []resource.TestCheckFunc{
-				resource.TestCheckResourceAttr("random_string.default", "numeric", "true"),
-				resource.TestCheckNoResourceAttr("random_string.default", "number"),
+				resource.TestCheckResourceAttr("random_string.default", "number", "true"),
+				resource.TestCheckResourceAttrPair("random_string.default", "number", "random_string.default", "numeric"),
 			},
 		},
 		{
-			name: "number is true before numeric is absent during",
+			name: "number is true before number and numeric are absent during",
 			configBeforeUpgrade: `resource "random_string" "default" {
 						length = 12
 						number = true
@@ -175,8 +175,8 @@ func TestAccResourceString_StateUpgradeV1toV2(t *testing.T) {
 				resource.TestCheckNoResourceAttr("random_string.default", "numeric"),
 			},
 			afterStateUpgrade: []resource.TestCheckFunc{
-				resource.TestCheckResourceAttr("random_string.default", "numeric", "true"),
-				resource.TestCheckNoResourceAttr("random_string.default", "number"),
+				resource.TestCheckResourceAttr("random_string.default", "number", "true"),
+				resource.TestCheckResourceAttrPair("random_string.default", "number", "random_string.default", "numeric"),
 			},
 		},
 		{
@@ -194,8 +194,8 @@ func TestAccResourceString_StateUpgradeV1toV2(t *testing.T) {
 				resource.TestCheckNoResourceAttr("random_string.default", "numeric"),
 			},
 			afterStateUpgrade: []resource.TestCheckFunc{
-				resource.TestCheckResourceAttr("random_string.default", "numeric", "false"),
-				resource.TestCheckNoResourceAttr("random_string.default", "number"),
+				resource.TestCheckResourceAttr("random_string.default", "number", "false"),
+				resource.TestCheckResourceAttrPair("random_string.default", "number", "random_string.default", "numeric"),
 			},
 		},
 		{
@@ -213,12 +213,12 @@ func TestAccResourceString_StateUpgradeV1toV2(t *testing.T) {
 				resource.TestCheckNoResourceAttr("random_string.default", "numeric"),
 			},
 			afterStateUpgrade: []resource.TestCheckFunc{
-				resource.TestCheckResourceAttr("random_string.default", "numeric", "false"),
-				resource.TestCheckNoResourceAttr("random_string.default", "number"),
+				resource.TestCheckResourceAttr("random_string.default", "number", "false"),
+				resource.TestCheckResourceAttrPair("random_string.default", "number", "random_string.default", "numeric"),
 			},
 		},
 		{
-			name: "number is false before numeric is absent during",
+			name: "number is false before number and numeric are absent during",
 			configBeforeUpgrade: `resource "random_string" "default" {
 						length = 12
 						number = false
@@ -231,8 +231,8 @@ func TestAccResourceString_StateUpgradeV1toV2(t *testing.T) {
 				resource.TestCheckNoResourceAttr("random_string.default", "numeric"),
 			},
 			afterStateUpgrade: []resource.TestCheckFunc{
-				resource.TestCheckResourceAttr("random_string.default", "numeric", "true"),
-				resource.TestCheckNoResourceAttr("random_string.default", "number"),
+				resource.TestCheckResourceAttr("random_string.default", "number", "true"),
+				resource.TestCheckResourceAttrPair("random_string.default", "number", "random_string.default", "numeric"),
 			},
 		},
 		{
@@ -250,8 +250,8 @@ func TestAccResourceString_StateUpgradeV1toV2(t *testing.T) {
 				resource.TestCheckNoResourceAttr("random_string.default", "numeric"),
 			},
 			afterStateUpgrade: []resource.TestCheckFunc{
-				resource.TestCheckResourceAttr("random_string.default", "numeric", "true"),
-				resource.TestCheckNoResourceAttr("random_string.default", "number"),
+				resource.TestCheckResourceAttr("random_string.default", "number", "true"),
+				resource.TestCheckResourceAttrPair("random_string.default", "number", "random_string.default", "numeric"),
 			},
 		},
 	}
@@ -322,6 +322,7 @@ func TestAccResourceString_UpgradeFromVersion3_3_2(t *testing.T) {
 					resource.TestCheckResourceAttr("random_string.min", "special", "true"),
 					resource.TestCheckResourceAttr("random_string.min", "upper", "true"),
 					resource.TestCheckResourceAttr("random_string.min", "lower", "true"),
+					resource.TestCheckResourceAttr("random_string.min", "number", "true"),
 					resource.TestCheckResourceAttr("random_string.min", "numeric", "true"),
 					resource.TestCheckResourceAttr("random_string.min", "min_special", "1"),
 					resource.TestCheckResourceAttr("random_string.min", "min_upper", "3"),
@@ -360,6 +361,7 @@ func TestAccResourceString_UpgradeFromVersion3_3_2(t *testing.T) {
 					resource.TestCheckResourceAttr("random_string.min", "special", "true"),
 					resource.TestCheckResourceAttr("random_string.min", "upper", "true"),
 					resource.TestCheckResourceAttr("random_string.min", "lower", "true"),
+					resource.TestCheckResourceAttr("random_string.min", "number", "true"),
 					resource.TestCheckResourceAttr("random_string.min", "numeric", "true"),
 					resource.TestCheckResourceAttr("random_string.min", "min_special", "1"),
 					resource.TestCheckResourceAttr("random_string.min", "min_upper", "3"),

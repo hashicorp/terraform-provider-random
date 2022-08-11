@@ -1,13 +1,8 @@
-## 4.0.0 (unreleased)
+## 3.4.0 (unreleased)
 
 NOTES:
 
 * Provider has been re-written using the new [`terraform-plugin-framework`](https://www.terraform.io/plugin/framework) ([#177](https://github.com/hashicorp/terraform-provider-random/pull/177)).
-
-BREAKING CHANGES:
-
-* resource/random_password: Deprecated attribute `number` has been removed ([266](https://github.com/hashicorp/terraform-provider-random/issues/266)).
-* resource/random_string: Deprecated attribute `number` has been removed ([266](https://github.com/hashicorp/terraform-provider-random/issues/266)).
 
 ## 3.3.2 (June 23, 2022)
 
