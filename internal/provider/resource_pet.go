@@ -7,13 +7,15 @@ import (
 
 	petname "github.com/dustinkirkland/golang-petname"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
+	"github.com/hashicorp/terraform-plugin-framework/provider"
+	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/tfsdk"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 
 	"github.com/terraform-providers/terraform-provider-random/internal/planmodifiers"
 )
 
-var _ tfsdk.ResourceType = (*petResourceType)(nil)
+var _ provider.ResourceType = (*petResourceType)(nil)
 
 type petResourceType struct{}
 
@@ -34,7 +36,7 @@ func (r *petResourceType) GetSchema(context.Context) (tfsdk.Schema, diag.Diagnos
 				},
 				Optional: true,
 				PlanModifiers: []tfsdk.AttributePlanModifier{
-					tfsdk.RequiresReplace(),
+					resource.RequiresReplace(),
 				},
 			},
 			"length": {
@@ -51,7 +53,7 @@ func (r *petResourceType) GetSchema(context.Context) (tfsdk.Schema, diag.Diagnos
 				Description:   "A string to prefix the name with.",
 				Type:          types.StringType,
 				Optional:      true,
-				PlanModifiers: []tfsdk.AttributePlanModifier{tfsdk.RequiresReplace()},
+				PlanModifiers: []tfsdk.AttributePlanModifier{resource.RequiresReplace()},
 			},
 			"separator": {
 				Description: "The character to separate words in the pet name. Defaults to \"-\"",
@@ -72,15 +74,15 @@ func (r *petResourceType) GetSchema(context.Context) (tfsdk.Schema, diag.Diagnos
 	}, nil
 }
 
-func (r *petResourceType) NewResource(_ context.Context, p tfsdk.Provider) (tfsdk.Resource, diag.Diagnostics) {
+func (r *petResourceType) NewResource(_ context.Context, p provider.Provider) (resource.Resource, diag.Diagnostics) {
 	return &petResource{}, nil
 }
 
-var _ tfsdk.Resource = (*petResource)(nil)
+var _ resource.Resource = (*petResource)(nil)
 
 type petResource struct{}
 
-func (r *petResource) Create(ctx context.Context, req tfsdk.CreateResourceRequest, resp *tfsdk.CreateResourceResponse) {
+func (r *petResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
 	// This is necessary to ensure each call to petname is properly randomised:
 	// the library uses `rand.Intn()` and does NOT seed `rand.Seed()` by default,
 	// so this call takes care of that.
@@ -123,17 +125,17 @@ func (r *petResource) Create(ctx context.Context, req tfsdk.CreateResourceReques
 }
 
 // Read does not need to perform any operations as the state in ReadResourceResponse is already populated.
-func (r *petResource) Read(ctx context.Context, req tfsdk.ReadResourceRequest, resp *tfsdk.ReadResourceResponse) {
+func (r *petResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
 }
 
 // Update is intentionally left blank as all required and optional attributes force replacement of the resource
 // through the RequiresReplace AttributePlanModifier.
-func (r *petResource) Update(ctx context.Context, req tfsdk.UpdateResourceRequest, resp *tfsdk.UpdateResourceResponse) {
+func (r *petResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
 }
 
 // Delete does not need to explicitly call resp.State.RemoveResource() as this is automatically handled by the
 // [framework](https://github.com/hashicorp/terraform-plugin-framework/pull/301).
-func (r *petResource) Delete(ctx context.Context, req tfsdk.DeleteResourceRequest, resp *tfsdk.DeleteResourceResponse) {
+func (r *petResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
 }
 
 type petModelV0 struct {

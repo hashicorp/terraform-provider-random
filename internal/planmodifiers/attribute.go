@@ -39,7 +39,7 @@ func (d *defaultValueAttributePlanModifier) Modify(ctx context.Context, req tfsd
 	resp.AttributePlan = d.val
 }
 
-// RequiresReplace returns an attribute plan modifier that is identical to tfsdk.RequiresReplace() with
+// RequiresReplace returns an attribute plan modifier that is identical to resource.RequiresReplace() with
 // the exception that there is no check for `configRaw.IsNull && attrSchema.Computed` as a replacement
 // needs to be triggered when the attribute has been removed from the config.
 func RequiresReplace() tfsdk.AttributePlanModifier {
@@ -59,7 +59,7 @@ func (r RequiresReplaceModifier) MarkdownDescription(ctx context.Context) string
 }
 
 // Modify will trigger replacement (i.e., destroy-create) when `configRaw.IsNull && attrSchema.Computed`,
-// which differs from the behaviour of `tfsdk.RequiresReplace()`.
+// which differs from the behaviour of `resource.RequiresReplace()`.
 func (r RequiresReplaceModifier) Modify(ctx context.Context, req tfsdk.ModifyAttributePlanRequest, resp *tfsdk.ModifyAttributePlanResponse) {
 	if req.AttributeConfig == nil || req.AttributePlan == nil || req.AttributeState == nil {
 		// shouldn't happen, but let's not panic if it does

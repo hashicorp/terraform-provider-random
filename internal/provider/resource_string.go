@@ -6,6 +6,8 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework-validators/int64validator"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/path"
+	"github.com/hashicorp/terraform-plugin-framework/provider"
+	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/tfsdk"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 
@@ -14,7 +16,7 @@ import (
 	"github.com/terraform-providers/terraform-provider-random/internal/random"
 )
 
-var _ tfsdk.ResourceType = (*stringResourceType)(nil)
+var _ provider.ResourceType = (*stringResourceType)(nil)
 
 type stringResourceType struct{}
 
@@ -38,7 +40,7 @@ func (r stringResourceType) GetSchema(context.Context) (tfsdk.Schema, diag.Diagn
 				},
 				Optional: true,
 				PlanModifiers: []tfsdk.AttributePlanModifier{
-					tfsdk.RequiresReplace(),
+					resource.RequiresReplace(),
 				},
 			},
 
@@ -47,7 +49,7 @@ func (r stringResourceType) GetSchema(context.Context) (tfsdk.Schema, diag.Diagn
 					"must also be >= (`min_upper` + `min_lower` + `min_numeric` + `min_special`).",
 				Type:          types.Int64Type,
 				Required:      true,
-				PlanModifiers: []tfsdk.AttributePlanModifier{tfsdk.RequiresReplace()},
+				PlanModifiers: []tfsdk.AttributePlanModifier{resource.RequiresReplace()},
 				Validators: []tfsdk.AttributeValidator{
 					int64validator.AtLeast(1),
 					int64validator.AtLeastSumOf(
@@ -168,7 +170,7 @@ func (r stringResourceType) GetSchema(context.Context) (tfsdk.Schema, diag.Diagn
 				Optional: true,
 				Computed: true,
 				PlanModifiers: []tfsdk.AttributePlanModifier{
-					tfsdk.RequiresReplace(),
+					resource.RequiresReplace(),
 				},
 			},
 
@@ -187,19 +189,19 @@ func (r stringResourceType) GetSchema(context.Context) (tfsdk.Schema, diag.Diagn
 	}, nil
 }
 
-func (r stringResourceType) NewResource(_ context.Context, p tfsdk.Provider) (tfsdk.Resource, diag.Diagnostics) {
+func (r stringResourceType) NewResource(_ context.Context, p provider.Provider) (resource.Resource, diag.Diagnostics) {
 	return &stringResource{}, nil
 }
 
 var (
-	_ tfsdk.Resource                 = (*stringResource)(nil)
-	_ tfsdk.ResourceWithImportState  = (*stringResource)(nil)
-	_ tfsdk.ResourceWithUpgradeState = (*stringResource)(nil)
+	_ resource.Resource                 = (*stringResource)(nil)
+	_ resource.ResourceWithImportState  = (*stringResource)(nil)
+	_ resource.ResourceWithUpgradeState = (*stringResource)(nil)
 )
 
 type stringResource struct{}
 
-func (r *stringResource) Create(ctx context.Context, req tfsdk.CreateResourceRequest, resp *tfsdk.CreateResourceResponse) {
+func (r *stringResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
 	var plan stringModelV2
 
 	diags := req.Plan.Get(ctx, &plan)
@@ -252,20 +254,20 @@ func (r *stringResource) Create(ctx context.Context, req tfsdk.CreateResourceReq
 }
 
 // Read does not need to perform any operations as the state in ReadResourceResponse is already populated.
-func (r *stringResource) Read(ctx context.Context, req tfsdk.ReadResourceRequest, resp *tfsdk.ReadResourceResponse) {
+func (r *stringResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
 }
 
 // Update is intentionally left blank as all required and optional attributes force replacement of the resource
 // through the RequiresReplace AttributePlanModifier.
-func (r *stringResource) Update(ctx context.Context, req tfsdk.UpdateResourceRequest, resp *tfsdk.UpdateResourceResponse) {
+func (r *stringResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
 }
 
 // Delete does not need to explicitly call resp.State.RemoveResource() as this is automatically handled by the
 // [framework](https://github.com/hashicorp/terraform-plugin-framework/pull/301).
-func (r *stringResource) Delete(ctx context.Context, req tfsdk.DeleteResourceRequest, resp *tfsdk.DeleteResourceResponse) {
+func (r *stringResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
 }
 
-func (r *stringResource) ImportState(ctx context.Context, req tfsdk.ImportResourceStateRequest, resp *tfsdk.ImportResourceStateResponse) {
+func (r *stringResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
 	id := req.ID
 
 	state := stringModelV2{
@@ -292,7 +294,7 @@ func (r *stringResource) ImportState(ctx context.Context, req tfsdk.ImportResour
 	}
 }
 
-func (r *stringResource) UpgradeState(context.Context) map[int64]tfsdk.ResourceStateUpgrader {
+func (r *stringResource) UpgradeState(context.Context) map[int64]resource.StateUpgrader {
 	schemaV1 := tfsdk.Schema{
 		Version: 1,
 		Description: "The resource `random_string` generates a random permutation of alphanumeric " +
@@ -312,7 +314,7 @@ func (r *stringResource) UpgradeState(context.Context) map[int64]tfsdk.ResourceS
 				},
 				Optional: true,
 				PlanModifiers: []tfsdk.AttributePlanModifier{
-					tfsdk.RequiresReplace(),
+					resource.RequiresReplace(),
 				},
 			},
 
@@ -321,7 +323,7 @@ func (r *stringResource) UpgradeState(context.Context) map[int64]tfsdk.ResourceS
 					"must also be >= (`min_upper` + `min_lower` + `min_numeric` + `min_special`).",
 				Type:          types.Int64Type,
 				Required:      true,
-				PlanModifiers: []tfsdk.AttributePlanModifier{tfsdk.RequiresReplace()},
+				PlanModifiers: []tfsdk.AttributePlanModifier{resource.RequiresReplace()},
 				Validators: []tfsdk.AttributeValidator{
 					int64validator.AtLeast(1),
 					int64validator.AtLeastSumOf(
@@ -429,7 +431,7 @@ func (r *stringResource) UpgradeState(context.Context) map[int64]tfsdk.ResourceS
 				Optional: true,
 				Computed: true,
 				PlanModifiers: []tfsdk.AttributePlanModifier{
-					tfsdk.RequiresReplace(),
+					resource.RequiresReplace(),
 				},
 			},
 
@@ -447,7 +449,7 @@ func (r *stringResource) UpgradeState(context.Context) map[int64]tfsdk.ResourceS
 		},
 	}
 
-	return map[int64]tfsdk.ResourceStateUpgrader{
+	return map[int64]resource.StateUpgrader{
 		1: {
 			PriorSchema:   &schemaV1,
 			StateUpgrader: upgradeStringStateV1toV2,
@@ -455,7 +457,7 @@ func (r *stringResource) UpgradeState(context.Context) map[int64]tfsdk.ResourceS
 	}
 }
 
-func upgradeStringStateV1toV2(ctx context.Context, req tfsdk.UpgradeResourceStateRequest, resp *tfsdk.UpgradeResourceStateResponse) {
+func upgradeStringStateV1toV2(ctx context.Context, req resource.UpgradeStateRequest, resp *resource.UpgradeStateResponse) {
 	type modelV1 struct {
 		ID              types.String `tfsdk:"id"`
 		Keepers         types.Map    `tfsdk:"keepers"`

@@ -7,13 +7,15 @@ import (
 	"strings"
 
 	"github.com/hashicorp/terraform-plugin-framework/diag"
+	"github.com/hashicorp/terraform-plugin-framework/provider"
+	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/tfsdk"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 
 	"github.com/terraform-providers/terraform-provider-random/internal/random"
 )
 
-var _ tfsdk.ResourceType = (*integerResourceType)(nil)
+var _ provider.ResourceType = (*integerResourceType)(nil)
 
 type integerResourceType struct{}
 
@@ -33,25 +35,25 @@ func (r *integerResourceType) GetSchema(context.Context) (tfsdk.Schema, diag.Dia
 					ElemType: types.StringType,
 				},
 				Optional:      true,
-				PlanModifiers: []tfsdk.AttributePlanModifier{tfsdk.RequiresReplace()},
+				PlanModifiers: []tfsdk.AttributePlanModifier{resource.RequiresReplace()},
 			},
 			"min": {
 				Description:   "The minimum inclusive value of the range.",
 				Type:          types.Int64Type,
 				Required:      true,
-				PlanModifiers: []tfsdk.AttributePlanModifier{tfsdk.RequiresReplace()},
+				PlanModifiers: []tfsdk.AttributePlanModifier{resource.RequiresReplace()},
 			},
 			"max": {
 				Description:   "The maximum inclusive value of the range.",
 				Type:          types.Int64Type,
 				Required:      true,
-				PlanModifiers: []tfsdk.AttributePlanModifier{tfsdk.RequiresReplace()},
+				PlanModifiers: []tfsdk.AttributePlanModifier{resource.RequiresReplace()},
 			},
 			"seed": {
 				Description:   "A custom seed to always produce the same value.",
 				Type:          types.StringType,
 				Optional:      true,
-				PlanModifiers: []tfsdk.AttributePlanModifier{tfsdk.RequiresReplace()},
+				PlanModifiers: []tfsdk.AttributePlanModifier{resource.RequiresReplace()},
 			},
 			"result": {
 				Description: "The random integer result.",
@@ -67,18 +69,18 @@ func (r *integerResourceType) GetSchema(context.Context) (tfsdk.Schema, diag.Dia
 	}, nil
 }
 
-func (r *integerResourceType) NewResource(_ context.Context, _ tfsdk.Provider) (tfsdk.Resource, diag.Diagnostics) {
+func (r *integerResourceType) NewResource(_ context.Context, _ provider.Provider) (resource.Resource, diag.Diagnostics) {
 	return &integerResource{}, nil
 }
 
 var (
-	_ tfsdk.Resource                = (*integerResource)(nil)
-	_ tfsdk.ResourceWithImportState = (*integerResource)(nil)
+	_ resource.Resource                = (*integerResource)(nil)
+	_ resource.ResourceWithImportState = (*integerResource)(nil)
 )
 
 type integerResource struct{}
 
-func (r *integerResource) Create(ctx context.Context, req tfsdk.CreateResourceRequest, resp *tfsdk.CreateResourceResponse) {
+func (r *integerResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
 	var plan integerModelV0
 
 	diags := req.Plan.Get(ctx, &plan)
@@ -124,20 +126,20 @@ func (r *integerResource) Create(ctx context.Context, req tfsdk.CreateResourceRe
 }
 
 // Read does not need to perform any operations as the state in ReadResourceResponse is already populated.
-func (r *integerResource) Read(ctx context.Context, req tfsdk.ReadResourceRequest, resp *tfsdk.ReadResourceResponse) {
+func (r *integerResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
 }
 
 // Update is intentionally left blank as all required and optional attributes force replacement of the resource
 // through the RequiresReplace AttributePlanModifier.
-func (r *integerResource) Update(ctx context.Context, req tfsdk.UpdateResourceRequest, resp *tfsdk.UpdateResourceResponse) {
+func (r *integerResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
 }
 
 // Delete does not need to explicitly call resp.State.RemoveResource() as this is automatically handled by the
 // [framework](https://github.com/hashicorp/terraform-plugin-framework/pull/301).
-func (r *integerResource) Delete(ctx context.Context, req tfsdk.DeleteResourceRequest, resp *tfsdk.DeleteResourceResponse) {
+func (r *integerResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
 }
 
-func (r *integerResource) ImportState(ctx context.Context, req tfsdk.ImportResourceStateRequest, resp *tfsdk.ImportResourceStateResponse) {
+func (r *integerResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
 	parts := strings.Split(req.ID, ",")
 	if len(parts) != 3 && len(parts) != 4 {
 		resp.Diagnostics.AddError(
