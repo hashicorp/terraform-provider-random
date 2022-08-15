@@ -8,7 +8,7 @@ import (
 
 func TestAccResourceID(t *testing.T) {
 	resource.UnitTest(t, resource.TestCase{
-		ProtoV6ProviderFactories: protoV6ProviderFactories(),
+		ProtoV5ProviderFactories: protoV5ProviderFactories(),
 		Steps: []resource.TestStep{
 			{
 				Config: `resource "random_id" "foo" {
@@ -32,7 +32,7 @@ func TestAccResourceID(t *testing.T) {
 
 func TestAccResourceID_ImportWithPrefix(t *testing.T) {
 	resource.UnitTest(t, resource.TestCase{
-		ProtoV6ProviderFactories: protoV6ProviderFactories(),
+		ProtoV5ProviderFactories: protoV5ProviderFactories(),
 		Steps: []resource.TestStep{
 			{
 				Config: `resource "random_id" "bar" {
@@ -73,7 +73,7 @@ func TestAccResourceID_UpgradeFromVersion3_3_2(t *testing.T) {
 				),
 			},
 			{
-				ProtoV6ProviderFactories: protoV6ProviderFactories(),
+				ProtoV5ProviderFactories: protoV5ProviderFactories(),
 				Config: `resource "random_id" "bar" {
   							byte_length = 4
   							prefix      = "cloud-"
@@ -81,7 +81,7 @@ func TestAccResourceID_UpgradeFromVersion3_3_2(t *testing.T) {
 				PlanOnly: true,
 			},
 			{
-				ProtoV6ProviderFactories: protoV6ProviderFactories(),
+				ProtoV5ProviderFactories: protoV5ProviderFactories(),
 				Config: `resource "random_id" "bar" {
   							byte_length = 4
   							prefix      = "cloud-"

@@ -70,6 +70,7 @@ func (r *passwordResource) Create(ctx context.Context, req tfsdk.CreateResourceR
 		Special:         types.Bool{Value: plan.Special.Value},
 		Upper:           types.Bool{Value: plan.Upper.Value},
 		Lower:           types.Bool{Value: plan.Lower.Value},
+		Number:          types.Bool{Value: plan.Number.Value},
 		Numeric:         types.Bool{Value: plan.Numeric.Value},
 		MinNumeric:      types.Int64{Value: plan.MinNumeric.Value},
 		MinUpper:        types.Int64{Value: plan.MinUpper.Value},
@@ -117,6 +118,7 @@ func (r *passwordResource) ImportState(ctx context.Context, req tfsdk.ImportReso
 		Special:    types.Bool{Value: true},
 		Upper:      types.Bool{Value: true},
 		Lower:      types.Bool{Value: true},
+		Number:     types.Bool{Value: true},
 		Numeric:    types.Bool{Value: true},
 		MinSpecial: types.Int64{Value: 0},
 		MinUpper:   types.Int64{Value: 0},
@@ -186,6 +188,7 @@ func upgradePasswordStateV0toV2(ctx context.Context, req tfsdk.UpgradeResourceSt
 		Special:         passwordDataV0.Special,
 		Upper:           passwordDataV0.Upper,
 		Lower:           passwordDataV0.Lower,
+		Number:          passwordDataV0.Number,
 		Numeric:         passwordDataV0.Number,
 		MinNumeric:      passwordDataV0.MinNumeric,
 		MinLower:        passwordDataV0.MinLower,
@@ -238,6 +241,7 @@ func upgradePasswordStateV1toV2(ctx context.Context, req tfsdk.UpgradeResourceSt
 		Special:         passwordDataV1.Special,
 		Upper:           passwordDataV1.Upper,
 		Lower:           passwordDataV1.Lower,
+		Number:          passwordDataV1.Number,
 		Numeric:         passwordDataV1.Number,
 		MinNumeric:      passwordDataV1.MinNumeric,
 		MinLower:        passwordDataV1.MinLower,
@@ -331,13 +335,26 @@ func passwordSchemaV2() tfsdk.Schema {
 				},
 			},
 
+			"number": {
+				Description: "Include numeric characters in the result. Default value is `true`. " +
+					"**NOTE**: This is deprecated, use `numeric` instead.",
+				Type:     types.BoolType,
+				Optional: true,
+				Computed: true,
+				PlanModifiers: []tfsdk.AttributePlanModifier{
+					planmodifiers.NumberNumericAttributePlanModifier(),
+					planmodifiers.RequiresReplace(),
+				},
+				DeprecationMessage: "**NOTE**: This is deprecated, use `numeric` instead.",
+			},
+
 			"numeric": {
 				Description: "Include numeric characters in the result. Default value is `true`.",
 				Type:        types.BoolType,
 				Optional:    true,
 				Computed:    true,
 				PlanModifiers: []tfsdk.AttributePlanModifier{
-					planmodifiers.DefaultValue(types.Bool{Value: true}),
+					planmodifiers.NumberNumericAttributePlanModifier(),
 					planmodifiers.RequiresReplace(),
 				},
 			},
@@ -740,6 +757,7 @@ type passwordModelV2 struct {
 	Special         types.Bool   `tfsdk:"special"`
 	Upper           types.Bool   `tfsdk:"upper"`
 	Lower           types.Bool   `tfsdk:"lower"`
+	Number          types.Bool   `tfsdk:"number"`
 	Numeric         types.Bool   `tfsdk:"numeric"`
 	MinNumeric      types.Int64  `tfsdk:"min_numeric"`
 	MinUpper        types.Int64  `tfsdk:"min_upper"`

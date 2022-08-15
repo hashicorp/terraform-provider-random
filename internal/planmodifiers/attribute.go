@@ -4,7 +4,9 @@ import (
 	"context"
 
 	"github.com/hashicorp/terraform-plugin-framework/attr"
+	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/tfsdk"
+	"github.com/hashicorp/terraform-plugin-framework/types"
 )
 
 // DefaultValue accepts an attr.Value and uses the supplied value to set a default if the config for
@@ -83,4 +85,75 @@ func (r RequiresReplaceModifier) Modify(ctx context.Context, req tfsdk.ModifyAtt
 	}
 
 	resp.RequiresReplace = true
+}
+
+func NumberNumericAttributePlanModifier() tfsdk.AttributePlanModifier {
+	return &numberNumericAttributePlanModifier{}
+}
+
+type numberNumericAttributePlanModifier struct {
+}
+
+func (d *numberNumericAttributePlanModifier) Description(ctx context.Context) string {
+	return ""
+}
+
+func (d *numberNumericAttributePlanModifier) MarkdownDescription(ctx context.Context) string {
+	return ""
+}
+
+func (d *numberNumericAttributePlanModifier) Modify(ctx context.Context, req tfsdk.ModifyAttributePlanRequest, resp *tfsdk.ModifyAttributePlanResponse) {
+	numberConfig := types.Bool{}
+	diags := req.Config.GetAttribute(ctx, path.Root("number"), &numberConfig)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	numericConfig := types.Bool{}
+	req.Config.GetAttribute(ctx, path.Root("numeric"), &numericConfig)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	if !numberConfig.Null && !numericConfig.Null {
+		resp.Diagnostics.AddError(
+			"Number numeric attribute plan modifier failed",
+			"Cannot specify both number and numeric in config",
+		)
+		return
+	}
+
+	numberPlan := types.Bool{}
+	diags = req.Config.GetAttribute(ctx, path.Root("number"), &numberPlan)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	numericPlan := types.Bool{}
+	req.Config.GetAttribute(ctx, path.Root("numeric"), &numericPlan)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	// Default to true for both number and numeric when both are null.
+	if numberPlan.Null && numericPlan.Null {
+		resp.AttributePlan = types.Bool{Value: true}
+		return
+	}
+
+	// Default to using value for numeric if number is null
+	if numberPlan.Null && !numericPlan.Null {
+		resp.AttributePlan = numericPlan
+		return
+	}
+
+	// Default to using value for number if numeric is null
+	if !numberPlan.Null && numericPlan.Null {
+		resp.AttributePlan = numberPlan
+		return
+	}
 }

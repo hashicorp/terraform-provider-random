@@ -10,7 +10,7 @@ import (
 func TestAccResourceInteger(t *testing.T) {
 	t.Parallel()
 	resource.UnitTest(t, resource.TestCase{
-		ProtoV6ProviderFactories: protoV6ProviderFactories(),
+		ProtoV5ProviderFactories: protoV5ProviderFactories(),
 		Steps: []resource.TestStep{
 			{
 				Config: `resource "random_integer" "integer_1" {
@@ -35,7 +35,7 @@ func TestAccResourceInteger(t *testing.T) {
 func TestAccResourceInteger_ChangeSeed(t *testing.T) {
 	t.Parallel()
 	resource.UnitTest(t, resource.TestCase{
-		ProtoV6ProviderFactories: protoV6ProviderFactories(),
+		ProtoV5ProviderFactories: protoV5ProviderFactories(),
 		Steps: []resource.TestStep{
 			{
 				Config: `resource "random_integer" "integer_1" {
@@ -64,7 +64,7 @@ func TestAccResourceInteger_ChangeSeed(t *testing.T) {
 func TestAccResourceInteger_SeedlessToSeeded(t *testing.T) {
 	t.Parallel()
 	resource.UnitTest(t, resource.TestCase{
-		ProtoV6ProviderFactories: protoV6ProviderFactories(),
+		ProtoV5ProviderFactories: protoV5ProviderFactories(),
 		Steps: []resource.TestStep{
 			{
 				Config: `resource "random_integer" "integer_1" {
@@ -92,7 +92,7 @@ func TestAccResourceInteger_SeedlessToSeeded(t *testing.T) {
 func TestAccResourceInteger_SeededToSeedless(t *testing.T) {
 	t.Parallel()
 	resource.UnitTest(t, resource.TestCase{
-		ProtoV6ProviderFactories: protoV6ProviderFactories(),
+		ProtoV5ProviderFactories: protoV5ProviderFactories(),
 		Steps: []resource.TestStep{
 			{
 				Config: `resource "random_integer" "integer_1" {
@@ -120,7 +120,7 @@ func TestAccResourceInteger_SeededToSeedless(t *testing.T) {
 func TestAccResourceInteger_Big(t *testing.T) {
 	t.Parallel()
 	resource.UnitTest(t, resource.TestCase{
-		ProtoV6ProviderFactories: protoV6ProviderFactories(),
+		ProtoV5ProviderFactories: protoV5ProviderFactories(),
 		Steps: []resource.TestStep{
 			{
 				Config: `resource "random_integer" "integer_1" {
@@ -154,7 +154,7 @@ func TestAccResourceInteger_UpgradeFromVersion3_3_2(t *testing.T) {
 				),
 			},
 			{
-				ProtoV6ProviderFactories: protoV6ProviderFactories(),
+				ProtoV5ProviderFactories: protoV5ProviderFactories(),
 				Config: `resource "random_integer" "integer_1" {
    							min  = 1
 							max  = 3
@@ -163,7 +163,7 @@ func TestAccResourceInteger_UpgradeFromVersion3_3_2(t *testing.T) {
 				PlanOnly: true,
 			},
 			{
-				ProtoV6ProviderFactories: protoV6ProviderFactories(),
+				ProtoV5ProviderFactories: protoV5ProviderFactories(),
 				Config: `resource "random_integer" "integer_1" {
    							min  = 1
 							max  = 3

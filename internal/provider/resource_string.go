@@ -92,13 +92,26 @@ func (r stringResourceType) GetSchema(context.Context) (tfsdk.Schema, diag.Diagn
 				},
 			},
 
+			"number": {
+				Description: "Include numeric characters in the result. Default value is `true`. " +
+					"**NOTE**: This is deprecated, use `numeric` instead.",
+				Type:     types.BoolType,
+				Optional: true,
+				Computed: true,
+				PlanModifiers: []tfsdk.AttributePlanModifier{
+					planmodifiers.NumberNumericAttributePlanModifier(),
+					planmodifiers.RequiresReplace(),
+				},
+				DeprecationMessage: "**NOTE**: This is deprecated, use `numeric` instead.",
+			},
+
 			"numeric": {
 				Description: "Include numeric characters in the result. Default value is `true`.",
 				Type:        types.BoolType,
 				Optional:    true,
 				Computed:    true,
 				PlanModifiers: []tfsdk.AttributePlanModifier{
-					planmodifiers.DefaultValue(types.Bool{Value: true}),
+					planmodifiers.NumberNumericAttributePlanModifier(),
 					planmodifiers.RequiresReplace(),
 				},
 			},
@@ -221,6 +234,7 @@ func (r *stringResource) Create(ctx context.Context, req tfsdk.CreateResourceReq
 		Special:         types.Bool{Value: plan.Special.Value},
 		Upper:           types.Bool{Value: plan.Upper.Value},
 		Lower:           types.Bool{Value: plan.Lower.Value},
+		Number:          types.Bool{Value: plan.Number.Value},
 		Numeric:         types.Bool{Value: plan.Numeric.Value},
 		MinNumeric:      types.Int64{Value: plan.MinNumeric.Value},
 		MinUpper:        types.Int64{Value: plan.MinUpper.Value},
@@ -261,6 +275,7 @@ func (r *stringResource) ImportState(ctx context.Context, req tfsdk.ImportResour
 		Special:    types.Bool{Value: true},
 		Upper:      types.Bool{Value: true},
 		Lower:      types.Bool{Value: true},
+		Number:     types.Bool{Value: true},
 		Numeric:    types.Bool{Value: true},
 		MinSpecial: types.Int64{Value: 0},
 		MinUpper:   types.Int64{Value: 0},
@@ -470,6 +485,7 @@ func upgradeStringStateV1toV2(ctx context.Context, req tfsdk.UpgradeResourceStat
 		Special:         stringDataV1.Special,
 		Upper:           stringDataV1.Upper,
 		Lower:           stringDataV1.Lower,
+		Number:          stringDataV1.Number,
 		Numeric:         stringDataV1.Number,
 		MinNumeric:      stringDataV1.MinNumeric,
 		MinLower:        stringDataV1.MinLower,
@@ -490,6 +506,7 @@ type stringModelV2 struct {
 	Special         types.Bool   `tfsdk:"special"`
 	Upper           types.Bool   `tfsdk:"upper"`
 	Lower           types.Bool   `tfsdk:"lower"`
+	Number          types.Bool   `tfsdk:"number"`
 	Numeric         types.Bool   `tfsdk:"numeric"`
 	MinNumeric      types.Int64  `tfsdk:"min_numeric"`
 	MinUpper        types.Int64  `tfsdk:"min_upper"`
