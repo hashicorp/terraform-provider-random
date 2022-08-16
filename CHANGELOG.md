@@ -2,7 +2,6 @@
 
 NOTES:
 
-* This Go module has been updated to Go 1.18 per the Go support policy. Any consumers building on earlier Go versions may experience errors. (#445)
 * Provider has been re-written using the new [`terraform-plugin-framework`](https://www.terraform.io/plugin/framework) ([#177](https://github.com/hashicorp/terraform-provider-random/pull/177)).
 * resource/random_password: `number` was deprecated in [v3.3.0](https://github.com/hashicorp/terraform-provider-random/releases/tag/v3.3.0) and will be removed in the next major release.
 * resource/random_string: `number` was deprecated in [v3.3.0](https://github.com/hashicorp/terraform-provider-random/releases/tag/v3.3.0) and will be removed in the next major release.
