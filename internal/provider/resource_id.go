@@ -10,13 +10,15 @@ import (
 	"strings"
 
 	"github.com/hashicorp/terraform-plugin-framework/diag"
+	"github.com/hashicorp/terraform-plugin-framework/provider"
+	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/tfsdk"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 
 	"github.com/terraform-providers/terraform-provider-random/internal/diagnostics"
 )
 
-var _ tfsdk.ResourceType = (*idResourceType)(nil)
+var _ provider.ResourceType = (*idResourceType)(nil)
 
 type idResourceType struct{}
 
@@ -45,7 +47,7 @@ exist concurrently.
 				},
 				Optional: true,
 				PlanModifiers: []tfsdk.AttributePlanModifier{
-					tfsdk.RequiresReplace(),
+					resource.RequiresReplace(),
 				},
 			},
 			"byte_length": {
@@ -54,7 +56,7 @@ exist concurrently.
 				Type:     types.Int64Type,
 				Required: true,
 				PlanModifiers: []tfsdk.AttributePlanModifier{
-					tfsdk.RequiresReplace(),
+					resource.RequiresReplace(),
 				},
 			},
 			"prefix": {
@@ -63,7 +65,7 @@ exist concurrently.
 				Type:     types.StringType,
 				Optional: true,
 				PlanModifiers: []tfsdk.AttributePlanModifier{
-					tfsdk.RequiresReplace(),
+					resource.RequiresReplace(),
 				},
 			},
 			"b64_url": {
@@ -97,18 +99,18 @@ exist concurrently.
 	}, nil
 }
 
-func (r *idResourceType) NewResource(_ context.Context, p tfsdk.Provider) (tfsdk.Resource, diag.Diagnostics) {
+func (r *idResourceType) NewResource(_ context.Context, p provider.Provider) (resource.Resource, diag.Diagnostics) {
 	return &idResource{}, nil
 }
 
 var (
-	_ tfsdk.Resource                = (*idResource)(nil)
-	_ tfsdk.ResourceWithImportState = (*idResource)(nil)
+	_ resource.Resource                = (*idResource)(nil)
+	_ resource.ResourceWithImportState = (*idResource)(nil)
 )
 
 type idResource struct{}
 
-func (r *idResource) Create(ctx context.Context, req tfsdk.CreateResourceRequest, resp *tfsdk.CreateResourceResponse) {
+func (r *idResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
 	var plan idModelV0
 
 	diags := req.Plan.Get(ctx, &plan)
@@ -158,20 +160,20 @@ func (r *idResource) Create(ctx context.Context, req tfsdk.CreateResourceRequest
 }
 
 // Read does not need to perform any operations as the state in ReadResourceResponse is already populated.
-func (r *idResource) Read(context.Context, tfsdk.ReadResourceRequest, *tfsdk.ReadResourceResponse) {
+func (r *idResource) Read(context.Context, resource.ReadRequest, *resource.ReadResponse) {
 }
 
 // Update is intentionally left blank as all required and optional attributes force replacement of the resource
 // through the RequiresReplace AttributePlanModifier.
-func (r *idResource) Update(context.Context, tfsdk.UpdateResourceRequest, *tfsdk.UpdateResourceResponse) {
+func (r *idResource) Update(context.Context, resource.UpdateRequest, *resource.UpdateResponse) {
 }
 
 // Delete does not need to explicitly call resp.State.RemoveResource() as this is automatically handled by the
 // [framework](https://github.com/hashicorp/terraform-plugin-framework/pull/301).
-func (r *idResource) Delete(context.Context, tfsdk.DeleteResourceRequest, *tfsdk.DeleteResourceResponse) {
+func (r *idResource) Delete(context.Context, resource.DeleteRequest, *resource.DeleteResponse) {
 }
 
-func (r *idResource) ImportState(ctx context.Context, req tfsdk.ImportResourceStateRequest, resp *tfsdk.ImportResourceStateResponse) {
+func (r *idResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
 	id := req.ID
 	var prefix string
 

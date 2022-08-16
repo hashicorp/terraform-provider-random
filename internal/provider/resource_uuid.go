@@ -6,13 +6,15 @@ import (
 
 	"github.com/hashicorp/go-uuid"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
+	"github.com/hashicorp/terraform-plugin-framework/provider"
+	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/tfsdk"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 
 	"github.com/terraform-providers/terraform-provider-random/internal/diagnostics"
 )
 
-var _ tfsdk.ResourceType = (*uuidResourceType)(nil)
+var _ provider.ResourceType = (*uuidResourceType)(nil)
 
 type uuidResourceType struct{}
 
@@ -32,7 +34,7 @@ func (r *uuidResourceType) GetSchema(context.Context) (tfsdk.Schema, diag.Diagno
 				},
 				Optional: true,
 				PlanModifiers: []tfsdk.AttributePlanModifier{
-					tfsdk.RequiresReplace(),
+					resource.RequiresReplace(),
 				},
 			},
 			"result": {
@@ -49,19 +51,19 @@ func (r *uuidResourceType) GetSchema(context.Context) (tfsdk.Schema, diag.Diagno
 	}, nil
 }
 
-func (r uuidResourceType) NewResource(_ context.Context, p tfsdk.Provider) (tfsdk.Resource, diag.Diagnostics) {
+func (r uuidResourceType) NewResource(_ context.Context, p provider.Provider) (resource.Resource, diag.Diagnostics) {
 	return &uuidResource{}, nil
 }
 
 var (
-	_ tfsdk.Resource                = (*uuidResource)(nil)
-	_ tfsdk.ResourceWithImportState = (*uuidResource)(nil)
+	_ resource.Resource                = (*uuidResource)(nil)
+	_ resource.ResourceWithImportState = (*uuidResource)(nil)
 )
 
 type uuidResource struct {
 }
 
-func (r *uuidResource) Create(ctx context.Context, req tfsdk.CreateResourceRequest, resp *tfsdk.CreateResourceResponse) {
+func (r *uuidResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
 	result, err := uuid.GenerateUUID()
 	if err != nil {
 		resp.Diagnostics.AddError(
@@ -95,20 +97,20 @@ func (r *uuidResource) Create(ctx context.Context, req tfsdk.CreateResourceReque
 }
 
 // Read does not need to perform any operations as the state in ReadResourceResponse is already populated.
-func (r *uuidResource) Read(ctx context.Context, req tfsdk.ReadResourceRequest, resp *tfsdk.ReadResourceResponse) {
+func (r *uuidResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
 }
 
 // Update is intentionally left blank as all required and optional attributes force replacement of the resource
 // through the RequiresReplace AttributePlanModifier.
-func (r *uuidResource) Update(ctx context.Context, req tfsdk.UpdateResourceRequest, resp *tfsdk.UpdateResourceResponse) {
+func (r *uuidResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
 }
 
 // Delete does not need to explicitly call resp.State.RemoveResource() as this is automatically handled by the
 // [framework](https://github.com/hashicorp/terraform-plugin-framework/pull/301).
-func (r *uuidResource) Delete(ctx context.Context, req tfsdk.DeleteResourceRequest, resp *tfsdk.DeleteResourceResponse) {
+func (r *uuidResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
 }
 
-func (r *uuidResource) ImportState(ctx context.Context, req tfsdk.ImportResourceStateRequest, resp *tfsdk.ImportResourceStateResponse) {
+func (r *uuidResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
 	bytes, err := uuid.ParseUUID(req.ID)
 	if err != nil {
 		resp.Diagnostics.AddError(

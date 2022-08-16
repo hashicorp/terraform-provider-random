@@ -6,6 +6,8 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework-validators/int64validator"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/path"
+	"github.com/hashicorp/terraform-plugin-framework/provider"
+	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/tfsdk"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"golang.org/x/crypto/bcrypt"
@@ -15,7 +17,7 @@ import (
 	"github.com/terraform-providers/terraform-provider-random/internal/random"
 )
 
-var _ tfsdk.ResourceType = (*passwordResourceType)(nil)
+var _ provider.ResourceType = (*passwordResourceType)(nil)
 
 type passwordResourceType struct{}
 
@@ -23,19 +25,19 @@ func (r *passwordResourceType) GetSchema(context.Context) (tfsdk.Schema, diag.Di
 	return passwordSchemaV2(), nil
 }
 
-func (r *passwordResourceType) NewResource(_ context.Context, _ tfsdk.Provider) (tfsdk.Resource, diag.Diagnostics) {
+func (r *passwordResourceType) NewResource(_ context.Context, _ provider.Provider) (resource.Resource, diag.Diagnostics) {
 	return &passwordResource{}, nil
 }
 
 var (
-	_ tfsdk.Resource                 = (*passwordResource)(nil)
-	_ tfsdk.ResourceWithImportState  = (*passwordResource)(nil)
-	_ tfsdk.ResourceWithUpgradeState = (*passwordResource)(nil)
+	_ resource.Resource                 = (*passwordResource)(nil)
+	_ resource.ResourceWithImportState  = (*passwordResource)(nil)
+	_ resource.ResourceWithUpgradeState = (*passwordResource)(nil)
 )
 
 type passwordResource struct{}
 
-func (r *passwordResource) Create(ctx context.Context, req tfsdk.CreateResourceRequest, resp *tfsdk.CreateResourceResponse) {
+func (r *passwordResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
 	var plan passwordModelV2
 
 	diags := req.Plan.Get(ctx, &plan)
@@ -95,20 +97,20 @@ func (r *passwordResource) Create(ctx context.Context, req tfsdk.CreateResourceR
 }
 
 // Read does not need to perform any operations as the state in ReadResourceResponse is already populated.
-func (r *passwordResource) Read(ctx context.Context, req tfsdk.ReadResourceRequest, resp *tfsdk.ReadResourceResponse) {
+func (r *passwordResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
 }
 
 // Update is intentionally left blank as all required and optional attributes force replacement of the resource
 // through the RequiresReplace AttributePlanModifier.
-func (r *passwordResource) Update(ctx context.Context, req tfsdk.UpdateResourceRequest, resp *tfsdk.UpdateResourceResponse) {
+func (r *passwordResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
 }
 
 // Delete does not need to explicitly call resp.State.RemoveResource() as this is automatically handled by the
 // [framework](https://github.com/hashicorp/terraform-plugin-framework/pull/301).
-func (r *passwordResource) Delete(ctx context.Context, req tfsdk.DeleteResourceRequest, resp *tfsdk.DeleteResourceResponse) {
+func (r *passwordResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
 }
 
-func (r *passwordResource) ImportState(ctx context.Context, req tfsdk.ImportResourceStateRequest, resp *tfsdk.ImportResourceStateResponse) {
+func (r *passwordResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
 	id := req.ID
 
 	state := passwordModelV2{
@@ -142,11 +144,11 @@ func (r *passwordResource) ImportState(ctx context.Context, req tfsdk.ImportReso
 	}
 }
 
-func (r *passwordResource) UpgradeState(context.Context) map[int64]tfsdk.ResourceStateUpgrader {
+func (r *passwordResource) UpgradeState(context.Context) map[int64]resource.StateUpgrader {
 	schemaV0 := passwordSchemaV0()
 	schemaV1 := passwordSchemaV1()
 
-	return map[int64]tfsdk.ResourceStateUpgrader{
+	return map[int64]resource.StateUpgrader{
 		0: {
 			PriorSchema:   &schemaV0,
 			StateUpgrader: upgradePasswordStateV0toV2,
@@ -158,7 +160,7 @@ func (r *passwordResource) UpgradeState(context.Context) map[int64]tfsdk.Resourc
 	}
 }
 
-func upgradePasswordStateV0toV2(ctx context.Context, req tfsdk.UpgradeResourceStateRequest, resp *tfsdk.UpgradeResourceStateResponse) {
+func upgradePasswordStateV0toV2(ctx context.Context, req resource.UpgradeStateRequest, resp *resource.UpgradeStateResponse) {
 	type modelV0 struct {
 		ID              types.String `tfsdk:"id"`
 		Keepers         types.Map    `tfsdk:"keepers"`
@@ -210,7 +212,7 @@ func upgradePasswordStateV0toV2(ctx context.Context, req tfsdk.UpgradeResourceSt
 	resp.Diagnostics.Append(diags...)
 }
 
-func upgradePasswordStateV1toV2(ctx context.Context, req tfsdk.UpgradeResourceStateRequest, resp *tfsdk.UpgradeResourceStateResponse) {
+func upgradePasswordStateV1toV2(ctx context.Context, req resource.UpgradeStateRequest, resp *resource.UpgradeStateResponse) {
 	type modelV1 struct {
 		ID              types.String `tfsdk:"id"`
 		Keepers         types.Map    `tfsdk:"keepers"`
@@ -279,7 +281,7 @@ func passwordSchemaV2() tfsdk.Schema {
 				},
 				Optional: true,
 				PlanModifiers: []tfsdk.AttributePlanModifier{
-					tfsdk.RequiresReplace(),
+					resource.RequiresReplace(),
 				},
 			},
 
@@ -289,7 +291,7 @@ func passwordSchemaV2() tfsdk.Schema {
 				Type:     types.Int64Type,
 				Required: true,
 				PlanModifiers: []tfsdk.AttributePlanModifier{
-					tfsdk.RequiresReplace(),
+					resource.RequiresReplace(),
 				},
 				Validators: []tfsdk.AttributeValidator{
 					int64validator.AtLeast(1),
@@ -411,7 +413,7 @@ func passwordSchemaV2() tfsdk.Schema {
 				Optional: true,
 				Computed: true,
 				PlanModifiers: []tfsdk.AttributePlanModifier{
-					tfsdk.RequiresReplace(),
+					resource.RequiresReplace(),
 				},
 			},
 
@@ -455,7 +457,7 @@ func passwordSchemaV1() tfsdk.Schema {
 				},
 				Optional: true,
 				PlanModifiers: []tfsdk.AttributePlanModifier{
-					tfsdk.RequiresReplace(),
+					resource.RequiresReplace(),
 				},
 			},
 
@@ -464,7 +466,7 @@ func passwordSchemaV1() tfsdk.Schema {
 					"must also be >= (`min_upper` + `min_lower` + `min_numeric` + `min_special`).",
 				Type:          types.Int64Type,
 				Required:      true,
-				PlanModifiers: []tfsdk.AttributePlanModifier{tfsdk.RequiresReplace()},
+				PlanModifiers: []tfsdk.AttributePlanModifier{resource.RequiresReplace()},
 				Validators: []tfsdk.AttributeValidator{
 					int64validator.AtLeast(1),
 					int64validator.AtLeastSumOf(
@@ -572,7 +574,7 @@ func passwordSchemaV1() tfsdk.Schema {
 				Optional: true,
 				Computed: true,
 				PlanModifiers: []tfsdk.AttributePlanModifier{
-					tfsdk.RequiresReplace(),
+					resource.RequiresReplace(),
 				},
 			},
 
@@ -614,7 +616,7 @@ func passwordSchemaV0() tfsdk.Schema {
 					ElemType: types.StringType,
 				},
 				Optional:      true,
-				PlanModifiers: []tfsdk.AttributePlanModifier{tfsdk.RequiresReplace()},
+				PlanModifiers: []tfsdk.AttributePlanModifier{resource.RequiresReplace()},
 			},
 
 			"length": {
@@ -622,7 +624,7 @@ func passwordSchemaV0() tfsdk.Schema {
 					"must also be >= (`min_upper` + `min_lower` + `min_numeric` + `min_special`).",
 				Type:          types.Int64Type,
 				Required:      true,
-				PlanModifiers: []tfsdk.AttributePlanModifier{tfsdk.RequiresReplace()},
+				PlanModifiers: []tfsdk.AttributePlanModifier{resource.RequiresReplace()},
 				Validators: []tfsdk.AttributeValidator{
 					int64validator.AtLeast(1),
 					int64validator.AtLeastSumOf(
@@ -730,7 +732,7 @@ func passwordSchemaV0() tfsdk.Schema {
 				Optional: true,
 				Computed: true,
 				PlanModifiers: []tfsdk.AttributePlanModifier{
-					tfsdk.RequiresReplace(),
+					resource.RequiresReplace(),
 				},
 			},
 

@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
+	res "github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/tfsdk"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-go/tftypes"
@@ -597,14 +598,14 @@ func TestUpgradePasswordStateV0toV2(t *testing.T) {
 		"upper":            tftypes.NewValue(tftypes.Bool, true),
 	})
 
-	req := tfsdk.UpgradeResourceStateRequest{
+	req := res.UpgradeStateRequest{
 		State: &tfsdk.State{
 			Raw:    raw,
 			Schema: passwordSchemaV0(),
 		},
 	}
 
-	resp := &tfsdk.UpgradeResourceStateResponse{
+	resp := &res.UpgradeStateResponse{
 		State: tfsdk.State{
 			Schema: passwordSchemaV2(),
 		},
@@ -666,14 +667,14 @@ func TestUpgradePasswordStateV1toV2(t *testing.T) {
 		"bcrypt_hash":      tftypes.NewValue(tftypes.String, "bcrypt_hash"),
 	})
 
-	req := tfsdk.UpgradeResourceStateRequest{
+	req := res.UpgradeStateRequest{
 		State: &tfsdk.State{
 			Raw:    raw,
 			Schema: passwordSchemaV1(),
 		},
 	}
 
-	resp := &tfsdk.UpgradeResourceStateResponse{
+	resp := &res.UpgradeStateResponse{
 		State: tfsdk.State{
 			Schema: passwordSchemaV2(),
 		},
