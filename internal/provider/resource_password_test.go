@@ -173,24 +173,6 @@ func TestAccResourcePassword_StateUpgradeV0toV2(t *testing.T) {
 			},
 		},
 		{
-			name: "number is true before numeric is absent during",
-			configBeforeUpgrade: `resource "random_password" "default" {
-						length = 12
-						number = true
-					}`,
-			configDuringUpgrade: `resource "random_password" "default" {
-						length = 12
-					}`,
-			beforeStateUpgrade: []r.TestCheckFunc{
-				r.TestCheckResourceAttr("random_password.default", "number", "true"),
-				r.TestCheckNoResourceAttr("random_password.default", "numeric"),
-			},
-			afterStateUpgrade: []r.TestCheckFunc{
-				r.TestCheckResourceAttr("random_password.default", "numeric", "true"),
-				r.TestCheckNoResourceAttr("random_password.default", "number"),
-			},
-		},
-		{
 			name: "number is true before numeric is false during",
 			configBeforeUpgrade: `resource "random_password" "default" {
 						length = 12
