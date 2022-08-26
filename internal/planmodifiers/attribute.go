@@ -95,11 +95,11 @@ type numberNumericAttributePlanModifier struct {
 }
 
 func (d *numberNumericAttributePlanModifier) Description(ctx context.Context) string {
-	return ""
+	return "Ensures that number and numeric attributes are kept synchronised."
 }
 
 func (d *numberNumericAttributePlanModifier) MarkdownDescription(ctx context.Context) string {
-	return ""
+	return d.Description(ctx)
 }
 
 func (d *numberNumericAttributePlanModifier) Modify(ctx context.Context, req tfsdk.ModifyAttributePlanRequest, resp *tfsdk.ModifyAttributePlanResponse) {
@@ -111,7 +111,7 @@ func (d *numberNumericAttributePlanModifier) Modify(ctx context.Context, req tfs
 	}
 
 	numericConfig := types.Bool{}
-	req.Config.GetAttribute(ctx, path.Root("numeric"), &numericConfig)
+	diags = req.Config.GetAttribute(ctx, path.Root("numeric"), &numericConfig)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
 		return
@@ -125,35 +125,21 @@ func (d *numberNumericAttributePlanModifier) Modify(ctx context.Context, req tfs
 		return
 	}
 
-	numberPlan := types.Bool{}
-	diags = req.Config.GetAttribute(ctx, path.Root("number"), &numberPlan)
-	resp.Diagnostics.Append(diags...)
-	if resp.Diagnostics.HasError() {
-		return
-	}
-
-	numericPlan := types.Bool{}
-	req.Config.GetAttribute(ctx, path.Root("numeric"), &numericPlan)
-	resp.Diagnostics.Append(diags...)
-	if resp.Diagnostics.HasError() {
-		return
-	}
-
 	// Default to true for both number and numeric when both are null.
-	if numberPlan.Null && numericPlan.Null {
+	if numberConfig.Null && numericConfig.Null {
 		resp.AttributePlan = types.Bool{Value: true}
 		return
 	}
 
 	// Default to using value for numeric if number is null
-	if numberPlan.Null && !numericPlan.Null {
-		resp.AttributePlan = numericPlan
+	if numberConfig.Null && !numericConfig.Null {
+		resp.AttributePlan = numericConfig
 		return
 	}
 
 	// Default to using value for number if numeric is null
-	if !numberPlan.Null && numericPlan.Null {
-		resp.AttributePlan = numberPlan
+	if !numberConfig.Null && numericConfig.Null {
+		resp.AttributePlan = numberConfig
 		return
 	}
 }
