@@ -111,7 +111,7 @@ func (d *numberNumericAttributePlanModifier) Modify(ctx context.Context, req tfs
 	}
 
 	numericConfig := types.Bool{}
-	req.Config.GetAttribute(ctx, path.Root("numeric"), &numericConfig)
+	diags = req.Config.GetAttribute(ctx, path.Root("numeric"), &numericConfig)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
 		return
