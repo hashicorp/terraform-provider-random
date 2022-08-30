@@ -1,4 +1,4 @@
-## 3.4.0 (unreleased)
+## 3.4.0 (August 30, 2022)
 
 NOTES:
 
