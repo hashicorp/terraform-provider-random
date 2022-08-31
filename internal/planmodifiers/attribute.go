@@ -119,7 +119,7 @@ func (d *numberNumericAttributePlanModifier) Modify(ctx context.Context, req tfs
 
 	if !numberConfig.Null && !numericConfig.Null && (numberConfig.Value != numericConfig.Value) {
 		resp.Diagnostics.AddError(
-			"Number and numeric are both present and have different values",
+			"Number and numeric are both configured with different values",
 			"Number is deprecated, use numeric instead",
 		)
 		return

@@ -721,7 +721,7 @@ func TestAccResourcePassword_NumberNumericErrors(t *testing.T) {
 							number = false
   							numeric = true
 						}`,
-				ExpectError: regexp.MustCompile(`.*Number and numeric are both present and have different values`),
+				ExpectError: regexp.MustCompile(`.*Number and numeric are both configured with different values`),
 			},
 		},
 	})
