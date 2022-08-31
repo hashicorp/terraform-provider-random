@@ -117,10 +117,10 @@ func (d *numberNumericAttributePlanModifier) Modify(ctx context.Context, req tfs
 		return
 	}
 
-	if !numberConfig.Null && !numericConfig.Null {
+	if !numberConfig.Null && !numericConfig.Null && (numberConfig.Value != numericConfig.Value) {
 		resp.Diagnostics.AddError(
-			"Number numeric attribute plan modifier failed",
-			"Cannot specify both number and numeric in config",
+			"Number and numeric are both configured with different values",
+			"Number is deprecated, use numeric instead",
 		)
 		return
 	}
@@ -131,14 +131,14 @@ func (d *numberNumericAttributePlanModifier) Modify(ctx context.Context, req tfs
 		return
 	}
 
-	// Default to using value for numeric if number is null
-	if numberConfig.Null && !numericConfig.Null {
+	// Default to using value for numeric if number is null.
+	if numberConfig.IsNull() && !numericConfig.IsNull() {
 		resp.AttributePlan = numericConfig
 		return
 	}
 
-	// Default to using value for number if numeric is null
-	if !numberConfig.Null && numericConfig.Null {
+	// Default to using value for number if numeric is null.
+	if !numberConfig.IsNull() && numericConfig.IsNull() {
 		resp.AttributePlan = numberConfig
 		return
 	}

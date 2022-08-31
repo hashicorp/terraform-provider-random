@@ -710,3 +710,19 @@ func TestUpgradePasswordStateV1toV2(t *testing.T) {
 		t.Errorf("expected: %+v, got: %+v", expected, actual)
 	}
 }
+
+func TestAccResourcePassword_NumberNumericErrors(t *testing.T) {
+	resource.UnitTest(t, resource.TestCase{
+		ProtoV5ProviderFactories: protoV5ProviderFactories(),
+		Steps: []resource.TestStep{
+			{
+				Config: `resource "random_password" "number_numeric_differ" {
+  							length = 1
+							number = false
+  							numeric = true
+						}`,
+				ExpectError: regexp.MustCompile(`.*Number and numeric are both configured with different values`),
+			},
+		},
+	})
+}
