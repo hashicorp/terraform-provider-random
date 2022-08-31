@@ -1,3 +1,10 @@
+## 3.4.2 (unreleased)
+
+BUG FIXES:
+
+* resource/random_password: During upgrade state, ensure `min_upper` is populated ([302](https://github.com/hashicorp/terraform-provider-random/pull/302)).
+* resource/random_string: During upgrade state, ensure `min_upper` is populated ([302](https://github.com/hashicorp/terraform-provider-random/pull/302)).
+
 ## 3.4.1 (August 31, 2022)
 
 BUG FIXES:
