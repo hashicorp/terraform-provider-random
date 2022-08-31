@@ -288,13 +288,13 @@ func TestAccResourceString_LengthErrors(t *testing.T) {
   							length = 2
   							min_lower = 3
 						}`,
-				ExpectError: regexp.MustCompile(`.*Value must be at least sum of min_upper \+ min_lower \+ min_numeric \+\nmin_special, got: 2`),
+				ExpectError: regexp.MustCompile(`.*Attribute length value must be at least sum of min_upper \+ min_lower \+\nmin_numeric \+ min_special, got: 2`),
 			},
 			{
 				Config: `resource "random_string" "invalid_length" {
 							length = 0
 						}`,
-				ExpectError: regexp.MustCompile(`.*Value must be at least 1, got: 0`),
+				ExpectError: regexp.MustCompile(`.*Attribute length value must be at least 1, got: 0`),
 			},
 		},
 	})
