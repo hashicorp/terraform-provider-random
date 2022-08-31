@@ -1,3 +1,10 @@
+## 3.4.1 (unreleased)
+
+BUG FIXES:
+
+* resource/random_password: During attribute plan modifier, only return error if `number` and `numeric` are both present and do not match ([301](https://github.com/hashicorp/terraform-provider-random/pull/301)).
+* resource/random_string: During attribute plan modifier, only return error if `number` and `numeric` are both present and do not match ([301](https://github.com/hashicorp/terraform-provider-random/pull/301)).
+
 ## 3.4.0 (August 30, 2022)
 
 NOTES:
