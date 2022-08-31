@@ -506,6 +506,163 @@ func TestAccResourcePassword_Min(t *testing.T) {
 	})
 }
 
+// TestAccResourcePassword_UpgradeFromVersion2_2_1 requires that you are running an amd64 Terraform binary
+// if you are running this test locally on arm64 architecture otherwise you will see the following error:
+//		  Error: Incompatible provider version
+//
+//        Provider registry.terraform.io/hashicorp/random v2.2.1 does not have a
+//        package available for your current platform ...
+//
+// TestAccResourcePassword_UpgradeFromVersion2_2_1 verifies behaviour when upgrading state from schema V0 to V2.
+func TestAccResourcePassword_UpgradeFromVersion2_2_1(t *testing.T) {
+	resource.Test(t, resource.TestCase{
+		Steps: []resource.TestStep{
+			{
+				ExternalProviders: providerVersion221(),
+				Config: `resource "random_password" "min" {
+							length = 12
+							override_special = "!#@"
+							min_lower = 2
+							min_upper = 3
+							min_special = 1
+							min_numeric = 4
+						}`,
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttrWith("random_password.min", "result", testCheckLen(12)),
+					resource.TestMatchResourceAttr("random_password.min", "result", regexp.MustCompile(`([a-z].*){2,}`)),
+					resource.TestMatchResourceAttr("random_password.min", "result", regexp.MustCompile(`([A-Z].*){3,}`)),
+					resource.TestMatchResourceAttr("random_password.min", "result", regexp.MustCompile(`([0-9].*){4,}`)),
+					resource.TestMatchResourceAttr("random_password.min", "result", regexp.MustCompile(`([!#@])`)),
+					resource.TestCheckResourceAttr("random_password.min", "special", "true"),
+					resource.TestCheckResourceAttr("random_password.min", "upper", "true"),
+					resource.TestCheckResourceAttr("random_password.min", "lower", "true"),
+					resource.TestCheckResourceAttr("random_password.min", "number", "true"),
+					resource.TestCheckResourceAttr("random_password.min", "min_special", "1"),
+					resource.TestCheckResourceAttr("random_password.min", "min_upper", "3"),
+					resource.TestCheckResourceAttr("random_password.min", "min_lower", "2"),
+					resource.TestCheckResourceAttr("random_password.min", "min_numeric", "4"),
+				),
+			},
+			{
+				ProtoV5ProviderFactories: protoV5ProviderFactories(),
+				Config: `resource "random_password" "min" {
+							length = 12
+							override_special = "!#@"
+							min_lower = 2
+							min_upper = 3
+							min_special = 1
+							min_numeric = 4
+						}`,
+				PlanOnly: true,
+			},
+			{
+				ProtoV5ProviderFactories: protoV5ProviderFactories(),
+				Config: `resource "random_password" "min" {
+							length = 12
+							override_special = "!#@"
+							min_lower = 2
+							min_upper = 3
+							min_special = 1
+							min_numeric = 4
+						}`,
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttrWith("random_password.min", "result", testCheckLen(12)),
+					resource.TestMatchResourceAttr("random_password.min", "result", regexp.MustCompile(`([a-z].*){2,}`)),
+					resource.TestMatchResourceAttr("random_password.min", "result", regexp.MustCompile(`([A-Z].*){3,}`)),
+					resource.TestMatchResourceAttr("random_password.min", "result", regexp.MustCompile(`([0-9].*){4,}`)),
+					resource.TestMatchResourceAttr("random_password.min", "result", regexp.MustCompile(`([!#@])`)),
+					resource.TestCheckResourceAttr("random_password.min", "special", "true"),
+					resource.TestCheckResourceAttr("random_password.min", "upper", "true"),
+					resource.TestCheckResourceAttr("random_password.min", "lower", "true"),
+					resource.TestCheckResourceAttr("random_password.min", "number", "true"),
+					resource.TestCheckResourceAttr("random_password.min", "numeric", "true"),
+					resource.TestCheckResourceAttr("random_password.min", "min_special", "1"),
+					resource.TestCheckResourceAttr("random_password.min", "min_upper", "3"),
+					resource.TestCheckResourceAttr("random_password.min", "min_lower", "2"),
+					resource.TestCheckResourceAttr("random_password.min", "min_numeric", "4"),
+					resource.TestCheckResourceAttrSet("random_password.min", "bcrypt_hash"),
+				),
+			},
+		},
+	})
+}
+
+// TestAccResourcePassword_UpgradeFromVersion3_2_0 verifies behaviour when upgrading state from schema V1 to V2.
+func TestAccResourcePassword_UpgradeFromVersion3_2_0(t *testing.T) {
+	resource.Test(t, resource.TestCase{
+		Steps: []resource.TestStep{
+			{
+				ExternalProviders: providerVersion320(),
+				Config: `resource "random_password" "min" {
+							length = 12
+							override_special = "!#@"
+							min_lower = 2
+							min_upper = 3
+							min_special = 1
+							min_numeric = 4
+						}`,
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttrWith("random_password.min", "result", testCheckLen(12)),
+					resource.TestMatchResourceAttr("random_password.min", "result", regexp.MustCompile(`([a-z].*){2,}`)),
+					resource.TestMatchResourceAttr("random_password.min", "result", regexp.MustCompile(`([A-Z].*){3,}`)),
+					resource.TestMatchResourceAttr("random_password.min", "result", regexp.MustCompile(`([0-9].*){4,}`)),
+					resource.TestMatchResourceAttr("random_password.min", "result", regexp.MustCompile(`([!#@])`)),
+					resource.TestCheckResourceAttr("random_password.min", "special", "true"),
+					resource.TestCheckResourceAttr("random_password.min", "upper", "true"),
+					resource.TestCheckResourceAttr("random_password.min", "lower", "true"),
+					resource.TestCheckResourceAttr("random_password.min", "number", "true"),
+					resource.TestCheckResourceAttr("random_password.min", "min_special", "1"),
+					resource.TestCheckResourceAttr("random_password.min", "min_upper", "3"),
+					resource.TestCheckResourceAttr("random_password.min", "min_lower", "2"),
+					resource.TestCheckResourceAttr("random_password.min", "min_numeric", "4"),
+					resource.TestCheckResourceAttrSet("random_password.min", "bcrypt_hash"),
+				),
+			},
+			{
+				ProtoV5ProviderFactories: protoV5ProviderFactories(),
+				Config: `resource "random_password" "min" {
+							length = 12
+							override_special = "!#@"
+							min_lower = 2
+							min_upper = 3
+							min_special = 1
+							min_numeric = 4
+						}`,
+				PlanOnly: true,
+			},
+			{
+				ProtoV5ProviderFactories: protoV5ProviderFactories(),
+				Config: `resource "random_password" "min" {
+							length = 12
+							override_special = "!#@"
+							min_lower = 2
+							min_upper = 3
+							min_special = 1
+							min_numeric = 4
+						}`,
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttrWith("random_password.min", "result", testCheckLen(12)),
+					resource.TestMatchResourceAttr("random_password.min", "result", regexp.MustCompile(`([a-z].*){2,}`)),
+					resource.TestMatchResourceAttr("random_password.min", "result", regexp.MustCompile(`([A-Z].*){3,}`)),
+					resource.TestMatchResourceAttr("random_password.min", "result", regexp.MustCompile(`([0-9].*){4,}`)),
+					resource.TestMatchResourceAttr("random_password.min", "result", regexp.MustCompile(`([!#@])`)),
+					resource.TestCheckResourceAttr("random_password.min", "special", "true"),
+					resource.TestCheckResourceAttr("random_password.min", "upper", "true"),
+					resource.TestCheckResourceAttr("random_password.min", "lower", "true"),
+					resource.TestCheckResourceAttr("random_password.min", "number", "true"),
+					resource.TestCheckResourceAttr("random_password.min", "numeric", "true"),
+					resource.TestCheckResourceAttr("random_password.min", "min_special", "1"),
+					resource.TestCheckResourceAttr("random_password.min", "min_upper", "3"),
+					resource.TestCheckResourceAttr("random_password.min", "min_lower", "2"),
+					resource.TestCheckResourceAttr("random_password.min", "min_numeric", "4"),
+					resource.TestCheckResourceAttrSet("random_password.min", "bcrypt_hash"),
+				),
+			},
+		},
+	})
+}
+
+// TestAccResourcePassword_UpgradeFromVersion3_3_2 verifies behaviour when upgrading from SDKv2 to the Framework.
 func TestAccResourcePassword_UpgradeFromVersion3_3_2(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		Steps: []resource.TestStep{
