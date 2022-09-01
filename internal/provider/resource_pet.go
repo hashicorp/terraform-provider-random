@@ -47,7 +47,6 @@ func (r *petResourceType) GetSchema(context.Context) (tfsdk.Schema, diag.Diagnos
 				PlanModifiers: []tfsdk.AttributePlanModifier{
 					planmodifiers.DefaultValue(types.Int64{Value: 2}),
 					planmodifiers.RequiresReplace(),
-					resource.UseStateForUnknown(),
 				},
 			},
 			"prefix": {
@@ -64,7 +63,6 @@ func (r *petResourceType) GetSchema(context.Context) (tfsdk.Schema, diag.Diagnos
 				PlanModifiers: []tfsdk.AttributePlanModifier{
 					planmodifiers.DefaultValue(types.String{Value: "-"}),
 					planmodifiers.RequiresReplace(),
-					resource.UseStateForUnknown(),
 				},
 			},
 			"id": {

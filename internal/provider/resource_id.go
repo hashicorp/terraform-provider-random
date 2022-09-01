@@ -179,8 +179,7 @@ func (r *idResource) Create(ctx context.Context, req resource.CreateRequest, res
 func (r *idResource) Read(context.Context, resource.ReadRequest, *resource.ReadResponse) {
 }
 
-// Update is intentionally left blank as all required and optional attributes force replacement of the resource
-// through the RequiresReplace AttributePlanModifier.
+// Update ensures the plan value is copied to the state to complete the update.
 func (r *idResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
 	var model idModelV0
 
