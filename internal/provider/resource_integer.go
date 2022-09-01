@@ -12,6 +12,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/tfsdk"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 
+	"github.com/terraform-providers/terraform-provider-random/internal/planmodifiers"
 	"github.com/terraform-providers/terraform-provider-random/internal/random"
 )
 
@@ -34,8 +35,11 @@ func (r *integerResourceType) GetSchema(context.Context) (tfsdk.Schema, diag.Dia
 				Type: types.MapType{
 					ElemType: types.StringType,
 				},
-				Optional:      true,
-				PlanModifiers: []tfsdk.AttributePlanModifier{resource.RequiresReplace()},
+				Optional: true,
+				Computed: true,
+				PlanModifiers: []tfsdk.AttributePlanModifier{
+					planmodifiers.RequiresReplaceIfValuesNotNull(),
+				},
 			},
 			"min": {
 				Description:   "The minimum inclusive value of the range.",
