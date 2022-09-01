@@ -63,11 +63,17 @@ func (r *integerResourceType) GetSchema(context.Context) (tfsdk.Schema, diag.Dia
 				Description: "The random integer result.",
 				Type:        types.Int64Type,
 				Computed:    true,
+				PlanModifiers: []tfsdk.AttributePlanModifier{
+					resource.UseStateForUnknown(),
+				},
 			},
 			"id": {
 				Description: "The string representation of the integer result.",
 				Type:        types.StringType,
 				Computed:    true,
+				PlanModifiers: []tfsdk.AttributePlanModifier{
+					resource.UseStateForUnknown(),
+				},
 			},
 		},
 	}, nil
@@ -136,6 +142,7 @@ func (r *integerResource) Read(ctx context.Context, req resource.ReadRequest, re
 // Update is intentionally left blank as all required and optional attributes force replacement of the resource
 // through the RequiresReplace AttributePlanModifier.
 func (r *integerResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
+	resp.State = tfsdk.State(req.Plan)
 }
 
 // Delete does not need to explicitly call resp.State.RemoveResource() as this is automatically handled by the

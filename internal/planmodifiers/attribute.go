@@ -168,26 +168,54 @@ func (r requiresReplaceIfValuesNotNullModifier) Modify(ctx context.Context, req 
 		return
 	}
 
-	attrConfig := req.AttributeConfig
+	configMap, ok := req.AttributeConfig.(types.Map)
+	if !ok {
+		return
+	}
 
-	m, ok := attrConfig.(types.Map)
+	stateMap, ok := req.AttributeState.(types.Map)
 	if !ok {
 		return
 	}
 
 	replace := false
 
-	for _, v := range m.Elems {
-		if v.IsNull() && !v.IsUnknown() {
+	additionalElems := map[string]attr.Value{}
+
+	for k, v := range configMap.Elems {
+		if _, ok := stateMap.Elems[k]; !ok {
+			if !v.IsNull() || v.IsUnknown() {
+				replace = true
+				break
+			}
 			continue
 		}
 
-		replace = true
+		if stateMap.Elems[k] != configMap.Elems[k] {
+			replace = true
+			break
+		}
+
+		if v.IsNull() && !v.IsUnknown() {
+			additionalElems[k] = v
+		}
 	}
 
 	if replace {
 		resp.RequiresReplace = true
+		return
 	}
+
+	respPlan := resp.AttributePlan
+
+	pm, ok := respPlan.(types.Map)
+	if ok {
+		for k, v := range additionalElems {
+			pm.Elems[k] = v
+		}
+	}
+
+	resp.AttributePlan = pm
 }
 
 // Description returns a human-readable description of the plan modifier.
