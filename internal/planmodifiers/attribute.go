@@ -233,7 +233,7 @@ func (r requiresReplaceIfValuesNotNullModifier) Modify(ctx context.Context, req 
 			break
 		}
 
-		for stateKey, _ := range stateMap.Elems {
+		for stateKey := range stateMap.Elems {
 			_, ok := configMap.Elems[stateKey]
 
 			// If the key doesn't exist in the config, but there is a state
