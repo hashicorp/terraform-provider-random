@@ -36,7 +36,6 @@ func (r *integerResourceType) GetSchema(context.Context) (tfsdk.Schema, diag.Dia
 					ElemType: types.StringType,
 				},
 				Optional: true,
-				Computed: true,
 				PlanModifiers: []tfsdk.AttributePlanModifier{
 					planmodifiers.RequiresReplaceIfValuesNotNull(),
 				},
@@ -142,7 +141,15 @@ func (r *integerResource) Read(ctx context.Context, req resource.ReadRequest, re
 // Update is intentionally left blank as all required and optional attributes force replacement of the resource
 // through the RequiresReplace AttributePlanModifier.
 func (r *integerResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
-	resp.State = tfsdk.State(req.Plan)
+	var model integerModelV0
+
+	resp.Diagnostics.Append(req.Plan.Get(ctx, &model)...)
+
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	resp.Diagnostics.Append(resp.State.Set(ctx, &model)...)
 }
 
 // Delete does not need to explicitly call resp.State.RemoveResource() as this is automatically handled by the

@@ -168,46 +168,88 @@ func (r requiresReplaceIfValuesNotNullModifier) Modify(ctx context.Context, req 
 		return
 	}
 
-	configMap, ok := req.AttributeConfig.(types.Map)
-	if !ok {
+	// If there are no differences, do not mark the resource for replacement
+	// and ensure the plan matches the configuration.
+	if req.AttributeConfig.Equal(req.AttributeState) {
 		return
 	}
 
-	stateMap, ok := req.AttributeState.(types.Map)
-	if !ok {
-		return
-	}
+	if req.AttributeState.IsNull() {
+		// terraform-plugin-sdk would store maps as null if all keys had null
+		// values. To prevent unintentional replacement plans when migrating
+		// to terraform-plugin-framework, only trigger replacement when the
+		// prior state (map) is null and when there are not null map values.
+		allNullValues := true
 
-	replace := false
+		configMap, ok := req.AttributeConfig.(types.Map)
 
-	for k, configValue := range configMap.Elems {
-		stateValue, ok := stateMap.Elems[k]
-
-		if !ok && configValue.IsNull() {
-			continue
+		if !ok {
+			return
 		}
 
-		if !configValue.Equal(stateValue) {
-			replace = true
+		for _, configValue := range configMap.Elems {
+			if !configValue.IsNull() {
+				allNullValues = false
+			}
+		}
+
+		if allNullValues {
+			return
+		}
+	} else {
+		// terraform-plugin-sdk would completely omit storing map keys with
+		// null values, so this also must prevent unintentional replacement
+		// in that case as well.
+		allNewNullValues := true
+
+		configMap, ok := req.AttributeConfig.(types.Map)
+
+		if !ok {
+			return
+		}
+
+		stateMap, ok := req.AttributeState.(types.Map)
+
+		if !ok {
+			return
+		}
+
+		for configKey, configValue := range configMap.Elems {
+			stateValue, ok := stateMap.Elems[configKey]
+
+			// If the key doesn't exist in state and the config value is
+			// null, do not trigger replacement.
+			if !ok && configValue.IsNull() {
+				continue
+			}
+
+			// If the state value exists and it is equal to the config value,
+			// do not trigger replacement.
+			if configValue.Equal(stateValue) {
+				continue
+			}
+
+			allNewNullValues = false
 			break
 		}
+
+		for stateKey, _ := range stateMap.Elems {
+			_, ok := configMap.Elems[stateKey]
+
+			// If the key doesn't exist in the config, but there is a state
+			// value, trigger replacement.
+			if !ok {
+				allNewNullValues = false
+				break
+			}
+		}
+
+		if allNewNullValues {
+			return
+		}
 	}
 
-	if replace {
-		resp.RequiresReplace = true
-		return
-	}
-
-	//respPlan := resp.AttributePlan
-	//
-	//pm, ok := respPlan.(types.Map)
-	//if ok {
-	//	for k, v := range additionalElems {
-	//		pm.Elems[k] = v
-	//	}
-	//}
-	//
-	//resp.AttributePlan = pm
+	resp.RequiresReplace = true
 }
 
 // Description returns a human-readable description of the plan modifier.
