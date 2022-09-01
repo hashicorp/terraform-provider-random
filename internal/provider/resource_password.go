@@ -421,8 +421,8 @@ func passwordSchemaV2() tfsdk.Schema {
 				Optional: true,
 				Computed: true,
 				PlanModifiers: []tfsdk.AttributePlanModifier{
+					planmodifiers.DefaultValue(types.String{Value: ""}),
 					resource.RequiresReplace(),
-					resource.UseStateForUnknown(),
 				},
 			},
 
