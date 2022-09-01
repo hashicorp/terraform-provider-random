@@ -170,8 +170,8 @@ func (r stringResourceType) GetSchema(context.Context) (tfsdk.Schema, diag.Diagn
 				Optional: true,
 				Computed: true,
 				PlanModifiers: []tfsdk.AttributePlanModifier{
+					planmodifiers.DefaultValue(types.String{Value: ""}),
 					resource.RequiresReplace(),
-					resource.UseStateForUnknown(),
 				},
 			},
 
