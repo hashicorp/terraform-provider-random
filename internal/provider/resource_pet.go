@@ -36,7 +36,7 @@ func (r *petResourceType) GetSchema(context.Context) (tfsdk.Schema, diag.Diagnos
 				},
 				Optional: true,
 				PlanModifiers: []tfsdk.AttributePlanModifier{
-					resource.RequiresReplace(),
+					planmodifiers.RequiresReplaceIfValuesNotNull(),
 				},
 			},
 			"length": {
@@ -47,6 +47,7 @@ func (r *petResourceType) GetSchema(context.Context) (tfsdk.Schema, diag.Diagnos
 				PlanModifiers: []tfsdk.AttributePlanModifier{
 					planmodifiers.DefaultValue(types.Int64{Value: 2}),
 					planmodifiers.RequiresReplace(),
+					resource.UseStateForUnknown(),
 				},
 			},
 			"prefix": {
@@ -63,12 +64,16 @@ func (r *petResourceType) GetSchema(context.Context) (tfsdk.Schema, diag.Diagnos
 				PlanModifiers: []tfsdk.AttributePlanModifier{
 					planmodifiers.DefaultValue(types.String{Value: "-"}),
 					planmodifiers.RequiresReplace(),
+					resource.UseStateForUnknown(),
 				},
 			},
 			"id": {
 				Description: "The random pet name.",
 				Type:        types.StringType,
 				Computed:    true,
+				PlanModifiers: []tfsdk.AttributePlanModifier{
+					resource.UseStateForUnknown(),
+				},
 			},
 		},
 	}, nil
@@ -131,6 +136,15 @@ func (r *petResource) Read(ctx context.Context, req resource.ReadRequest, resp *
 // Update is intentionally left blank as all required and optional attributes force replacement of the resource
 // through the RequiresReplace AttributePlanModifier.
 func (r *petResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
+	var model petModelV0
+
+	resp.Diagnostics.Append(req.Plan.Get(ctx, &model)...)
+
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	resp.Diagnostics.Append(resp.State.Set(ctx, &model)...)
 }
 
 // Delete does not need to explicitly call resp.State.RemoveResource() as this is automatically handled by the

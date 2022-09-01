@@ -40,7 +40,7 @@ func (r stringResourceType) GetSchema(context.Context) (tfsdk.Schema, diag.Diagn
 				},
 				Optional: true,
 				PlanModifiers: []tfsdk.AttributePlanModifier{
-					resource.RequiresReplace(),
+					planmodifiers.RequiresReplaceIfValuesNotNull(),
 				},
 			},
 
@@ -69,6 +69,7 @@ func (r stringResourceType) GetSchema(context.Context) (tfsdk.Schema, diag.Diagn
 				PlanModifiers: []tfsdk.AttributePlanModifier{
 					planmodifiers.DefaultValue(types.Bool{Value: true}),
 					planmodifiers.RequiresReplace(),
+					resource.UseStateForUnknown(),
 				},
 			},
 
@@ -80,6 +81,7 @@ func (r stringResourceType) GetSchema(context.Context) (tfsdk.Schema, diag.Diagn
 				PlanModifiers: []tfsdk.AttributePlanModifier{
 					planmodifiers.DefaultValue(types.Bool{Value: true}),
 					planmodifiers.RequiresReplace(),
+					resource.UseStateForUnknown(),
 				},
 			},
 
@@ -91,6 +93,7 @@ func (r stringResourceType) GetSchema(context.Context) (tfsdk.Schema, diag.Diagn
 				PlanModifiers: []tfsdk.AttributePlanModifier{
 					planmodifiers.DefaultValue(types.Bool{Value: true}),
 					planmodifiers.RequiresReplace(),
+					resource.UseStateForUnknown(),
 				},
 			},
 
@@ -103,6 +106,7 @@ func (r stringResourceType) GetSchema(context.Context) (tfsdk.Schema, diag.Diagn
 				PlanModifiers: []tfsdk.AttributePlanModifier{
 					planmodifiers.NumberNumericAttributePlanModifier(),
 					planmodifiers.RequiresReplace(),
+					resource.UseStateForUnknown(),
 				},
 				DeprecationMessage: "**NOTE**: This is deprecated, use `numeric` instead.",
 			},
@@ -115,6 +119,7 @@ func (r stringResourceType) GetSchema(context.Context) (tfsdk.Schema, diag.Diagn
 				PlanModifiers: []tfsdk.AttributePlanModifier{
 					planmodifiers.NumberNumericAttributePlanModifier(),
 					planmodifiers.RequiresReplace(),
+					resource.UseStateForUnknown(),
 				},
 			},
 
@@ -126,6 +131,7 @@ func (r stringResourceType) GetSchema(context.Context) (tfsdk.Schema, diag.Diagn
 				PlanModifiers: []tfsdk.AttributePlanModifier{
 					planmodifiers.DefaultValue(types.Int64{Value: 0}),
 					planmodifiers.RequiresReplace(),
+					resource.UseStateForUnknown(),
 				},
 			},
 
@@ -137,6 +143,7 @@ func (r stringResourceType) GetSchema(context.Context) (tfsdk.Schema, diag.Diagn
 				PlanModifiers: []tfsdk.AttributePlanModifier{
 					planmodifiers.DefaultValue(types.Int64{Value: 0}),
 					planmodifiers.RequiresReplace(),
+					resource.UseStateForUnknown(),
 				},
 			},
 
@@ -148,6 +155,7 @@ func (r stringResourceType) GetSchema(context.Context) (tfsdk.Schema, diag.Diagn
 				PlanModifiers: []tfsdk.AttributePlanModifier{
 					planmodifiers.DefaultValue(types.Int64{Value: 0}),
 					planmodifiers.RequiresReplace(),
+					resource.UseStateForUnknown(),
 				},
 			},
 
@@ -159,6 +167,7 @@ func (r stringResourceType) GetSchema(context.Context) (tfsdk.Schema, diag.Diagn
 				PlanModifiers: []tfsdk.AttributePlanModifier{
 					planmodifiers.DefaultValue(types.Int64{Value: 0}),
 					planmodifiers.RequiresReplace(),
+					resource.UseStateForUnknown(),
 				},
 			},
 
@@ -171,6 +180,7 @@ func (r stringResourceType) GetSchema(context.Context) (tfsdk.Schema, diag.Diagn
 				Computed: true,
 				PlanModifiers: []tfsdk.AttributePlanModifier{
 					resource.RequiresReplace(),
+					resource.UseStateForUnknown(),
 				},
 			},
 
@@ -178,12 +188,18 @@ func (r stringResourceType) GetSchema(context.Context) (tfsdk.Schema, diag.Diagn
 				Description: "The generated random string.",
 				Type:        types.StringType,
 				Computed:    true,
+				PlanModifiers: []tfsdk.AttributePlanModifier{
+					resource.UseStateForUnknown(),
+				},
 			},
 
 			"id": {
 				Description: "The generated random string.",
 				Computed:    true,
 				Type:        types.StringType,
+				PlanModifiers: []tfsdk.AttributePlanModifier{
+					resource.UseStateForUnknown(),
+				},
 			},
 		},
 	}, nil
@@ -260,6 +276,15 @@ func (r *stringResource) Read(ctx context.Context, req resource.ReadRequest, res
 // Update is intentionally left blank as all required and optional attributes force replacement of the resource
 // through the RequiresReplace AttributePlanModifier.
 func (r *stringResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
+	var model stringModelV2
+
+	resp.Diagnostics.Append(req.Plan.Get(ctx, &model)...)
+
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	resp.Diagnostics.Append(resp.State.Set(ctx, &model)...)
 }
 
 // Delete does not need to explicitly call resp.State.RemoveResource() as this is automatically handled by the

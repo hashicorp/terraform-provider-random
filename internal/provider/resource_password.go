@@ -103,6 +103,15 @@ func (r *passwordResource) Read(ctx context.Context, req resource.ReadRequest, r
 // Update is intentionally left blank as all required and optional attributes force replacement of the resource
 // through the RequiresReplace AttributePlanModifier.
 func (r *passwordResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
+	var model passwordModelV2
+
+	resp.Diagnostics.Append(req.Plan.Get(ctx, &model)...)
+
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	resp.Diagnostics.Append(resp.State.Set(ctx, &model)...)
 }
 
 // Delete does not need to explicitly call resp.State.RemoveResource() as this is automatically handled by the
@@ -281,7 +290,7 @@ func passwordSchemaV2() tfsdk.Schema {
 				},
 				Optional: true,
 				PlanModifiers: []tfsdk.AttributePlanModifier{
-					resource.RequiresReplace(),
+					planmodifiers.RequiresReplaceIfValuesNotNull(),
 				},
 			},
 
@@ -312,6 +321,7 @@ func passwordSchemaV2() tfsdk.Schema {
 				PlanModifiers: []tfsdk.AttributePlanModifier{
 					planmodifiers.DefaultValue(types.Bool{Value: true}),
 					planmodifiers.RequiresReplace(),
+					resource.UseStateForUnknown(),
 				},
 			},
 
@@ -323,6 +333,7 @@ func passwordSchemaV2() tfsdk.Schema {
 				PlanModifiers: []tfsdk.AttributePlanModifier{
 					planmodifiers.DefaultValue(types.Bool{Value: true}),
 					planmodifiers.RequiresReplace(),
+					resource.UseStateForUnknown(),
 				},
 			},
 
@@ -334,6 +345,7 @@ func passwordSchemaV2() tfsdk.Schema {
 				PlanModifiers: []tfsdk.AttributePlanModifier{
 					planmodifiers.DefaultValue(types.Bool{Value: true}),
 					planmodifiers.RequiresReplace(),
+					resource.UseStateForUnknown(),
 				},
 			},
 
@@ -346,6 +358,7 @@ func passwordSchemaV2() tfsdk.Schema {
 				PlanModifiers: []tfsdk.AttributePlanModifier{
 					planmodifiers.NumberNumericAttributePlanModifier(),
 					planmodifiers.RequiresReplace(),
+					resource.UseStateForUnknown(),
 				},
 				DeprecationMessage: "**NOTE**: This is deprecated, use `numeric` instead.",
 			},
@@ -358,6 +371,7 @@ func passwordSchemaV2() tfsdk.Schema {
 				PlanModifiers: []tfsdk.AttributePlanModifier{
 					planmodifiers.NumberNumericAttributePlanModifier(),
 					planmodifiers.RequiresReplace(),
+					resource.UseStateForUnknown(),
 				},
 			},
 
@@ -369,6 +383,7 @@ func passwordSchemaV2() tfsdk.Schema {
 				PlanModifiers: []tfsdk.AttributePlanModifier{
 					planmodifiers.DefaultValue(types.Int64{Value: 0}),
 					planmodifiers.RequiresReplace(),
+					resource.UseStateForUnknown(),
 				},
 			},
 
@@ -380,6 +395,7 @@ func passwordSchemaV2() tfsdk.Schema {
 				PlanModifiers: []tfsdk.AttributePlanModifier{
 					planmodifiers.DefaultValue(types.Int64{Value: 0}),
 					planmodifiers.RequiresReplace(),
+					resource.UseStateForUnknown(),
 				},
 			},
 
@@ -391,6 +407,7 @@ func passwordSchemaV2() tfsdk.Schema {
 				PlanModifiers: []tfsdk.AttributePlanModifier{
 					planmodifiers.DefaultValue(types.Int64{Value: 0}),
 					planmodifiers.RequiresReplace(),
+					resource.UseStateForUnknown(),
 				},
 			},
 
@@ -402,6 +419,7 @@ func passwordSchemaV2() tfsdk.Schema {
 				PlanModifiers: []tfsdk.AttributePlanModifier{
 					planmodifiers.DefaultValue(types.Int64{Value: 0}),
 					planmodifiers.RequiresReplace(),
+					resource.UseStateForUnknown(),
 				},
 			},
 
@@ -414,6 +432,7 @@ func passwordSchemaV2() tfsdk.Schema {
 				Computed: true,
 				PlanModifiers: []tfsdk.AttributePlanModifier{
 					resource.RequiresReplace(),
+					resource.UseStateForUnknown(),
 				},
 			},
 
@@ -422,6 +441,9 @@ func passwordSchemaV2() tfsdk.Schema {
 				Type:        types.StringType,
 				Computed:    true,
 				Sensitive:   true,
+				PlanModifiers: []tfsdk.AttributePlanModifier{
+					resource.UseStateForUnknown(),
+				},
 			},
 
 			"bcrypt_hash": {
@@ -429,12 +451,18 @@ func passwordSchemaV2() tfsdk.Schema {
 				Type:        types.StringType,
 				Computed:    true,
 				Sensitive:   true,
+				PlanModifiers: []tfsdk.AttributePlanModifier{
+					resource.UseStateForUnknown(),
+				},
 			},
 
 			"id": {
 				Description: "A static value used internally by Terraform, this should not be referenced in configurations.",
 				Computed:    true,
 				Type:        types.StringType,
+				PlanModifiers: []tfsdk.AttributePlanModifier{
+					resource.UseStateForUnknown(),
+				},
 			},
 		},
 	}
