@@ -10,6 +10,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/tfsdk"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 
+	"github.com/terraform-providers/terraform-provider-random/internal/planmodifiers"
 	"github.com/terraform-providers/terraform-provider-random/internal/random"
 )
 
@@ -30,7 +31,7 @@ func (r *shuffleResourceType) GetSchema(context.Context) (tfsdk.Schema, diag.Dia
 				},
 				Optional: true,
 				PlanModifiers: []tfsdk.AttributePlanModifier{
-					resource.RequiresReplace(),
+					planmodifiers.RequiresReplaceIfValuesNotNull(),
 				},
 			},
 			"seed": {
@@ -73,11 +74,17 @@ func (r *shuffleResourceType) GetSchema(context.Context) (tfsdk.Schema, diag.Dia
 					ElemType: types.StringType,
 				},
 				Computed: true,
+				PlanModifiers: []tfsdk.AttributePlanModifier{
+					resource.UseStateForUnknown(),
+				},
 			},
 			"id": {
 				Description: "A static value used internally by Terraform, this should not be referenced in configurations.",
 				Type:        types.StringType,
 				Computed:    true,
+				PlanModifiers: []tfsdk.AttributePlanModifier{
+					resource.UseStateForUnknown(),
+				},
 			},
 		},
 	}, nil
@@ -162,9 +169,17 @@ func (r *shuffleResource) Create(ctx context.Context, req resource.CreateRequest
 func (r *shuffleResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
 }
 
-// Update is intentionally left blank as all required and optional attributes force replacement of the resource
-// through the RequiresReplace AttributePlanModifier.
+// Update ensures the plan value is copied to the state to complete the update.
 func (r *shuffleResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
+	var model shuffleModelV0
+
+	resp.Diagnostics.Append(req.Plan.Get(ctx, &model)...)
+
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	resp.Diagnostics.Append(resp.State.Set(ctx, &model)...)
 }
 
 // Delete does not need to explicitly call resp.State.RemoveResource() as this is automatically handled by the

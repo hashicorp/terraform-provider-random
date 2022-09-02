@@ -2,9 +2,12 @@ package provider
 
 import (
 	"fmt"
+	"reflect"
+	"strconv"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 )
 
 // These results are current as of Go 1.6. The Go
@@ -32,6 +35,749 @@ func TestAccResourceShuffle(t *testing.T) {
 					resource.TestCheckResourceAttr("random_shuffle.default_length", "result.2", "b"),
 					resource.TestCheckResourceAttr("random_shuffle.default_length", "result.3", "e"),
 					resource.TestCheckResourceAttr("random_shuffle.default_length", "result.4", "d"),
+				),
+			},
+		},
+	})
+}
+
+func TestAccResourceShuffle_Keepers_Keep_EmptyMap(t *testing.T) {
+	var result1, result2 []string
+
+	resource.ParallelTest(t, resource.TestCase{
+		Steps: []resource.TestStep{
+			{
+				ProtoV5ProviderFactories: protoV5ProviderFactories(),
+				Config: `resource "random_shuffle" "test" {
+					input = ["a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k"]
+					keepers = {}
+				}`,
+				Check: resource.ComposeTestCheckFunc(
+					testExtractResourceAttrList("random_shuffle.test", "result", &result1),
+					resource.TestCheckResourceAttr("random_shuffle.test", "keepers.%", "0"),
+				),
+			},
+			{
+				ProtoV5ProviderFactories: protoV5ProviderFactories(),
+				Config: `resource "random_shuffle" "test" {
+					input = ["a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k"]
+					keepers = {}
+				}`,
+				Check: resource.ComposeTestCheckFunc(
+					testExtractResourceAttrList("random_shuffle.test", "result", &result2),
+					testCheckAttributeValueListsEqual(&result1, &result2),
+					resource.TestCheckResourceAttr("random_shuffle.test", "keepers.%", "0"),
+				),
+			},
+		},
+	})
+}
+
+func TestAccResourceShuffle_Keepers_Keep_EmptyMapToNullValue(t *testing.T) {
+	var result1, result2 []string
+
+	resource.ParallelTest(t, resource.TestCase{
+		Steps: []resource.TestStep{
+			{
+				ProtoV5ProviderFactories: protoV5ProviderFactories(),
+				Config: `resource "random_shuffle" "test" {
+					input = ["a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k"]
+					keepers = {}
+				}`,
+				Check: resource.ComposeTestCheckFunc(
+					testExtractResourceAttrList("random_shuffle.test", "result", &result1),
+					resource.TestCheckResourceAttr("random_shuffle.test", "keepers.%", "0"),
+				),
+			},
+			{
+				ProtoV5ProviderFactories: protoV5ProviderFactories(),
+				Config: `resource "random_shuffle" "test" {
+					input = ["a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k"]
+					keepers = {
+						"key" = null
+					}
+				}`,
+				Check: resource.ComposeTestCheckFunc(
+					testExtractResourceAttrList("random_shuffle.test", "result", &result2),
+					testCheckAttributeValueListsEqual(&result1, &result2),
+					resource.TestCheckResourceAttr("random_shuffle.test", "keepers.%", "1"),
+				),
+			},
+		},
+	})
+}
+
+func TestAccResourceShuffle_Keepers_Keep_NullMap(t *testing.T) {
+	var result1, result2 []string
+
+	resource.ParallelTest(t, resource.TestCase{
+		Steps: []resource.TestStep{
+			{
+				ProtoV5ProviderFactories: protoV5ProviderFactories(),
+				Config: `resource "random_shuffle" "test" {
+					input = ["a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k"]
+				}`,
+				Check: resource.ComposeTestCheckFunc(
+					testExtractResourceAttrList("random_shuffle.test", "result", &result1),
+					resource.TestCheckResourceAttr("random_shuffle.test", "keepers.%", "0"),
+				),
+			},
+			{
+				ProtoV5ProviderFactories: protoV5ProviderFactories(),
+				Config: `resource "random_shuffle" "test" {
+					input = ["a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k"]
+				}`,
+				Check: resource.ComposeTestCheckFunc(
+					testExtractResourceAttrList("random_shuffle.test", "result", &result2),
+					testCheckAttributeValueListsEqual(&result1, &result2),
+					resource.TestCheckResourceAttr("random_shuffle.test", "keepers.%", "0"),
+				),
+			},
+		},
+	})
+}
+
+func TestAccResourceShuffle_Keepers_Keep_NullMapToNullValue(t *testing.T) {
+	var result1, result2 []string
+
+	resource.ParallelTest(t, resource.TestCase{
+		Steps: []resource.TestStep{
+			{
+				ProtoV5ProviderFactories: protoV5ProviderFactories(),
+				Config: `resource "random_shuffle" "test" {
+					input = ["a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k"]
+				}`,
+				Check: resource.ComposeTestCheckFunc(
+					testExtractResourceAttrList("random_shuffle.test", "result", &result1),
+					resource.TestCheckResourceAttr("random_shuffle.test", "keepers.%", "0"),
+				),
+			},
+			{
+				ProtoV5ProviderFactories: protoV5ProviderFactories(),
+				Config: `resource "random_shuffle" "test" {
+					input = ["a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k"]
+					keepers = {
+						"key" = null
+					}
+				}`,
+				Check: resource.ComposeTestCheckFunc(
+					testExtractResourceAttrList("random_shuffle.test", "result", &result2),
+					testCheckAttributeValueListsEqual(&result1, &result2),
+					resource.TestCheckResourceAttr("random_shuffle.test", "keepers.%", "1"),
+				),
+			},
+		},
+	})
+}
+
+func TestAccResourceShuffle_Keepers_Keep_NullValue(t *testing.T) {
+	var result1, result2 []string
+
+	resource.ParallelTest(t, resource.TestCase{
+		Steps: []resource.TestStep{
+			{
+				ProtoV5ProviderFactories: protoV5ProviderFactories(),
+				Config: `resource "random_shuffle" "test" {
+					input = ["a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k"]
+					keepers = {
+						"key" = null
+					}
+				}`,
+				Check: resource.ComposeTestCheckFunc(
+					testExtractResourceAttrList("random_shuffle.test", "result", &result1),
+					resource.TestCheckResourceAttr("random_shuffle.test", "keepers.%", "1"),
+				),
+			},
+			{
+				ProtoV5ProviderFactories: protoV5ProviderFactories(),
+				Config: `resource "random_shuffle" "test" {
+					input = ["a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k"]
+					keepers = {
+						"key" = null
+					}
+				}`,
+				Check: resource.ComposeTestCheckFunc(
+					testExtractResourceAttrList("random_shuffle.test", "result", &result2),
+					testCheckAttributeValueListsEqual(&result1, &result2),
+					resource.TestCheckResourceAttr("random_shuffle.test", "keepers.%", "1"),
+				),
+			},
+		},
+	})
+}
+
+func TestAccResourceShuffle_Keepers_Keep_NullValues(t *testing.T) {
+	var result1, result2 []string
+
+	resource.ParallelTest(t, resource.TestCase{
+		Steps: []resource.TestStep{
+			{
+				ProtoV5ProviderFactories: protoV5ProviderFactories(),
+				Config: `resource "random_shuffle" "test" {
+					input = ["a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k"]
+					keepers = {
+						"key1" = null
+						"key2" = null
+					}
+				}`,
+				Check: resource.ComposeTestCheckFunc(
+					testExtractResourceAttrList("random_shuffle.test", "result", &result1),
+					resource.TestCheckResourceAttr("random_shuffle.test", "keepers.%", "2"),
+				),
+			},
+			{
+				ProtoV5ProviderFactories: protoV5ProviderFactories(),
+				Config: `resource "random_shuffle" "test" {
+					input = ["a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k"]
+					keepers = {
+						"key1" = null
+						"key2" = null
+					}
+				}`,
+				Check: resource.ComposeTestCheckFunc(
+					testExtractResourceAttrList("random_shuffle.test", "result", &result2),
+					testCheckAttributeValueListsEqual(&result1, &result2),
+					resource.TestCheckResourceAttr("random_shuffle.test", "keepers.%", "2"),
+				),
+			},
+		},
+	})
+}
+
+func TestAccResourceShuffle_Keepers_Keep_Value(t *testing.T) {
+	var result1, result2 []string
+
+	resource.ParallelTest(t, resource.TestCase{
+		Steps: []resource.TestStep{
+			{
+				ProtoV5ProviderFactories: protoV5ProviderFactories(),
+				Config: `resource "random_shuffle" "test" {
+					input = ["a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k"]
+					keepers = {
+						"key" = "123"
+					}
+				}`,
+				Check: resource.ComposeTestCheckFunc(
+					testExtractResourceAttrList("random_shuffle.test", "result", &result1),
+					resource.TestCheckResourceAttr("random_shuffle.test", "keepers.%", "1"),
+				),
+			},
+			{
+				ProtoV5ProviderFactories: protoV5ProviderFactories(),
+				Config: `resource "random_shuffle" "test" {
+					input = ["a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k"]
+					keepers = {
+						"key" = "123"
+					}
+				}`,
+				Check: resource.ComposeTestCheckFunc(
+					testExtractResourceAttrList("random_shuffle.test", "result", &result2),
+					testCheckAttributeValueListsEqual(&result1, &result2),
+					resource.TestCheckResourceAttr("random_shuffle.test", "keepers.%", "1"),
+				),
+			},
+		},
+	})
+}
+
+func TestAccResourceShuffle_Keepers_Keep_Values(t *testing.T) {
+	var result1, result2 []string
+
+	resource.ParallelTest(t, resource.TestCase{
+		Steps: []resource.TestStep{
+			{
+				ProtoV5ProviderFactories: protoV5ProviderFactories(),
+				Config: `resource "random_shuffle" "test" {
+					input = ["a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k"]
+					keepers = {
+						"key1" = "123"
+						"key2" = "456"
+					}
+				}`,
+				Check: resource.ComposeTestCheckFunc(
+					testExtractResourceAttrList("random_shuffle.test", "result", &result1),
+					resource.TestCheckResourceAttr("random_shuffle.test", "keepers.%", "2"),
+				),
+			},
+			{
+				ProtoV5ProviderFactories: protoV5ProviderFactories(),
+				Config: `resource "random_shuffle" "test" {
+					input = ["a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k"]
+					keepers = {
+						"key1" = "123"
+						"key2" = "456"
+					}
+				}`,
+				Check: resource.ComposeTestCheckFunc(
+					testExtractResourceAttrList("random_shuffle.test", "result", &result2),
+					testCheckAttributeValueListsEqual(&result1, &result2),
+					resource.TestCheckResourceAttr("random_shuffle.test", "keepers.%", "2"),
+				),
+			},
+		},
+	})
+}
+
+func TestAccResourceShuffle_Keepers_Replace_EmptyMapToValue(t *testing.T) {
+	var result1, result2 []string
+
+	resource.ParallelTest(t, resource.TestCase{
+		Steps: []resource.TestStep{
+			{
+				ProtoV5ProviderFactories: protoV5ProviderFactories(),
+				Config: `resource "random_shuffle" "test" {
+					input = ["a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k"]
+					keepers = {}
+				}`,
+				Check: resource.ComposeTestCheckFunc(
+					testExtractResourceAttrList("random_shuffle.test", "result", &result1),
+					resource.TestCheckResourceAttr("random_shuffle.test", "keepers.%", "0"),
+				),
+			},
+			{
+				ProtoV5ProviderFactories: protoV5ProviderFactories(),
+				Config: `resource "random_shuffle" "test" {
+					input = ["a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k"]
+					keepers = {
+						"key" = "123"
+					}
+				}`,
+				Check: resource.ComposeTestCheckFunc(
+					testExtractResourceAttrList("random_shuffle.test", "result", &result2),
+					testCheckAttributeValueListsDiffer(&result1, &result2),
+					resource.TestCheckResourceAttr("random_shuffle.test", "keepers.%", "1"),
+				),
+			},
+		},
+	})
+}
+
+func TestAccResourceShuffle_Keepers_Replace_NullMapToValue(t *testing.T) {
+	var result1, result2 []string
+
+	resource.ParallelTest(t, resource.TestCase{
+		Steps: []resource.TestStep{
+			{
+				ProtoV5ProviderFactories: protoV5ProviderFactories(),
+				Config: `resource "random_shuffle" "test" {
+					input = ["a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k"]
+				}`,
+				Check: resource.ComposeTestCheckFunc(
+					testExtractResourceAttrList("random_shuffle.test", "result", &result1),
+					resource.TestCheckResourceAttr("random_shuffle.test", "keepers.%", "0"),
+				),
+			},
+			{
+				ProtoV5ProviderFactories: protoV5ProviderFactories(),
+				Config: `resource "random_shuffle" "test" {
+					input = ["a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k"]
+					keepers = {
+						"key" = "123"
+					}
+				}`,
+				Check: resource.ComposeTestCheckFunc(
+					testExtractResourceAttrList("random_shuffle.test", "result", &result2),
+					testCheckAttributeValueListsDiffer(&result1, &result2),
+					resource.TestCheckResourceAttr("random_shuffle.test", "keepers.%", "1"),
+				),
+			},
+		},
+	})
+}
+
+func TestAccResourceShuffle_Keepers_Replace_NullValueToValue(t *testing.T) {
+	var result1, result2 []string
+
+	resource.ParallelTest(t, resource.TestCase{
+		Steps: []resource.TestStep{
+			{
+				ProtoV5ProviderFactories: protoV5ProviderFactories(),
+				Config: `resource "random_shuffle" "test" {
+					input = ["a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k"]
+					keepers = {
+						"key" = null
+					}
+				}`,
+				Check: resource.ComposeTestCheckFunc(
+					testExtractResourceAttrList("random_shuffle.test", "result", &result1),
+					resource.TestCheckResourceAttr("random_shuffle.test", "keepers.%", "1"),
+				),
+			},
+			{
+				ProtoV5ProviderFactories: protoV5ProviderFactories(),
+				Config: `resource "random_shuffle" "test" {
+					input = ["a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k"]
+					keepers = {
+						"key" = "123"
+					}
+				}`,
+				Check: resource.ComposeTestCheckFunc(
+					testExtractResourceAttrList("random_shuffle.test", "result", &result2),
+					testCheckAttributeValueListsDiffer(&result1, &result2),
+					resource.TestCheckResourceAttr("random_shuffle.test", "keepers.%", "1"),
+				),
+			},
+		},
+	})
+}
+
+func TestAccResourceShuffle_Keepers_Replace_ValueToEmptyMap(t *testing.T) {
+	var result1, result2 []string
+
+	resource.ParallelTest(t, resource.TestCase{
+		Steps: []resource.TestStep{
+			{
+				ProtoV5ProviderFactories: protoV5ProviderFactories(),
+				Config: `resource "random_shuffle" "test" {
+					input = ["a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k"]
+					keepers = {
+						"key" = "123"
+					}
+				}`,
+				Check: resource.ComposeTestCheckFunc(
+					testExtractResourceAttrList("random_shuffle.test", "result", &result1),
+					resource.TestCheckResourceAttr("random_shuffle.test", "keepers.%", "1"),
+				),
+			},
+			{
+				ProtoV5ProviderFactories: protoV5ProviderFactories(),
+				Config: `resource "random_shuffle" "test" {
+					input = ["a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k"]
+					keepers = {}
+				}`,
+				Check: resource.ComposeTestCheckFunc(
+					testExtractResourceAttrList("random_shuffle.test", "result", &result2),
+					testCheckAttributeValueListsDiffer(&result1, &result2),
+					resource.TestCheckResourceAttr("random_shuffle.test", "keepers.%", "0"),
+				),
+			},
+		},
+	})
+}
+
+func TestAccResourceShuffle_Keepers_Replace_ValueToNullMap(t *testing.T) {
+	var result1, result2 []string
+
+	resource.ParallelTest(t, resource.TestCase{
+		Steps: []resource.TestStep{
+			{
+				ProtoV5ProviderFactories: protoV5ProviderFactories(),
+				Config: `resource "random_shuffle" "test" {
+					input = ["a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k"]
+					keepers = {
+						"key" = "123"
+					}
+				}`,
+				Check: resource.ComposeTestCheckFunc(
+					testExtractResourceAttrList("random_shuffle.test", "result", &result1),
+					resource.TestCheckResourceAttr("random_shuffle.test", "keepers.%", "1"),
+				),
+			},
+			{
+				ProtoV5ProviderFactories: protoV5ProviderFactories(),
+				Config: `resource "random_shuffle" "test" {
+					input = ["a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k"]
+				}`,
+				Check: resource.ComposeTestCheckFunc(
+					testExtractResourceAttrList("random_shuffle.test", "result", &result2),
+					testCheckAttributeValueListsDiffer(&result1, &result2),
+					resource.TestCheckResourceAttr("random_shuffle.test", "keepers.%", "0"),
+				),
+			},
+		},
+	})
+}
+
+func TestAccResourceShuffle_Keepers_Replace_ValueToNullValue(t *testing.T) {
+	var result1, result2 []string
+
+	resource.ParallelTest(t, resource.TestCase{
+		Steps: []resource.TestStep{
+			{
+				ProtoV5ProviderFactories: protoV5ProviderFactories(),
+				Config: `resource "random_shuffle" "test" {
+					input = ["a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k"]
+					keepers = {
+						"key" = "123"
+					}
+				}`,
+				Check: resource.ComposeTestCheckFunc(
+					testExtractResourceAttrList("random_shuffle.test", "result", &result1),
+					resource.TestCheckResourceAttr("random_shuffle.test", "keepers.%", "1"),
+				),
+			},
+			{
+				ProtoV5ProviderFactories: protoV5ProviderFactories(),
+				Config: `resource "random_shuffle" "test" {
+					input = ["a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k"]
+					keepers = {
+						"key" = null
+					}
+				}`,
+				Check: resource.ComposeTestCheckFunc(
+					testExtractResourceAttrList("random_shuffle.test", "result", &result2),
+					testCheckAttributeValueListsDiffer(&result1, &result2),
+					resource.TestCheckResourceAttr("random_shuffle.test", "keepers.%", "1"),
+				),
+			},
+		},
+	})
+}
+
+func TestAccResourceShuffle_Keepers_Replace_ValueToNewValue(t *testing.T) {
+	var result1, result2 []string
+
+	resource.ParallelTest(t, resource.TestCase{
+		Steps: []resource.TestStep{
+			{
+				ProtoV5ProviderFactories: protoV5ProviderFactories(),
+				Config: `resource "random_shuffle" "test" {
+					input = ["a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k"]
+					keepers = {
+						"key" = "123"
+					}
+				}`,
+				Check: resource.ComposeTestCheckFunc(
+					testExtractResourceAttrList("random_shuffle.test", "result", &result1),
+					resource.TestCheckResourceAttr("random_shuffle.test", "keepers.%", "1"),
+				),
+			},
+			{
+				ProtoV5ProviderFactories: protoV5ProviderFactories(),
+				Config: `resource "random_shuffle" "test" {
+					input = ["a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k"]
+					keepers = {
+						"key" = "456"
+					}
+				}`,
+				Check: resource.ComposeTestCheckFunc(
+					testExtractResourceAttrList("random_shuffle.test", "result", &result2),
+					testCheckAttributeValueListsDiffer(&result1, &result2),
+					resource.TestCheckResourceAttr("random_shuffle.test", "keepers.%", "1"),
+				),
+			},
+		},
+	})
+}
+
+func TestAccResourceShuffle_Keepers_FrameworkMigration_NullMapToNullValue(t *testing.T) {
+	var result1, result2 []string
+
+	resource.ParallelTest(t, resource.TestCase{
+		Steps: []resource.TestStep{
+			{
+				ExternalProviders: providerVersion332(),
+				Config: `resource "random_shuffle" "test" {
+					input = ["a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k"]
+					keepers = {
+						"key" = null
+					}
+				}`,
+				Check: resource.ComposeTestCheckFunc(
+					testExtractResourceAttrList("random_shuffle.test", "result", &result1),
+					resource.TestCheckResourceAttr("random_shuffle.test", "keepers.%", "0"),
+				),
+			},
+			{
+				ProtoV5ProviderFactories: protoV5ProviderFactories(),
+				Config: `resource "random_shuffle" "test" {
+					input = ["a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k"]
+					keepers = {
+						"key" = null
+					}
+				}`,
+				Check: resource.ComposeTestCheckFunc(
+					testExtractResourceAttrList("random_shuffle.test", "result", &result2),
+					testCheckAttributeValueListsEqual(&result1, &result2),
+					resource.TestCheckResourceAttr("random_shuffle.test", "keepers.%", "1"),
+				),
+			},
+		},
+	})
+}
+
+func TestAccResourceShuffle_Keepers_FrameworkMigration_NullMapToValue(t *testing.T) {
+	var result1, result2 []string
+
+	resource.ParallelTest(t, resource.TestCase{
+		Steps: []resource.TestStep{
+			{
+				ExternalProviders: providerVersion332(),
+				Config: `resource "random_shuffle" "test" {
+					input = ["a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k"]
+					keepers = {
+						"key" = null
+					}
+				}`,
+				Check: resource.ComposeTestCheckFunc(
+					testExtractResourceAttrList("random_shuffle.test", "result", &result1),
+					resource.TestCheckResourceAttr("random_shuffle.test", "keepers.%", "0"),
+				),
+			},
+			{
+				ProtoV5ProviderFactories: protoV5ProviderFactories(),
+				Config: `resource "random_shuffle" "test" {
+					input = ["a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k"]
+					keepers = {
+						"key" = "123"
+					}
+				}`,
+				Check: resource.ComposeTestCheckFunc(
+					testExtractResourceAttrList("random_shuffle.test", "result", &result2),
+					testCheckAttributeValueListsDiffer(&result1, &result2),
+					resource.TestCheckResourceAttr("random_shuffle.test", "keepers.%", "1"),
+				),
+			},
+		},
+	})
+}
+
+func TestAccResourceShuffle_Keepers_FrameworkMigration_NullMapToMultipleNullValue(t *testing.T) {
+	var result1, result2 []string
+
+	resource.ParallelTest(t, resource.TestCase{
+		Steps: []resource.TestStep{
+			{
+				ExternalProviders: providerVersion332(),
+				Config: `resource "random_shuffle" "test" {
+					input = ["a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k"]
+					keepers = {
+						"key1" = null
+						"key2" = null
+					}
+				}`,
+				Check: resource.ComposeTestCheckFunc(
+					testExtractResourceAttrList("random_shuffle.test", "result", &result1),
+					resource.TestCheckResourceAttr("random_shuffle.test", "keepers.%", "0"),
+				),
+			},
+			{
+				ProtoV5ProviderFactories: protoV5ProviderFactories(),
+				Config: `resource "random_shuffle" "test" {
+					input = ["a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k"]
+					keepers = {
+						"key1" = null
+						"key2" = null
+					}
+				}`,
+				Check: resource.ComposeTestCheckFunc(
+					testExtractResourceAttrList("random_shuffle.test", "result", &result2),
+					testCheckAttributeValueListsEqual(&result1, &result2),
+					resource.TestCheckResourceAttr("random_shuffle.test", "keepers.%", "2"),
+				),
+			},
+		},
+	})
+}
+
+func TestAccResourceShuffle_Keepers_FrameworkMigration_NullMapToMultipleValue(t *testing.T) {
+	var result1, result2 []string
+
+	resource.ParallelTest(t, resource.TestCase{
+		Steps: []resource.TestStep{
+			{
+				ExternalProviders: providerVersion332(),
+				Config: `resource "random_shuffle" "test" {
+					input = ["a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k"]
+					keepers = {
+						"key1" = null
+						"key2" = null
+					}
+				}`,
+				Check: resource.ComposeTestCheckFunc(
+					testExtractResourceAttrList("random_shuffle.test", "result", &result1),
+					resource.TestCheckResourceAttr("random_shuffle.test", "keepers.%", "0"),
+				),
+			},
+			{
+				ProtoV5ProviderFactories: protoV5ProviderFactories(),
+				Config: `resource "random_shuffle" "test" {
+					input = ["a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k"]
+					keepers = {
+						"key1" = "123"
+						"key2" = "456"
+					}
+				}`,
+				Check: resource.ComposeTestCheckFunc(
+					testExtractResourceAttrList("random_shuffle.test", "result", &result2),
+					testCheckAttributeValueListsDiffer(&result1, &result2),
+					resource.TestCheckResourceAttr("random_shuffle.test", "keepers.%", "2"),
+				),
+			},
+		},
+	})
+}
+
+func TestAccResourceShuffle_Keepers_FrameworkMigration_NullMapValue(t *testing.T) {
+	var result1, result2 []string
+
+	resource.ParallelTest(t, resource.TestCase{
+		Steps: []resource.TestStep{
+			{
+				ExternalProviders: providerVersion332(),
+				Config: `resource "random_shuffle" "test" {
+					input = ["a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k"]
+					keepers = {
+						"key1" = "123"
+						"key2" = null
+					}
+				}`,
+				Check: resource.ComposeTestCheckFunc(
+					testExtractResourceAttrList("random_shuffle.test", "result", &result1),
+					resource.TestCheckResourceAttr("random_shuffle.test", "keepers.%", "1"),
+				),
+			},
+			{
+				ProtoV5ProviderFactories: protoV5ProviderFactories(),
+				Config: `resource "random_shuffle" "test" {
+					input = ["a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k"]
+					keepers = {
+						"key1" = "123"
+						"key2" = null
+					}
+				}`,
+				Check: resource.ComposeTestCheckFunc(
+					testExtractResourceAttrList("random_shuffle.test", "result", &result2),
+					testCheckAttributeValueListsEqual(&result1, &result2),
+					resource.TestCheckResourceAttr("random_shuffle.test", "keepers.%", "2"),
+				),
+			},
+		},
+	})
+}
+
+func TestAccResourceShuffle_Keepers_FrameworkMigration_NullMapValueToValue(t *testing.T) {
+	var result1, result2 []string
+
+	resource.ParallelTest(t, resource.TestCase{
+		Steps: []resource.TestStep{
+			{
+				ExternalProviders: providerVersion332(),
+				Config: `resource "random_shuffle" "test" {
+					input = ["a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k"]
+					keepers = {
+						"key1" = "123"
+						"key2" = null
+					}
+				}`,
+				Check: resource.ComposeTestCheckFunc(
+					testExtractResourceAttrList("random_shuffle.test", "result", &result1),
+					resource.TestCheckResourceAttr("random_shuffle.test", "keepers.%", "1"),
+				),
+			},
+			{
+				ProtoV5ProviderFactories: protoV5ProviderFactories(),
+				Config: `resource "random_shuffle" "test" {
+					input = ["a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k"]
+					keepers = {
+						"key1" = "123"
+						"key2" = "456"
+					}
+				}`,
+				Check: resource.ComposeTestCheckFunc(
+					testExtractResourceAttrList("random_shuffle.test", "result", &result2),
+					testCheckAttributeValueListsDiffer(&result1, &result2),
+					resource.TestCheckResourceAttr("random_shuffle.test", "keepers.%", "2"),
 				),
 			},
 		},
@@ -175,6 +921,69 @@ func testAccResourceShuffleCheckLength(expectedLength string) func(input string)
 	return func(input string) error {
 		if input != expectedLength {
 			return fmt.Errorf("got length %s; expected length %s", input, expectedLength)
+		}
+
+		return nil
+	}
+}
+
+//nolint:unparam
+func testExtractResourceAttrList(resourceName string, attributeName string, attributeValue *[]string) resource.TestCheckFunc {
+	return func(s *terraform.State) error {
+		rs, ok := s.RootModule().Resources[resourceName]
+
+		if !ok {
+			return fmt.Errorf("resource name %s not found in state", resourceName)
+		}
+
+		elementCountAttr := attributeName + ".#"
+
+		elementCountValue, ok := rs.Primary.Attributes[elementCountAttr]
+
+		if !ok {
+			return fmt.Errorf("attribute %s not found in resource %s state", elementCountAttr, resourceName)
+		}
+
+		elementCount, err := strconv.Atoi(elementCountValue)
+
+		if err != nil {
+			return fmt.Errorf("attribute %s not integer: %w", elementCountAttr, err)
+		}
+
+		listValue := make([]string, elementCount)
+
+		for i := 0; i < elementCount; i++ {
+			attr := attributeName + "." + strconv.Itoa(i)
+
+			attrValue, ok := rs.Primary.Attributes[attr]
+
+			if !ok {
+				return fmt.Errorf("attribute %s not found in resource %s state", attr, resourceName)
+			}
+
+			listValue[i] = attrValue
+		}
+
+		*attributeValue = listValue
+
+		return nil
+	}
+}
+
+func testCheckAttributeValueListsDiffer(i *[]string, j *[]string) resource.TestCheckFunc {
+	return func(s *terraform.State) error {
+		if reflect.DeepEqual(i, j) {
+			return fmt.Errorf("attribute values are the same")
+		}
+
+		return nil
+	}
+}
+
+func testCheckAttributeValueListsEqual(i *[]string, j *[]string) resource.TestCheckFunc {
+	return func(s *terraform.State) error {
+		if !reflect.DeepEqual(i, j) {
+			return fmt.Errorf("attribute values are different, got %v and %v", i, j)
 		}
 
 		return nil

@@ -12,6 +12,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/tfsdk"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 
+	"github.com/terraform-providers/terraform-provider-random/internal/planmodifiers"
 	"github.com/terraform-providers/terraform-provider-random/internal/random"
 )
 
@@ -34,8 +35,10 @@ func (r *integerResourceType) GetSchema(context.Context) (tfsdk.Schema, diag.Dia
 				Type: types.MapType{
 					ElemType: types.StringType,
 				},
-				Optional:      true,
-				PlanModifiers: []tfsdk.AttributePlanModifier{resource.RequiresReplace()},
+				Optional: true,
+				PlanModifiers: []tfsdk.AttributePlanModifier{
+					planmodifiers.RequiresReplaceIfValuesNotNull(),
+				},
 			},
 			"min": {
 				Description:   "The minimum inclusive value of the range.",
@@ -59,11 +62,17 @@ func (r *integerResourceType) GetSchema(context.Context) (tfsdk.Schema, diag.Dia
 				Description: "The random integer result.",
 				Type:        types.Int64Type,
 				Computed:    true,
+				PlanModifiers: []tfsdk.AttributePlanModifier{
+					resource.UseStateForUnknown(),
+				},
 			},
 			"id": {
 				Description: "The string representation of the integer result.",
 				Type:        types.StringType,
 				Computed:    true,
+				PlanModifiers: []tfsdk.AttributePlanModifier{
+					resource.UseStateForUnknown(),
+				},
 			},
 		},
 	}, nil
@@ -129,9 +138,17 @@ func (r *integerResource) Create(ctx context.Context, req resource.CreateRequest
 func (r *integerResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
 }
 
-// Update is intentionally left blank as all required and optional attributes force replacement of the resource
-// through the RequiresReplace AttributePlanModifier.
+// Update ensures the plan value is copied to the state to complete the update.
 func (r *integerResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
+	var model integerModelV0
+
+	resp.Diagnostics.Append(req.Plan.Get(ctx, &model)...)
+
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	resp.Diagnostics.Append(resp.State.Set(ctx, &model)...)
 }
 
 // Delete does not need to explicitly call resp.State.RemoveResource() as this is automatically handled by the

@@ -16,6 +16,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types"
 
 	"github.com/terraform-providers/terraform-provider-random/internal/diagnostics"
+	"github.com/terraform-providers/terraform-provider-random/internal/planmodifiers"
 )
 
 var _ provider.ResourceType = (*idResourceType)(nil)
@@ -47,7 +48,7 @@ exist concurrently.
 				},
 				Optional: true,
 				PlanModifiers: []tfsdk.AttributePlanModifier{
-					resource.RequiresReplace(),
+					planmodifiers.RequiresReplaceIfValuesNotNull(),
 				},
 			},
 			"byte_length": {
@@ -73,27 +74,42 @@ exist concurrently.
 					"case-sensitive letters, digits and the characters `_` and `-`.",
 				Type:     types.StringType,
 				Computed: true,
+				PlanModifiers: []tfsdk.AttributePlanModifier{
+					resource.UseStateForUnknown(),
+				},
 			},
 			"b64_std": {
 				Description: "The generated id presented in base64 without additional transformations.",
 				Type:        types.StringType,
 				Computed:    true,
+				PlanModifiers: []tfsdk.AttributePlanModifier{
+					resource.UseStateForUnknown(),
+				},
 			},
 			"hex": {
 				Description: "The generated id presented in padded hexadecimal digits. This result will " +
 					"always be twice as long as the requested byte length.",
 				Type:     types.StringType,
 				Computed: true,
+				PlanModifiers: []tfsdk.AttributePlanModifier{
+					resource.UseStateForUnknown(),
+				},
 			},
 			"dec": {
 				Description: "The generated id presented in non-padded decimal digits.",
 				Type:        types.StringType,
 				Computed:    true,
+				PlanModifiers: []tfsdk.AttributePlanModifier{
+					resource.UseStateForUnknown(),
+				},
 			},
 			"id": {
 				Description: "The generated id presented in base64 without additional transformations or prefix.",
 				Type:        types.StringType,
 				Computed:    true,
+				PlanModifiers: []tfsdk.AttributePlanModifier{
+					resource.UseStateForUnknown(),
+				},
 			},
 		},
 	}, nil
@@ -163,9 +179,17 @@ func (r *idResource) Create(ctx context.Context, req resource.CreateRequest, res
 func (r *idResource) Read(context.Context, resource.ReadRequest, *resource.ReadResponse) {
 }
 
-// Update is intentionally left blank as all required and optional attributes force replacement of the resource
-// through the RequiresReplace AttributePlanModifier.
-func (r *idResource) Update(context.Context, resource.UpdateRequest, *resource.UpdateResponse) {
+// Update ensures the plan value is copied to the state to complete the update.
+func (r *idResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
+	var model idModelV0
+
+	resp.Diagnostics.Append(req.Plan.Get(ctx, &model)...)
+
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	resp.Diagnostics.Append(resp.State.Set(ctx, &model)...)
 }
 
 // Delete does not need to explicitly call resp.State.RemoveResource() as this is automatically handled by the
