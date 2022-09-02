@@ -927,6 +927,7 @@ func testAccResourceShuffleCheckLength(expectedLength string) func(input string)
 	}
 }
 
+//nolint:unparam
 func testExtractResourceAttrList(resourceName string, attributeName string, attributeValue *[]string) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 		rs, ok := s.RootModule().Resources[resourceName]
