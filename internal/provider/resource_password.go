@@ -285,7 +285,9 @@ func upgradePasswordStateV2toV3(ctx context.Context, req resource.UpgradeStateRe
 
 	// Schema version 2 to schema version 3 is a duplicate of the data,
 	// however the BcryptHash value may have been incorrectly generated.
-	passwordDataV3 := passwordModelV3{ //lint:ignore S1016 // Over time the V3 model may change.
+
+	//nolint:gosimple // V3 model will expand over time so all fields are written out to help future code changes.
+	passwordDataV3 := passwordModelV3{
 		BcryptHash:      passwordDataV2.BcryptHash,
 		ID:              passwordDataV2.ID,
 		Keepers:         passwordDataV2.Keepers,
