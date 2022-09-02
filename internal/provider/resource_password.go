@@ -82,7 +82,7 @@ func (r *passwordResource) Create(ctx context.Context, req resource.CreateReques
 		Result:          types.String{Value: string(result)},
 	}
 
-	hash, err := generateHash(plan.Result.Value)
+	hash, err := generateHash(string(result))
 	if err != nil {
 		resp.Diagnostics.Append(diagnostics.HashGenerationError(err.Error())...)
 	}

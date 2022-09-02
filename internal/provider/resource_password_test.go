@@ -14,8 +14,53 @@ import (
 	"github.com/hashicorp/terraform-plugin-go/tftypes"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
+	"github.com/terraform-providers/terraform-provider-random/internal/random"
 	"golang.org/x/crypto/bcrypt"
 )
+
+func TestGenerateHash(t *testing.T) {
+	t.Parallel()
+
+	testCases := map[string]struct {
+		input random.StringParams
+	}{
+		"defaults": {
+			input: random.StringParams{
+				Length:  32, // Required
+				Lower:   true,
+				Numeric: true,
+				Special: true,
+				Upper:   true,
+			},
+		},
+	}
+
+	for name, testCase := range testCases {
+		name, testCase := name, testCase
+
+		t.Run(name, func(t *testing.T) {
+			t.Parallel()
+
+			randomBytes, err := random.CreateString(testCase.input)
+
+			if err != nil {
+				t.Fatalf("unexpected random.CreateString error: %s", err)
+			}
+
+			hash, err := generateHash(string(randomBytes))
+
+			if err != nil {
+				t.Fatalf("unexpected generateHash error: %s", err)
+			}
+
+			err = bcrypt.CompareHashAndPassword([]byte(hash), randomBytes)
+
+			if err != nil {
+				t.Fatalf("unexpected bcrypt.CompareHashAndPassword error: %s", err)
+			}
+		})
+	}
+}
 
 func TestAccResourcePassword(t *testing.T) {
 	resource.UnitTest(t, resource.TestCase{
@@ -49,6 +94,30 @@ func TestAccResourcePassword(t *testing.T) {
 				ImportState:             true,
 				ImportStateVerify:       true,
 				ImportStateVerifyIgnore: []string{"bcrypt_hash"},
+			},
+		},
+	})
+}
+
+func TestAccResourcePassword_BcryptHash(t *testing.T) {
+	t.Parallel()
+
+	var result, bcryptHash string
+
+	resource.UnitTest(t, resource.TestCase{
+		ProtoV5ProviderFactories: protoV5ProviderFactories(),
+		Steps: []resource.TestStep{
+			{
+				Config: `resource "random_password" "test" {
+							length = 12
+						}`,
+				Check: resource.ComposeTestCheckFunc(
+					testExtractResourceAttr("random_password.test", "bcrypt_hash", &bcryptHash),
+					testExtractResourceAttr("random_password.test", "result", &result),
+					func(s *terraform.State) error {
+						return bcrypt.CompareHashAndPassword([]byte(bcryptHash), []byte(result))
+					},
+				),
 			},
 		},
 	})
