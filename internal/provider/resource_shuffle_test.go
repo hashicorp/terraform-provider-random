@@ -2,9 +2,12 @@ package provider
 
 import (
 	"fmt"
+	"reflect"
+	"strconv"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 )
 
 // These results are current as of Go 1.6. The Go
@@ -39,7 +42,7 @@ func TestAccResourceShuffle(t *testing.T) {
 }
 
 func TestAccResourceShuffle_Keepers_Keep_EmptyMap(t *testing.T) {
-	var result1, result2 string
+	var result1, result2 []string
 
 	resource.ParallelTest(t, resource.TestCase{
 		Steps: []resource.TestStep{
@@ -50,7 +53,7 @@ func TestAccResourceShuffle_Keepers_Keep_EmptyMap(t *testing.T) {
 					keepers = {}
 				}`,
 				Check: resource.ComposeTestCheckFunc(
-					testExtractResourceAttr("random_shuffle.test", "result.0", &result1),
+					testExtractResourceAttrList("random_shuffle.test", "result", &result1),
 					resource.TestCheckResourceAttr("random_shuffle.test", "keepers.%", "0"),
 				),
 			},
@@ -61,8 +64,8 @@ func TestAccResourceShuffle_Keepers_Keep_EmptyMap(t *testing.T) {
 					keepers = {}
 				}`,
 				Check: resource.ComposeTestCheckFunc(
-					testExtractResourceAttr("random_shuffle.test", "result.0", &result2),
-					testCheckAttributeValuesEqual(&result1, &result2),
+					testExtractResourceAttrList("random_shuffle.test", "result", &result2),
+					testCheckAttributeValueListsEqual(&result1, &result2),
 					resource.TestCheckResourceAttr("random_shuffle.test", "keepers.%", "0"),
 				),
 			},
@@ -71,7 +74,7 @@ func TestAccResourceShuffle_Keepers_Keep_EmptyMap(t *testing.T) {
 }
 
 func TestAccResourceShuffle_Keepers_Keep_EmptyMapToNullValue(t *testing.T) {
-	var result1, result2 string
+	var result1, result2 []string
 
 	resource.ParallelTest(t, resource.TestCase{
 		Steps: []resource.TestStep{
@@ -82,7 +85,7 @@ func TestAccResourceShuffle_Keepers_Keep_EmptyMapToNullValue(t *testing.T) {
 					keepers = {}
 				}`,
 				Check: resource.ComposeTestCheckFunc(
-					testExtractResourceAttr("random_shuffle.test", "result.0", &result1),
+					testExtractResourceAttrList("random_shuffle.test", "result", &result1),
 					resource.TestCheckResourceAttr("random_shuffle.test", "keepers.%", "0"),
 				),
 			},
@@ -95,8 +98,8 @@ func TestAccResourceShuffle_Keepers_Keep_EmptyMapToNullValue(t *testing.T) {
 					}
 				}`,
 				Check: resource.ComposeTestCheckFunc(
-					testExtractResourceAttr("random_shuffle.test", "result.0", &result2),
-					testCheckAttributeValuesEqual(&result1, &result2),
+					testExtractResourceAttrList("random_shuffle.test", "result", &result2),
+					testCheckAttributeValueListsEqual(&result1, &result2),
 					resource.TestCheckResourceAttr("random_shuffle.test", "keepers.%", "1"),
 				),
 			},
@@ -105,7 +108,7 @@ func TestAccResourceShuffle_Keepers_Keep_EmptyMapToNullValue(t *testing.T) {
 }
 
 func TestAccResourceShuffle_Keepers_Keep_NullMap(t *testing.T) {
-	var result1, result2 string
+	var result1, result2 []string
 
 	resource.ParallelTest(t, resource.TestCase{
 		Steps: []resource.TestStep{
@@ -115,7 +118,7 @@ func TestAccResourceShuffle_Keepers_Keep_NullMap(t *testing.T) {
 					input = ["a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k"]
 				}`,
 				Check: resource.ComposeTestCheckFunc(
-					testExtractResourceAttr("random_shuffle.test", "result.0", &result1),
+					testExtractResourceAttrList("random_shuffle.test", "result", &result1),
 					resource.TestCheckResourceAttr("random_shuffle.test", "keepers.%", "0"),
 				),
 			},
@@ -125,8 +128,8 @@ func TestAccResourceShuffle_Keepers_Keep_NullMap(t *testing.T) {
 					input = ["a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k"]
 				}`,
 				Check: resource.ComposeTestCheckFunc(
-					testExtractResourceAttr("random_shuffle.test", "result.0", &result2),
-					testCheckAttributeValuesEqual(&result1, &result2),
+					testExtractResourceAttrList("random_shuffle.test", "result", &result2),
+					testCheckAttributeValueListsEqual(&result1, &result2),
 					resource.TestCheckResourceAttr("random_shuffle.test", "keepers.%", "0"),
 				),
 			},
@@ -135,7 +138,7 @@ func TestAccResourceShuffle_Keepers_Keep_NullMap(t *testing.T) {
 }
 
 func TestAccResourceShuffle_Keepers_Keep_NullMapToNullValue(t *testing.T) {
-	var result1, result2 string
+	var result1, result2 []string
 
 	resource.ParallelTest(t, resource.TestCase{
 		Steps: []resource.TestStep{
@@ -145,7 +148,7 @@ func TestAccResourceShuffle_Keepers_Keep_NullMapToNullValue(t *testing.T) {
 					input = ["a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k"]
 				}`,
 				Check: resource.ComposeTestCheckFunc(
-					testExtractResourceAttr("random_shuffle.test", "result.0", &result1),
+					testExtractResourceAttrList("random_shuffle.test", "result", &result1),
 					resource.TestCheckResourceAttr("random_shuffle.test", "keepers.%", "0"),
 				),
 			},
@@ -158,8 +161,8 @@ func TestAccResourceShuffle_Keepers_Keep_NullMapToNullValue(t *testing.T) {
 					}
 				}`,
 				Check: resource.ComposeTestCheckFunc(
-					testExtractResourceAttr("random_shuffle.test", "result.0", &result2),
-					testCheckAttributeValuesEqual(&result1, &result2),
+					testExtractResourceAttrList("random_shuffle.test", "result", &result2),
+					testCheckAttributeValueListsEqual(&result1, &result2),
 					resource.TestCheckResourceAttr("random_shuffle.test", "keepers.%", "1"),
 				),
 			},
@@ -168,7 +171,7 @@ func TestAccResourceShuffle_Keepers_Keep_NullMapToNullValue(t *testing.T) {
 }
 
 func TestAccResourceShuffle_Keepers_Keep_NullValue(t *testing.T) {
-	var result1, result2 string
+	var result1, result2 []string
 
 	resource.ParallelTest(t, resource.TestCase{
 		Steps: []resource.TestStep{
@@ -181,7 +184,7 @@ func TestAccResourceShuffle_Keepers_Keep_NullValue(t *testing.T) {
 					}
 				}`,
 				Check: resource.ComposeTestCheckFunc(
-					testExtractResourceAttr("random_shuffle.test", "result.0", &result1),
+					testExtractResourceAttrList("random_shuffle.test", "result", &result1),
 					resource.TestCheckResourceAttr("random_shuffle.test", "keepers.%", "1"),
 				),
 			},
@@ -194,8 +197,8 @@ func TestAccResourceShuffle_Keepers_Keep_NullValue(t *testing.T) {
 					}
 				}`,
 				Check: resource.ComposeTestCheckFunc(
-					testExtractResourceAttr("random_shuffle.test", "result.0", &result2),
-					testCheckAttributeValuesEqual(&result1, &result2),
+					testExtractResourceAttrList("random_shuffle.test", "result", &result2),
+					testCheckAttributeValueListsEqual(&result1, &result2),
 					resource.TestCheckResourceAttr("random_shuffle.test", "keepers.%", "1"),
 				),
 			},
@@ -204,7 +207,7 @@ func TestAccResourceShuffle_Keepers_Keep_NullValue(t *testing.T) {
 }
 
 func TestAccResourceShuffle_Keepers_Keep_NullValues(t *testing.T) {
-	var result1, result2 string
+	var result1, result2 []string
 
 	resource.ParallelTest(t, resource.TestCase{
 		Steps: []resource.TestStep{
@@ -218,7 +221,7 @@ func TestAccResourceShuffle_Keepers_Keep_NullValues(t *testing.T) {
 					}
 				}`,
 				Check: resource.ComposeTestCheckFunc(
-					testExtractResourceAttr("random_shuffle.test", "result.0", &result1),
+					testExtractResourceAttrList("random_shuffle.test", "result", &result1),
 					resource.TestCheckResourceAttr("random_shuffle.test", "keepers.%", "2"),
 				),
 			},
@@ -232,8 +235,8 @@ func TestAccResourceShuffle_Keepers_Keep_NullValues(t *testing.T) {
 					}
 				}`,
 				Check: resource.ComposeTestCheckFunc(
-					testExtractResourceAttr("random_shuffle.test", "result.0", &result2),
-					testCheckAttributeValuesEqual(&result1, &result2),
+					testExtractResourceAttrList("random_shuffle.test", "result", &result2),
+					testCheckAttributeValueListsEqual(&result1, &result2),
 					resource.TestCheckResourceAttr("random_shuffle.test", "keepers.%", "2"),
 				),
 			},
@@ -242,7 +245,7 @@ func TestAccResourceShuffle_Keepers_Keep_NullValues(t *testing.T) {
 }
 
 func TestAccResourceShuffle_Keepers_Keep_Value(t *testing.T) {
-	var result1, result2 string
+	var result1, result2 []string
 
 	resource.ParallelTest(t, resource.TestCase{
 		Steps: []resource.TestStep{
@@ -255,7 +258,7 @@ func TestAccResourceShuffle_Keepers_Keep_Value(t *testing.T) {
 					}
 				}`,
 				Check: resource.ComposeTestCheckFunc(
-					testExtractResourceAttr("random_shuffle.test", "result.0", &result1),
+					testExtractResourceAttrList("random_shuffle.test", "result", &result1),
 					resource.TestCheckResourceAttr("random_shuffle.test", "keepers.%", "1"),
 				),
 			},
@@ -268,8 +271,8 @@ func TestAccResourceShuffle_Keepers_Keep_Value(t *testing.T) {
 					}
 				}`,
 				Check: resource.ComposeTestCheckFunc(
-					testExtractResourceAttr("random_shuffle.test", "result.0", &result2),
-					testCheckAttributeValuesEqual(&result1, &result2),
+					testExtractResourceAttrList("random_shuffle.test", "result", &result2),
+					testCheckAttributeValueListsEqual(&result1, &result2),
 					resource.TestCheckResourceAttr("random_shuffle.test", "keepers.%", "1"),
 				),
 			},
@@ -278,7 +281,7 @@ func TestAccResourceShuffle_Keepers_Keep_Value(t *testing.T) {
 }
 
 func TestAccResourceShuffle_Keepers_Keep_Values(t *testing.T) {
-	var result1, result2 string
+	var result1, result2 []string
 
 	resource.ParallelTest(t, resource.TestCase{
 		Steps: []resource.TestStep{
@@ -292,7 +295,7 @@ func TestAccResourceShuffle_Keepers_Keep_Values(t *testing.T) {
 					}
 				}`,
 				Check: resource.ComposeTestCheckFunc(
-					testExtractResourceAttr("random_shuffle.test", "result.0", &result1),
+					testExtractResourceAttrList("random_shuffle.test", "result", &result1),
 					resource.TestCheckResourceAttr("random_shuffle.test", "keepers.%", "2"),
 				),
 			},
@@ -306,8 +309,8 @@ func TestAccResourceShuffle_Keepers_Keep_Values(t *testing.T) {
 					}
 				}`,
 				Check: resource.ComposeTestCheckFunc(
-					testExtractResourceAttr("random_shuffle.test", "result.0", &result2),
-					testCheckAttributeValuesEqual(&result1, &result2),
+					testExtractResourceAttrList("random_shuffle.test", "result", &result2),
+					testCheckAttributeValueListsEqual(&result1, &result2),
 					resource.TestCheckResourceAttr("random_shuffle.test", "keepers.%", "2"),
 				),
 			},
@@ -316,7 +319,7 @@ func TestAccResourceShuffle_Keepers_Keep_Values(t *testing.T) {
 }
 
 func TestAccResourceShuffle_Keepers_Replace_EmptyMapToValue(t *testing.T) {
-	var result1, result2 string
+	var result1, result2 []string
 
 	resource.ParallelTest(t, resource.TestCase{
 		Steps: []resource.TestStep{
@@ -327,7 +330,7 @@ func TestAccResourceShuffle_Keepers_Replace_EmptyMapToValue(t *testing.T) {
 					keepers = {}
 				}`,
 				Check: resource.ComposeTestCheckFunc(
-					testExtractResourceAttr("random_shuffle.test", "result.0", &result1),
+					testExtractResourceAttrList("random_shuffle.test", "result", &result1),
 					resource.TestCheckResourceAttr("random_shuffle.test", "keepers.%", "0"),
 				),
 			},
@@ -340,8 +343,8 @@ func TestAccResourceShuffle_Keepers_Replace_EmptyMapToValue(t *testing.T) {
 					}
 				}`,
 				Check: resource.ComposeTestCheckFunc(
-					testExtractResourceAttr("random_shuffle.test", "result.0", &result2),
-					testCheckAttributeValuesDiffer(&result1, &result2),
+					testExtractResourceAttrList("random_shuffle.test", "result", &result2),
+					testCheckAttributeValueListsDiffer(&result1, &result2),
 					resource.TestCheckResourceAttr("random_shuffle.test", "keepers.%", "1"),
 				),
 			},
@@ -350,7 +353,7 @@ func TestAccResourceShuffle_Keepers_Replace_EmptyMapToValue(t *testing.T) {
 }
 
 func TestAccResourceShuffle_Keepers_Replace_NullMapToValue(t *testing.T) {
-	var result1, result2 string
+	var result1, result2 []string
 
 	resource.ParallelTest(t, resource.TestCase{
 		Steps: []resource.TestStep{
@@ -360,7 +363,7 @@ func TestAccResourceShuffle_Keepers_Replace_NullMapToValue(t *testing.T) {
 					input = ["a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k"]
 				}`,
 				Check: resource.ComposeTestCheckFunc(
-					testExtractResourceAttr("random_shuffle.test", "result.0", &result1),
+					testExtractResourceAttrList("random_shuffle.test", "result", &result1),
 					resource.TestCheckResourceAttr("random_shuffle.test", "keepers.%", "0"),
 				),
 			},
@@ -373,8 +376,8 @@ func TestAccResourceShuffle_Keepers_Replace_NullMapToValue(t *testing.T) {
 					}
 				}`,
 				Check: resource.ComposeTestCheckFunc(
-					testExtractResourceAttr("random_shuffle.test", "result.0", &result2),
-					testCheckAttributeValuesDiffer(&result1, &result2),
+					testExtractResourceAttrList("random_shuffle.test", "result", &result2),
+					testCheckAttributeValueListsDiffer(&result1, &result2),
 					resource.TestCheckResourceAttr("random_shuffle.test", "keepers.%", "1"),
 				),
 			},
@@ -383,7 +386,7 @@ func TestAccResourceShuffle_Keepers_Replace_NullMapToValue(t *testing.T) {
 }
 
 func TestAccResourceShuffle_Keepers_Replace_NullValueToValue(t *testing.T) {
-	var result1, result2 string
+	var result1, result2 []string
 
 	resource.ParallelTest(t, resource.TestCase{
 		Steps: []resource.TestStep{
@@ -396,7 +399,7 @@ func TestAccResourceShuffle_Keepers_Replace_NullValueToValue(t *testing.T) {
 					}
 				}`,
 				Check: resource.ComposeTestCheckFunc(
-					testExtractResourceAttr("random_shuffle.test", "result.0", &result1),
+					testExtractResourceAttrList("random_shuffle.test", "result", &result1),
 					resource.TestCheckResourceAttr("random_shuffle.test", "keepers.%", "1"),
 				),
 			},
@@ -409,8 +412,8 @@ func TestAccResourceShuffle_Keepers_Replace_NullValueToValue(t *testing.T) {
 					}
 				}`,
 				Check: resource.ComposeTestCheckFunc(
-					testExtractResourceAttr("random_shuffle.test", "result.0", &result2),
-					testCheckAttributeValuesDiffer(&result1, &result2),
+					testExtractResourceAttrList("random_shuffle.test", "result", &result2),
+					testCheckAttributeValueListsDiffer(&result1, &result2),
 					resource.TestCheckResourceAttr("random_shuffle.test", "keepers.%", "1"),
 				),
 			},
@@ -419,7 +422,7 @@ func TestAccResourceShuffle_Keepers_Replace_NullValueToValue(t *testing.T) {
 }
 
 func TestAccResourceShuffle_Keepers_Replace_ValueToEmptyMap(t *testing.T) {
-	var result1, result2 string
+	var result1, result2 []string
 
 	resource.ParallelTest(t, resource.TestCase{
 		Steps: []resource.TestStep{
@@ -432,7 +435,7 @@ func TestAccResourceShuffle_Keepers_Replace_ValueToEmptyMap(t *testing.T) {
 					}
 				}`,
 				Check: resource.ComposeTestCheckFunc(
-					testExtractResourceAttr("random_shuffle.test", "result.0", &result1),
+					testExtractResourceAttrList("random_shuffle.test", "result", &result1),
 					resource.TestCheckResourceAttr("random_shuffle.test", "keepers.%", "1"),
 				),
 			},
@@ -443,8 +446,8 @@ func TestAccResourceShuffle_Keepers_Replace_ValueToEmptyMap(t *testing.T) {
 					keepers = {}
 				}`,
 				Check: resource.ComposeTestCheckFunc(
-					testExtractResourceAttr("random_shuffle.test", "result.0", &result2),
-					testCheckAttributeValuesDiffer(&result1, &result2),
+					testExtractResourceAttrList("random_shuffle.test", "result", &result2),
+					testCheckAttributeValueListsDiffer(&result1, &result2),
 					resource.TestCheckResourceAttr("random_shuffle.test", "keepers.%", "0"),
 				),
 			},
@@ -453,7 +456,7 @@ func TestAccResourceShuffle_Keepers_Replace_ValueToEmptyMap(t *testing.T) {
 }
 
 func TestAccResourceShuffle_Keepers_Replace_ValueToNullMap(t *testing.T) {
-	var result1, result2 string
+	var result1, result2 []string
 
 	resource.ParallelTest(t, resource.TestCase{
 		Steps: []resource.TestStep{
@@ -466,7 +469,7 @@ func TestAccResourceShuffle_Keepers_Replace_ValueToNullMap(t *testing.T) {
 					}
 				}`,
 				Check: resource.ComposeTestCheckFunc(
-					testExtractResourceAttr("random_shuffle.test", "result.0", &result1),
+					testExtractResourceAttrList("random_shuffle.test", "result", &result1),
 					resource.TestCheckResourceAttr("random_shuffle.test", "keepers.%", "1"),
 				),
 			},
@@ -476,8 +479,8 @@ func TestAccResourceShuffle_Keepers_Replace_ValueToNullMap(t *testing.T) {
 					input = ["a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k"]
 				}`,
 				Check: resource.ComposeTestCheckFunc(
-					testExtractResourceAttr("random_shuffle.test", "result.0", &result2),
-					testCheckAttributeValuesDiffer(&result1, &result2),
+					testExtractResourceAttrList("random_shuffle.test", "result", &result2),
+					testCheckAttributeValueListsDiffer(&result1, &result2),
 					resource.TestCheckResourceAttr("random_shuffle.test", "keepers.%", "0"),
 				),
 			},
@@ -486,7 +489,7 @@ func TestAccResourceShuffle_Keepers_Replace_ValueToNullMap(t *testing.T) {
 }
 
 func TestAccResourceShuffle_Keepers_Replace_ValueToNullValue(t *testing.T) {
-	var result1, result2 string
+	var result1, result2 []string
 
 	resource.ParallelTest(t, resource.TestCase{
 		Steps: []resource.TestStep{
@@ -499,7 +502,7 @@ func TestAccResourceShuffle_Keepers_Replace_ValueToNullValue(t *testing.T) {
 					}
 				}`,
 				Check: resource.ComposeTestCheckFunc(
-					testExtractResourceAttr("random_shuffle.test", "result.0", &result1),
+					testExtractResourceAttrList("random_shuffle.test", "result", &result1),
 					resource.TestCheckResourceAttr("random_shuffle.test", "keepers.%", "1"),
 				),
 			},
@@ -512,8 +515,8 @@ func TestAccResourceShuffle_Keepers_Replace_ValueToNullValue(t *testing.T) {
 					}
 				}`,
 				Check: resource.ComposeTestCheckFunc(
-					testExtractResourceAttr("random_shuffle.test", "result.0", &result2),
-					testCheckAttributeValuesDiffer(&result1, &result2),
+					testExtractResourceAttrList("random_shuffle.test", "result", &result2),
+					testCheckAttributeValueListsDiffer(&result1, &result2),
 					resource.TestCheckResourceAttr("random_shuffle.test", "keepers.%", "1"),
 				),
 			},
@@ -522,7 +525,7 @@ func TestAccResourceShuffle_Keepers_Replace_ValueToNullValue(t *testing.T) {
 }
 
 func TestAccResourceShuffle_Keepers_Replace_ValueToNewValue(t *testing.T) {
-	var result1, result2 string
+	var result1, result2 []string
 
 	resource.ParallelTest(t, resource.TestCase{
 		Steps: []resource.TestStep{
@@ -535,7 +538,7 @@ func TestAccResourceShuffle_Keepers_Replace_ValueToNewValue(t *testing.T) {
 					}
 				}`,
 				Check: resource.ComposeTestCheckFunc(
-					testExtractResourceAttr("random_shuffle.test", "result.0", &result1),
+					testExtractResourceAttrList("random_shuffle.test", "result", &result1),
 					resource.TestCheckResourceAttr("random_shuffle.test", "keepers.%", "1"),
 				),
 			},
@@ -548,8 +551,8 @@ func TestAccResourceShuffle_Keepers_Replace_ValueToNewValue(t *testing.T) {
 					}
 				}`,
 				Check: resource.ComposeTestCheckFunc(
-					testExtractResourceAttr("random_shuffle.test", "result.0", &result2),
-					testCheckAttributeValuesDiffer(&result1, &result2),
+					testExtractResourceAttrList("random_shuffle.test", "result", &result2),
+					testCheckAttributeValueListsDiffer(&result1, &result2),
 					resource.TestCheckResourceAttr("random_shuffle.test", "keepers.%", "1"),
 				),
 			},
@@ -558,7 +561,7 @@ func TestAccResourceShuffle_Keepers_Replace_ValueToNewValue(t *testing.T) {
 }
 
 func TestAccResourceShuffle_Keepers_FrameworkMigration_NullMapToNullValue(t *testing.T) {
-	var result1, result2 string
+	var result1, result2 []string
 
 	resource.ParallelTest(t, resource.TestCase{
 		Steps: []resource.TestStep{
@@ -571,7 +574,7 @@ func TestAccResourceShuffle_Keepers_FrameworkMigration_NullMapToNullValue(t *tes
 					}
 				}`,
 				Check: resource.ComposeTestCheckFunc(
-					testExtractResourceAttr("random_shuffle.test", "result.0", &result1),
+					testExtractResourceAttrList("random_shuffle.test", "result", &result1),
 					resource.TestCheckResourceAttr("random_shuffle.test", "keepers.%", "0"),
 				),
 			},
@@ -584,8 +587,8 @@ func TestAccResourceShuffle_Keepers_FrameworkMigration_NullMapToNullValue(t *tes
 					}
 				}`,
 				Check: resource.ComposeTestCheckFunc(
-					testExtractResourceAttr("random_shuffle.test", "result.0", &result2),
-					testCheckAttributeValuesEqual(&result1, &result2),
+					testExtractResourceAttrList("random_shuffle.test", "result", &result2),
+					testCheckAttributeValueListsEqual(&result1, &result2),
 					resource.TestCheckResourceAttr("random_shuffle.test", "keepers.%", "1"),
 				),
 			},
@@ -594,7 +597,7 @@ func TestAccResourceShuffle_Keepers_FrameworkMigration_NullMapToNullValue(t *tes
 }
 
 func TestAccResourceShuffle_Keepers_FrameworkMigration_NullMapToValue(t *testing.T) {
-	var result1, result2 string
+	var result1, result2 []string
 
 	resource.ParallelTest(t, resource.TestCase{
 		Steps: []resource.TestStep{
@@ -607,7 +610,7 @@ func TestAccResourceShuffle_Keepers_FrameworkMigration_NullMapToValue(t *testing
 					}
 				}`,
 				Check: resource.ComposeTestCheckFunc(
-					testExtractResourceAttr("random_shuffle.test", "result.0", &result1),
+					testExtractResourceAttrList("random_shuffle.test", "result", &result1),
 					resource.TestCheckResourceAttr("random_shuffle.test", "keepers.%", "0"),
 				),
 			},
@@ -620,8 +623,8 @@ func TestAccResourceShuffle_Keepers_FrameworkMigration_NullMapToValue(t *testing
 					}
 				}`,
 				Check: resource.ComposeTestCheckFunc(
-					testExtractResourceAttr("random_shuffle.test", "result.0", &result2),
-					testCheckAttributeValuesDiffer(&result1, &result2),
+					testExtractResourceAttrList("random_shuffle.test", "result", &result2),
+					testCheckAttributeValueListsDiffer(&result1, &result2),
 					resource.TestCheckResourceAttr("random_shuffle.test", "keepers.%", "1"),
 				),
 			},
@@ -630,7 +633,7 @@ func TestAccResourceShuffle_Keepers_FrameworkMigration_NullMapToValue(t *testing
 }
 
 func TestAccResourceShuffle_Keepers_FrameworkMigration_NullMapToMultipleNullValue(t *testing.T) {
-	var result1, result2 string
+	var result1, result2 []string
 
 	resource.ParallelTest(t, resource.TestCase{
 		Steps: []resource.TestStep{
@@ -644,7 +647,7 @@ func TestAccResourceShuffle_Keepers_FrameworkMigration_NullMapToMultipleNullValu
 					}
 				}`,
 				Check: resource.ComposeTestCheckFunc(
-					testExtractResourceAttr("random_shuffle.test", "result.0", &result1),
+					testExtractResourceAttrList("random_shuffle.test", "result", &result1),
 					resource.TestCheckResourceAttr("random_shuffle.test", "keepers.%", "0"),
 				),
 			},
@@ -658,8 +661,8 @@ func TestAccResourceShuffle_Keepers_FrameworkMigration_NullMapToMultipleNullValu
 					}
 				}`,
 				Check: resource.ComposeTestCheckFunc(
-					testExtractResourceAttr("random_shuffle.test", "result.0", &result2),
-					testCheckAttributeValuesEqual(&result1, &result2),
+					testExtractResourceAttrList("random_shuffle.test", "result", &result2),
+					testCheckAttributeValueListsEqual(&result1, &result2),
 					resource.TestCheckResourceAttr("random_shuffle.test", "keepers.%", "2"),
 				),
 			},
@@ -668,7 +671,7 @@ func TestAccResourceShuffle_Keepers_FrameworkMigration_NullMapToMultipleNullValu
 }
 
 func TestAccResourceShuffle_Keepers_FrameworkMigration_NullMapToMultipleValue(t *testing.T) {
-	var result1, result2 string
+	var result1, result2 []string
 
 	resource.ParallelTest(t, resource.TestCase{
 		Steps: []resource.TestStep{
@@ -682,7 +685,7 @@ func TestAccResourceShuffle_Keepers_FrameworkMigration_NullMapToMultipleValue(t 
 					}
 				}`,
 				Check: resource.ComposeTestCheckFunc(
-					testExtractResourceAttr("random_shuffle.test", "result.0", &result1),
+					testExtractResourceAttrList("random_shuffle.test", "result", &result1),
 					resource.TestCheckResourceAttr("random_shuffle.test", "keepers.%", "0"),
 				),
 			},
@@ -696,8 +699,8 @@ func TestAccResourceShuffle_Keepers_FrameworkMigration_NullMapToMultipleValue(t 
 					}
 				}`,
 				Check: resource.ComposeTestCheckFunc(
-					testExtractResourceAttr("random_shuffle.test", "result.0", &result2),
-					testCheckAttributeValuesDiffer(&result1, &result2),
+					testExtractResourceAttrList("random_shuffle.test", "result", &result2),
+					testCheckAttributeValueListsDiffer(&result1, &result2),
 					resource.TestCheckResourceAttr("random_shuffle.test", "keepers.%", "2"),
 				),
 			},
@@ -706,7 +709,7 @@ func TestAccResourceShuffle_Keepers_FrameworkMigration_NullMapToMultipleValue(t 
 }
 
 func TestAccResourceShuffle_Keepers_FrameworkMigration_NullMapValue(t *testing.T) {
-	var result1, result2 string
+	var result1, result2 []string
 
 	resource.ParallelTest(t, resource.TestCase{
 		Steps: []resource.TestStep{
@@ -720,7 +723,7 @@ func TestAccResourceShuffle_Keepers_FrameworkMigration_NullMapValue(t *testing.T
 					}
 				}`,
 				Check: resource.ComposeTestCheckFunc(
-					testExtractResourceAttr("random_shuffle.test", "result.0", &result1),
+					testExtractResourceAttrList("random_shuffle.test", "result", &result1),
 					resource.TestCheckResourceAttr("random_shuffle.test", "keepers.%", "1"),
 				),
 			},
@@ -734,8 +737,8 @@ func TestAccResourceShuffle_Keepers_FrameworkMigration_NullMapValue(t *testing.T
 					}
 				}`,
 				Check: resource.ComposeTestCheckFunc(
-					testExtractResourceAttr("random_shuffle.test", "result.0", &result2),
-					testCheckAttributeValuesEqual(&result1, &result2),
+					testExtractResourceAttrList("random_shuffle.test", "result", &result2),
+					testCheckAttributeValueListsEqual(&result1, &result2),
 					resource.TestCheckResourceAttr("random_shuffle.test", "keepers.%", "2"),
 				),
 			},
@@ -744,7 +747,7 @@ func TestAccResourceShuffle_Keepers_FrameworkMigration_NullMapValue(t *testing.T
 }
 
 func TestAccResourceShuffle_Keepers_FrameworkMigration_NullMapValueToValue(t *testing.T) {
-	var result1, result2 string
+	var result1, result2 []string
 
 	resource.ParallelTest(t, resource.TestCase{
 		Steps: []resource.TestStep{
@@ -758,7 +761,7 @@ func TestAccResourceShuffle_Keepers_FrameworkMigration_NullMapValueToValue(t *te
 					}
 				}`,
 				Check: resource.ComposeTestCheckFunc(
-					testExtractResourceAttr("random_shuffle.test", "result.0", &result1),
+					testExtractResourceAttrList("random_shuffle.test", "result", &result1),
 					resource.TestCheckResourceAttr("random_shuffle.test", "keepers.%", "1"),
 				),
 			},
@@ -772,8 +775,8 @@ func TestAccResourceShuffle_Keepers_FrameworkMigration_NullMapValueToValue(t *te
 					}
 				}`,
 				Check: resource.ComposeTestCheckFunc(
-					testExtractResourceAttr("random_shuffle.test", "result.0", &result2),
-					testCheckAttributeValuesDiffer(&result1, &result2),
+					testExtractResourceAttrList("random_shuffle.test", "result", &result2),
+					testCheckAttributeValueListsDiffer(&result1, &result2),
 					resource.TestCheckResourceAttr("random_shuffle.test", "keepers.%", "2"),
 				),
 			},
@@ -918,6 +921,68 @@ func testAccResourceShuffleCheckLength(expectedLength string) func(input string)
 	return func(input string) error {
 		if input != expectedLength {
 			return fmt.Errorf("got length %s; expected length %s", input, expectedLength)
+		}
+
+		return nil
+	}
+}
+
+func testExtractResourceAttrList(resourceName string, attributeName string, attributeValue *[]string) resource.TestCheckFunc {
+	return func(s *terraform.State) error {
+		rs, ok := s.RootModule().Resources[resourceName]
+
+		if !ok {
+			return fmt.Errorf("resource name %s not found in state", resourceName)
+		}
+
+		elementCountAttr := attributeName + ".#"
+
+		elementCountValue, ok := rs.Primary.Attributes[elementCountAttr]
+
+		if !ok {
+			return fmt.Errorf("attribute %s not found in resource %s state", elementCountAttr, resourceName)
+		}
+
+		elementCount, err := strconv.Atoi(elementCountValue)
+
+		if err != nil {
+			return fmt.Errorf("attribute %s not integer: %w", elementCountAttr, err)
+		}
+
+		listValue := make([]string, elementCount)
+
+		for i := 0; i < elementCount; i++ {
+			attr := attributeName + "." + strconv.Itoa(i)
+
+			attrValue, ok := rs.Primary.Attributes[attr]
+
+			if !ok {
+				return fmt.Errorf("attribute %s not found in resource %s state", attr, resourceName)
+			}
+
+			listValue[i] = attrValue
+		}
+
+		*attributeValue = listValue
+
+		return nil
+	}
+}
+
+func testCheckAttributeValueListsDiffer(i *[]string, j *[]string) resource.TestCheckFunc {
+	return func(s *terraform.State) error {
+		if reflect.DeepEqual(i, j) {
+			return fmt.Errorf("attribute values are the same")
+		}
+
+		return nil
+	}
+}
+
+func testCheckAttributeValueListsEqual(i *[]string, j *[]string) resource.TestCheckFunc {
+	return func(s *terraform.State) error {
+		if !reflect.DeepEqual(i, j) {
+			return fmt.Errorf("attribute values are different, got %v and %v", i, j)
 		}
 
 		return nil
