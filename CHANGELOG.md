@@ -1,4 +1,4 @@
-## 3.4.2 (unreleased)
+## 3.4.2 (September 02, 2022)
 
 BUG FIXES:
 
