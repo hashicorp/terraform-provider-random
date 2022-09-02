@@ -1,3 +1,9 @@
+## 3.4.* (unreleased)
+
+BUG FIXES:
+
+* resource: Prevent null `keeper` from forcing replacement ([305](https://github.com/hashicorp/terraform-provider-random/pull/305)).
+
 ## 3.4.1 (August 31, 2022)
 
 BUG FIXES:
