@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"regexp"
+	"runtime"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
@@ -506,17 +507,14 @@ func TestAccResourcePassword_Min(t *testing.T) {
 	})
 }
 
-// TestAccResourcePassword_UpgradeFromVersion2_2_1 requires that you are running an amd64 Terraform binary
-// if you are running this test locally on arm64 architecture otherwise you will see the following error:
-//
-// Error: Incompatible provider version
-//
-// Provider registry.terraform.io/hashicorp/random v2.2.1 does not have a
-// package available for your current platform ...
-//
 // TestAccResourcePassword_UpgradeFromVersion2_2_1 verifies behaviour when upgrading state from schema V0 to V2.
 func TestAccResourcePassword_UpgradeFromVersion2_2_1(t *testing.T) {
 	resource.Test(t, resource.TestCase{
+		PreCheck: func() {
+			if runtime.GOOS == "darwin" && runtime.GOARCH == "arm64" {
+				t.Skip("This test requires darwin/amd64 to download the old provider version. Setting TF_ACC_TERRAFORM_PATH to darwin/amd64 compatible Terraform binary can be used as a workaround.")
+			}
+		},
 		Steps: []resource.TestStep{
 			{
 				ExternalProviders: providerVersion221(),
