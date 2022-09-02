@@ -1,8 +1,10 @@
-## 3.4.* (unreleased)
+## 3.4.2 (unreleased)
 
 BUG FIXES:
 
 * all: Prevent `keeper` with `null` values from forcing replacement ([305](https://github.com/hashicorp/terraform-provider-random/pull/305)).
+* resource/random_password: During upgrade state, ensure `min_upper` is populated ([304](https://github.com/hashicorp/terraform-provider-random/pull/304)).
+* resource/random_string: During upgrade state, ensure `min_upper` is populated ([304](https://github.com/hashicorp/terraform-provider-random/pull/304)).
 
 ## 3.4.1 (August 31, 2022)
 

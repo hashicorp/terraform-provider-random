@@ -505,6 +505,7 @@ func upgradeStringStateV1toV2(ctx context.Context, req resource.UpgradeStateRequ
 		Number:          stringDataV1.Number,
 		Numeric:         stringDataV1.Number,
 		MinNumeric:      stringDataV1.MinNumeric,
+		MinUpper:        stringDataV1.MinUpper,
 		MinLower:        stringDataV1.MinLower,
 		MinSpecial:      stringDataV1.MinSpecial,
 		OverrideSpecial: stringDataV1.OverrideSpecial,
