@@ -300,6 +300,80 @@ func TestAccResourceString_LengthErrors(t *testing.T) {
 	})
 }
 
+// TestAccResourceString_UpgradeFromVersion3_2_0 verifies behaviour when upgrading state from schema V1 to V2.
+func TestAccResourceString_UpgradeFromVersion3_2_0(t *testing.T) {
+	resource.Test(t, resource.TestCase{
+		Steps: []resource.TestStep{
+			{
+				ExternalProviders: providerVersion320(),
+				Config: `resource "random_string" "min" {
+							length = 12
+							override_special = "!#@"
+							min_lower = 2
+							min_upper = 3
+							min_special = 1
+							min_numeric = 4
+						}`,
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttrWith("random_string.min", "result", testCheckLen(12)),
+					resource.TestMatchResourceAttr("random_string.min", "result", regexp.MustCompile(`([a-z].*){2,}`)),
+					resource.TestMatchResourceAttr("random_string.min", "result", regexp.MustCompile(`([A-Z].*){3,}`)),
+					resource.TestMatchResourceAttr("random_string.min", "result", regexp.MustCompile(`([0-9].*){4,}`)),
+					resource.TestMatchResourceAttr("random_string.min", "result", regexp.MustCompile(`([!#@])`)),
+					resource.TestCheckResourceAttr("random_string.min", "special", "true"),
+					resource.TestCheckResourceAttr("random_string.min", "upper", "true"),
+					resource.TestCheckResourceAttr("random_string.min", "lower", "true"),
+					resource.TestCheckResourceAttr("random_string.min", "number", "true"),
+					resource.TestCheckResourceAttr("random_string.min", "min_special", "1"),
+					resource.TestCheckResourceAttr("random_string.min", "min_upper", "3"),
+					resource.TestCheckResourceAttr("random_string.min", "min_lower", "2"),
+					resource.TestCheckResourceAttr("random_string.min", "min_numeric", "4"),
+				),
+			},
+			{
+				ProtoV5ProviderFactories: protoV5ProviderFactories(),
+				Config: `resource "random_string" "min" {
+							length = 12
+							override_special = "!#@"
+							min_lower = 2
+							min_upper = 3
+							min_special = 1
+							min_numeric = 4
+						}`,
+				PlanOnly: true,
+			},
+			{
+				ProtoV5ProviderFactories: protoV5ProviderFactories(),
+				Config: `resource "random_string" "min" {
+							length = 12
+							override_special = "!#@"
+							min_lower = 2
+							min_upper = 3
+							min_special = 1
+							min_numeric = 4
+						}`,
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttrWith("random_string.min", "result", testCheckLen(12)),
+					resource.TestMatchResourceAttr("random_string.min", "result", regexp.MustCompile(`([a-z].*){2,}`)),
+					resource.TestMatchResourceAttr("random_string.min", "result", regexp.MustCompile(`([A-Z].*){3,}`)),
+					resource.TestMatchResourceAttr("random_string.min", "result", regexp.MustCompile(`([0-9].*){4,}`)),
+					resource.TestMatchResourceAttr("random_string.min", "result", regexp.MustCompile(`([!#@])`)),
+					resource.TestCheckResourceAttr("random_string.min", "special", "true"),
+					resource.TestCheckResourceAttr("random_string.min", "upper", "true"),
+					resource.TestCheckResourceAttr("random_string.min", "lower", "true"),
+					resource.TestCheckResourceAttr("random_string.min", "number", "true"),
+					resource.TestCheckResourceAttr("random_string.min", "numeric", "true"),
+					resource.TestCheckResourceAttr("random_string.min", "min_special", "1"),
+					resource.TestCheckResourceAttr("random_string.min", "min_upper", "3"),
+					resource.TestCheckResourceAttr("random_string.min", "min_lower", "2"),
+					resource.TestCheckResourceAttr("random_string.min", "min_numeric", "4"),
+				),
+			},
+		},
+	})
+}
+
+// TestAccResourceString_UpgradeFromVersion3_3_2 verifies behaviour when upgrading from SDKv2 to the Framework.
 func TestAccResourceString_UpgradeFromVersion3_3_2(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		Steps: []resource.TestStep{
