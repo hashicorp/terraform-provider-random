@@ -350,7 +350,7 @@ func upgradePasswordStateV2toV3(ctx context.Context, req resource.UpgradeStateRe
 		numeric.Value = true
 	}
 
-	passwordDataV3 := passwordModelV2{
+	passwordDataV3 := passwordModelV3{
 		Keepers:         passwordDataV2.Keepers,
 		Length:          passwordDataV2.Length,
 		Special:         special,
