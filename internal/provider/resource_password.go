@@ -78,7 +78,7 @@ func (r *passwordResource) Create(ctx context.Context, req resource.CreateReques
 		MinUpper:        types.Int64{Value: plan.MinUpper.Value},
 		MinLower:        types.Int64{Value: plan.MinLower.Value},
 		MinSpecial:      types.Int64{Value: plan.MinSpecial.Value},
-		OverrideSpecial: types.String{Value: plan.OverrideSpecial.Value},
+		OverrideSpecial: plan.OverrideSpecial,
 		Result:          types.String{Value: string(result)},
 	}
 
@@ -421,9 +421,7 @@ func passwordSchemaV2() tfsdk.Schema {
 					"still be set to true for any overwritten characters to be used in generation.",
 				Type:     types.StringType,
 				Optional: true,
-				Computed: true,
 				PlanModifiers: []tfsdk.AttributePlanModifier{
-					planmodifiers.DefaultValue(types.String{Value: ""}),
 					resource.RequiresReplace(),
 				},
 			},

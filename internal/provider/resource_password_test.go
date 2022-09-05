@@ -17,7 +17,7 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
-func TestAccResourcePassword(t *testing.T) {
+func TestAccResourcePassword_Import(t *testing.T) {
 	resource.UnitTest(t, resource.TestCase{
 		ProtoV5ProviderFactories: protoV5ProviderFactories(),
 		Steps: []resource.TestStep{
@@ -48,7 +48,13 @@ func TestAccResourcePassword(t *testing.T) {
 				},
 				ImportState:             true,
 				ImportStateVerify:       true,
-				ImportStateVerifyIgnore: []string{"bcrypt_hash"},
+				ImportStateVerifyIgnore: []string{"bcrypt_hash", "override_special"},
+			},
+			{
+				Config: `resource "random_password" "basic" {
+							length = 12
+						}`,
+				PlanOnly: true,
 			},
 		},
 	})
