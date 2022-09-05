@@ -48,7 +48,7 @@ func TestAccResourcePassword_Import(t *testing.T) {
 				},
 				ImportState:             true,
 				ImportStateVerify:       true,
-				ImportStateVerifyIgnore: []string{"bcrypt_hash", "override_special"},
+				ImportStateVerifyIgnore: []string{"bcrypt_hash"},
 			},
 			{
 				Config: `resource "random_password" "basic" {

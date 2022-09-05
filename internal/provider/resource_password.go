@@ -122,18 +122,20 @@ func (r *passwordResource) ImportState(ctx context.Context, req resource.ImportS
 	id := req.ID
 
 	state := passwordModelV2{
-		ID:         types.String{Value: "none"},
-		Result:     types.String{Value: id},
-		Length:     types.Int64{Value: int64(len(id))},
-		Special:    types.Bool{Value: true},
-		Upper:      types.Bool{Value: true},
-		Lower:      types.Bool{Value: true},
-		Number:     types.Bool{Value: true},
-		Numeric:    types.Bool{Value: true},
-		MinSpecial: types.Int64{Value: 0},
-		MinUpper:   types.Int64{Value: 0},
-		MinLower:   types.Int64{Value: 0},
-		MinNumeric: types.Int64{Value: 0},
+		ID:              types.String{Value: "none"},
+		Result:          types.String{Value: id},
+		Length:          types.Int64{Value: int64(len(id))},
+		Special:         types.Bool{Value: true},
+		Upper:           types.Bool{Value: true},
+		Lower:           types.Bool{Value: true},
+		Number:          types.Bool{Value: true},
+		Numeric:         types.Bool{Value: true},
+		MinSpecial:      types.Int64{Value: 0},
+		MinUpper:        types.Int64{Value: 0},
+		MinLower:        types.Int64{Value: 0},
+		MinNumeric:      types.Int64{Value: 0},
+		Keepers:         types.Map{Null: true},
+		OverrideSpecial: types.String{Null: true},
 	}
 
 	state.Keepers.ElemType = types.StringType
