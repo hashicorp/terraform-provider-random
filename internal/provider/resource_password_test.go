@@ -60,6 +60,96 @@ func TestAccResourcePassword_Import(t *testing.T) {
 	})
 }
 
+func TestAccResourcePassword_Import_332(t *testing.T) {
+	resource.UnitTest(t, resource.TestCase{
+		Steps: []resource.TestStep{
+			{
+				ExternalProviders: providerVersion332(),
+				Config: `resource "random_password" "basic" {
+							length = 12
+						}`,
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttrWith("random_password.basic", "result", testCheckLen(12)),
+				),
+			},
+			{
+				ExternalProviders: providerVersion332(),
+				ResourceName:      "random_password.basic",
+				// Usage of ImportStateIdFunc is required as the value passed to the `terraform import` command needs
+				// to be the password itself, as the password resource sets ID to "none" and "result" to the password
+				// supplied during import.
+				ImportStateIdFunc: func(s *terraform.State) (string, error) {
+					id := "random_password.basic"
+					rs, ok := s.RootModule().Resources[id]
+					if !ok {
+						return "", fmt.Errorf("not found: %s", id)
+					}
+					if rs.Primary.ID == "" {
+						return "", fmt.Errorf("no ID is set")
+					}
+
+					return rs.Primary.Attributes["result"], nil
+				},
+				ImportState:             true,
+				ImportStateVerify:       true,
+				ImportStateVerifyIgnore: []string{"bcrypt_hash"},
+			},
+			{
+				ProtoV5ProviderFactories: protoV5ProviderFactories(),
+				Config: `resource "random_password" "basic" {
+							length = 12
+						}`,
+				PlanOnly: true,
+			},
+		},
+	})
+}
+
+func TestAccResourcePassword_Import_342(t *testing.T) {
+	resource.UnitTest(t, resource.TestCase{
+		Steps: []resource.TestStep{
+			{
+				ExternalProviders: providerVersion342(),
+				Config: `resource "random_password" "basic" {
+							length = 12
+						}`,
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttrWith("random_password.basic", "result", testCheckLen(12)),
+				),
+			},
+			{
+				ExternalProviders: providerVersion342(),
+				ResourceName:      "random_password.basic",
+				// Usage of ImportStateIdFunc is required as the value passed to the `terraform import` command needs
+				// to be the password itself, as the password resource sets ID to "none" and "result" to the password
+				// supplied during import.
+				ImportStateIdFunc: func(s *terraform.State) (string, error) {
+					id := "random_password.basic"
+					rs, ok := s.RootModule().Resources[id]
+					if !ok {
+						return "", fmt.Errorf("not found: %s", id)
+					}
+					if rs.Primary.ID == "" {
+						return "", fmt.Errorf("no ID is set")
+					}
+
+					return rs.Primary.Attributes["result"], nil
+				},
+				ImportState:             true,
+				ImportStateVerify:       true,
+				ImportStateVerifyIgnore: []string{"bcrypt_hash"},
+			},
+			{
+				ProtoV5ProviderFactories: protoV5ProviderFactories(),
+				Config: `resource "random_password" "basic" {
+							length = 12
+						}`,
+				PlanOnly: true,
+			},
+		},
+	})
+}
+
 func TestAccResourcePassword_Override(t *testing.T) {
 	resource.UnitTest(t, resource.TestCase{
 		ProtoV5ProviderFactories: protoV5ProviderFactories(),
