@@ -211,6 +211,74 @@ func TestAccResourcePassword_Override(t *testing.T) {
 	})
 }
 
+// TestAccResourcePassword_OverrideSpecial_FromVersion3_3_2 verifies behaviour
+// when upgrading the provider version from 3.3.2, which set the
+// override_special value to null and should not result in a plan difference.
+// Reference: https://github.com/hashicorp/terraform-provider-random/issues/306
+func TestAccResourcePassword_OverrideSpecial_FromVersion3_3_2(t *testing.T) {
+	var result1, result2 string
+
+	resource.ParallelTest(t, resource.TestCase{
+		Steps: []resource.TestStep{
+			{
+				ExternalProviders: providerVersion342(),
+				Config: `resource "random_password" "test" {
+							length = 12
+						}`,
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("random_password.test", "override_special", ""),
+					testExtractResourceAttr("random_password.test", "result", &result1),
+				),
+			},
+			{
+				ProtoV5ProviderFactories: protoV5ProviderFactories(),
+				Config: `resource "random_password" "test" {
+					length = 12
+				}`,
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckNoResourceAttr("random_password.test", "override_special"),
+					testExtractResourceAttr("random_password.test", "result", &result2),
+					testCheckAttributeValuesEqual(&result1, &result2),
+				),
+			},
+		},
+	})
+}
+
+// TestAccResourcePassword_OverrideSpecial_FromVersion3_4_2 verifies behaviour
+// when upgrading the provider version from 3.4.2, which set the
+// override_special value to "", while other versions do not.
+// Reference: https://github.com/hashicorp/terraform-provider-random/issues/306
+func TestAccResourcePassword_OverrideSpecial_FromVersion3_4_2(t *testing.T) {
+	var result1, result2 string
+
+	resource.ParallelTest(t, resource.TestCase{
+		Steps: []resource.TestStep{
+			{
+				ExternalProviders: providerVersion342(),
+				Config: `resource "random_password" "test" {
+							length = 12
+						}`,
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("random_password.test", "override_special", ""),
+					testExtractResourceAttr("random_password.test", "result", &result1),
+				),
+			},
+			{
+				ProtoV5ProviderFactories: protoV5ProviderFactories(),
+				Config: `resource "random_password" "test" {
+					length = 12
+				}`,
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckNoResourceAttr("random_password.test", "override_special"),
+					testExtractResourceAttr("random_password.test", "result", &result2),
+					testCheckAttributeValuesEqual(&result1, &result2),
+				),
+			},
+		},
+	})
+}
+
 // TestAccResourcePassword_StateUpgradeV0toV2 covers the state upgrades from V0 to V2.
 // This includes the the addition of `numeric` and `bcrypt_hash` attributes.
 // v3.1.3 is used as this is last version before `bcrypt_hash` attributed was added.

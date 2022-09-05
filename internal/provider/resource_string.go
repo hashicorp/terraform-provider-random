@@ -168,10 +168,12 @@ func (r stringResourceType) GetSchema(context.Context) (tfsdk.Schema, diag.Diagn
 					"still be set to true for any overwritten characters to be used in generation.",
 				Type:     types.StringType,
 				Optional: true,
-				Computed: true,
 				PlanModifiers: []tfsdk.AttributePlanModifier{
-					planmodifiers.DefaultValue(types.String{Value: ""}),
-					resource.RequiresReplace(),
+					resource.RequiresReplaceIf(
+						planmodifiers.RequiresReplaceUnlessEmptyStringToNull(),
+						"Replace on modification unless updating from empty string (\"\") to null.",
+						"Replace on modification unless updating from empty string (`\"\"`) to `null`.",
+					),
 				},
 			},
 
@@ -236,28 +238,10 @@ func (r *stringResource) Create(ctx context.Context, req resource.CreateRequest,
 		return
 	}
 
-	state := stringModelV2{
-		ID:              types.String{Value: string(result)},
-		Keepers:         plan.Keepers,
-		Length:          types.Int64{Value: plan.Length.Value},
-		Special:         types.Bool{Value: plan.Special.Value},
-		Upper:           types.Bool{Value: plan.Upper.Value},
-		Lower:           types.Bool{Value: plan.Lower.Value},
-		Number:          types.Bool{Value: plan.Number.Value},
-		Numeric:         types.Bool{Value: plan.Numeric.Value},
-		MinNumeric:      types.Int64{Value: plan.MinNumeric.Value},
-		MinUpper:        types.Int64{Value: plan.MinUpper.Value},
-		MinLower:        types.Int64{Value: plan.MinLower.Value},
-		MinSpecial:      types.Int64{Value: plan.MinSpecial.Value},
-		OverrideSpecial: types.String{Value: plan.OverrideSpecial.Value},
-		Result:          types.String{Value: string(result)},
-	}
+	plan.ID = types.String{Value: string(result)}
+	plan.Result = types.String{Value: string(result)}
 
-	diags = resp.State.Set(ctx, state)
-	resp.Diagnostics.Append(diags...)
-	if resp.Diagnostics.HasError() {
-		return
-	}
+	resp.Diagnostics.Append(resp.State.Set(ctx, plan)...)
 }
 
 // Read does not need to perform any operations as the state in ReadResourceResponse is already populated.
