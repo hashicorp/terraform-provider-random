@@ -22,7 +22,7 @@ var _ provider.ResourceType = (*passwordResourceType)(nil)
 type passwordResourceType struct{}
 
 func (r *passwordResourceType) GetSchema(context.Context) (tfsdk.Schema, diag.Diagnostics) {
-	return passwordSchemaV2(), nil
+	return passwordSchemaV3(), nil
 }
 
 func (r *passwordResourceType) NewResource(_ context.Context, _ provider.Provider) (resource.Resource, diag.Diagnostics) {
@@ -147,6 +147,7 @@ func (r *passwordResource) ImportState(ctx context.Context, req resource.ImportS
 func (r *passwordResource) UpgradeState(context.Context) map[int64]resource.StateUpgrader {
 	schemaV0 := passwordSchemaV0()
 	schemaV1 := passwordSchemaV1()
+	schemaV2 := passwordSchemaV2()
 
 	return map[int64]resource.StateUpgrader{
 		0: {
@@ -156,6 +157,10 @@ func (r *passwordResource) UpgradeState(context.Context) map[int64]resource.Stat
 		1: {
 			PriorSchema:   &schemaV1,
 			StateUpgrader: upgradePasswordStateV1toV2,
+		},
+		2: {
+			PriorSchema:   &schemaV2,
+			StateUpgrader: upgradePasswordStateV2toV3,
 		},
 	}
 }
@@ -260,10 +265,293 @@ func upgradePasswordStateV1toV2(ctx context.Context, req resource.UpgradeStateRe
 	resp.Diagnostics.Append(diags...)
 }
 
+func upgradePasswordStateV2toV3(ctx context.Context, req resource.UpgradeStateRequest, resp *resource.UpgradeStateResponse) {
+	type modelV2 struct {
+		ID              types.String `tfsdk:"id"`
+		Keepers         types.Map    `tfsdk:"keepers"`
+		Length          types.Int64  `tfsdk:"length"`
+		Special         types.Bool   `tfsdk:"special"`
+		Upper           types.Bool   `tfsdk:"upper"`
+		Lower           types.Bool   `tfsdk:"lower"`
+		Number          types.Bool   `tfsdk:"number"`
+		Numeric         types.Bool   `tfsdk:"numeric"`
+		MinNumeric      types.Int64  `tfsdk:"min_numeric"`
+		MinUpper        types.Int64  `tfsdk:"min_upper"`
+		MinLower        types.Int64  `tfsdk:"min_lower"`
+		MinSpecial      types.Int64  `tfsdk:"min_special"`
+		OverrideSpecial types.String `tfsdk:"override_special"`
+		Result          types.String `tfsdk:"result"`
+		BcryptHash      types.String `tfsdk:"bcrypt_hash"`
+	}
+
+	var passwordDataV2 modelV2
+
+	resp.Diagnostics.Append(req.State.Get(ctx, &passwordDataV2)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	minNumeric := passwordDataV2.MinNumeric
+
+	if minNumeric.IsNull() {
+		minNumeric.Null = false
+	}
+
+	minUpper := passwordDataV2.MinUpper
+
+	if minUpper.IsNull() {
+		minUpper.Null = false
+	}
+
+	minLower := passwordDataV2.MinLower
+
+	if minLower.IsNull() {
+		minLower.Null = false
+	}
+
+	minSpecial := passwordDataV2.MinSpecial
+
+	if minSpecial.IsNull() {
+		minSpecial.Null = false
+	}
+
+	special := passwordDataV2.Special
+
+	if special.IsNull() {
+		special.Null = false
+		special.Value = true
+	}
+
+	upper := passwordDataV2.Upper
+
+	if upper.IsNull() {
+		upper.Null = false
+		upper.Value = true
+	}
+
+	lower := passwordDataV2.Lower
+
+	if lower.IsNull() {
+		lower.Null = false
+		lower.Value = true
+	}
+
+	number := passwordDataV2.Number
+
+	if number.IsNull() {
+		number.Null = false
+		number.Value = true
+	}
+
+	numeric := passwordDataV2.Number
+
+	if numeric.IsNull() {
+		numeric.Null = false
+		numeric.Value = true
+	}
+
+	passwordDataV3 := passwordModelV2{
+		Keepers:         passwordDataV2.Keepers,
+		Length:          passwordDataV2.Length,
+		Special:         special,
+		Upper:           upper,
+		Lower:           lower,
+		Number:          number,
+		Numeric:         numeric,
+		MinNumeric:      minNumeric,
+		MinUpper:        minUpper,
+		MinLower:        minLower,
+		MinSpecial:      minSpecial,
+		OverrideSpecial: passwordDataV2.OverrideSpecial,
+		BcryptHash:      passwordDataV2.BcryptHash,
+		Result:          passwordDataV2.Result,
+		ID:              passwordDataV2.ID,
+	}
+
+	diags := resp.State.Set(ctx, passwordDataV3)
+	resp.Diagnostics.Append(diags...)
+}
+
 func generateHash(toHash string) (string, error) {
 	hash, err := bcrypt.GenerateFromPassword([]byte(toHash), bcrypt.DefaultCost)
 
 	return string(hash), err
+}
+
+func passwordSchemaV3() tfsdk.Schema {
+	return tfsdk.Schema{
+		Version: 3,
+		Description: "Identical to [random_string](string.html) with the exception that the result is " +
+			"treated as sensitive and, thus, _not_ displayed in console output. Read more about sensitive " +
+			"data handling in the " +
+			"[Terraform documentation](https://www.terraform.io/docs/language/state/sensitive-data.html).\n\n" +
+			"This resource *does* use a cryptographic random number generator.",
+		Attributes: map[string]tfsdk.Attribute{
+			"keepers": {
+				Description: "Arbitrary map of values that, when changed, will trigger recreation of " +
+					"resource. See [the main provider documentation](../index.html) for more information.",
+				Type: types.MapType{
+					ElemType: types.StringType,
+				},
+				Optional: true,
+				PlanModifiers: []tfsdk.AttributePlanModifier{
+					resource.RequiresReplace(),
+				},
+			},
+
+			"length": {
+				Description: "The length of the string desired. The minimum value for length is 1 and, length " +
+					"must also be >= (`min_upper` + `min_lower` + `min_numeric` + `min_special`).",
+				Type:     types.Int64Type,
+				Required: true,
+				PlanModifiers: []tfsdk.AttributePlanModifier{
+					resource.RequiresReplace(),
+				},
+				Validators: []tfsdk.AttributeValidator{
+					int64validator.AtLeast(1),
+					int64validator.AtLeastSumOf(
+						path.MatchRoot("min_upper"),
+						path.MatchRoot("min_lower"),
+						path.MatchRoot("min_numeric"),
+						path.MatchRoot("min_special"),
+					),
+				},
+			},
+
+			"special": {
+				Description: "Include special characters in the result. These are `!@#$%&*()-_=+[]{}<>:?`. Default value is `true`.",
+				Type:        types.BoolType,
+				Optional:    true,
+				Computed:    true,
+				PlanModifiers: []tfsdk.AttributePlanModifier{
+					planmodifiers.DefaultValue(types.Bool{Value: true}),
+					planmodifiers.RequiresReplace(),
+				},
+			},
+
+			"upper": {
+				Description: "Include uppercase alphabet characters in the result. Default value is `true`.",
+				Type:        types.BoolType,
+				Optional:    true,
+				Computed:    true,
+				PlanModifiers: []tfsdk.AttributePlanModifier{
+					planmodifiers.DefaultValue(types.Bool{Value: true}),
+					planmodifiers.RequiresReplace(),
+				},
+			},
+
+			"lower": {
+				Description: "Include lowercase alphabet characters in the result. Default value is `true`.",
+				Type:        types.BoolType,
+				Optional:    true,
+				Computed:    true,
+				PlanModifiers: []tfsdk.AttributePlanModifier{
+					planmodifiers.DefaultValue(types.Bool{Value: true}),
+					planmodifiers.RequiresReplace(),
+				},
+			},
+
+			"number": {
+				Description: "Include numeric characters in the result. Default value is `true`. " +
+					"**NOTE**: This is deprecated, use `numeric` instead.",
+				Type:     types.BoolType,
+				Optional: true,
+				Computed: true,
+				PlanModifiers: []tfsdk.AttributePlanModifier{
+					planmodifiers.NumberNumericAttributePlanModifier(),
+					planmodifiers.RequiresReplace(),
+				},
+				DeprecationMessage: "**NOTE**: This is deprecated, use `numeric` instead.",
+			},
+
+			"numeric": {
+				Description: "Include numeric characters in the result. Default value is `true`.",
+				Type:        types.BoolType,
+				Optional:    true,
+				Computed:    true,
+				PlanModifiers: []tfsdk.AttributePlanModifier{
+					planmodifiers.NumberNumericAttributePlanModifier(),
+					planmodifiers.RequiresReplace(),
+				},
+			},
+
+			"min_numeric": {
+				Description: "Minimum number of numeric characters in the result. Default value is `0`.",
+				Type:        types.Int64Type,
+				Optional:    true,
+				Computed:    true,
+				PlanModifiers: []tfsdk.AttributePlanModifier{
+					planmodifiers.DefaultValue(types.Int64{Value: 0}),
+					planmodifiers.RequiresReplace(),
+				},
+			},
+
+			"min_upper": {
+				Description: "Minimum number of uppercase alphabet characters in the result. Default value is `0`.",
+				Type:        types.Int64Type,
+				Optional:    true,
+				Computed:    true,
+				PlanModifiers: []tfsdk.AttributePlanModifier{
+					planmodifiers.DefaultValue(types.Int64{Value: 0}),
+					planmodifiers.RequiresReplace(),
+				},
+			},
+
+			"min_lower": {
+				Description: "Minimum number of lowercase alphabet characters in the result. Default value is `0`.",
+				Type:        types.Int64Type,
+				Optional:    true,
+				Computed:    true,
+				PlanModifiers: []tfsdk.AttributePlanModifier{
+					planmodifiers.DefaultValue(types.Int64{Value: 0}),
+					planmodifiers.RequiresReplace(),
+				},
+			},
+
+			"min_special": {
+				Description: "Minimum number of special characters in the result. Default value is `0`.",
+				Type:        types.Int64Type,
+				Optional:    true,
+				Computed:    true,
+				PlanModifiers: []tfsdk.AttributePlanModifier{
+					planmodifiers.DefaultValue(types.Int64{Value: 0}),
+					planmodifiers.RequiresReplace(),
+				},
+			},
+
+			"override_special": {
+				Description: "Supply your own list of special characters to use for string generation.  This " +
+					"overrides the default character list in the special argument.  The `special` argument must " +
+					"still be set to true for any overwritten characters to be used in generation.",
+				Type:     types.StringType,
+				Optional: true,
+				Computed: true,
+				PlanModifiers: []tfsdk.AttributePlanModifier{
+					resource.RequiresReplace(),
+				},
+			},
+
+			"result": {
+				Description: "The generated random string.",
+				Type:        types.StringType,
+				Computed:    true,
+				Sensitive:   true,
+			},
+
+			"bcrypt_hash": {
+				Description: "A bcrypt hash of the generated random string.",
+				Type:        types.StringType,
+				Computed:    true,
+				Sensitive:   true,
+			},
+
+			"id": {
+				Description: "A static value used internally by Terraform, this should not be referenced in configurations.",
+				Computed:    true,
+				Type:        types.StringType,
+			},
+		},
+	}
 }
 
 func passwordSchemaV2() tfsdk.Schema {
@@ -755,6 +1043,24 @@ func passwordSchemaV0() tfsdk.Schema {
 }
 
 type passwordModelV2 struct {
+	ID              types.String `tfsdk:"id"`
+	Keepers         types.Map    `tfsdk:"keepers"`
+	Length          types.Int64  `tfsdk:"length"`
+	Special         types.Bool   `tfsdk:"special"`
+	Upper           types.Bool   `tfsdk:"upper"`
+	Lower           types.Bool   `tfsdk:"lower"`
+	Number          types.Bool   `tfsdk:"number"`
+	Numeric         types.Bool   `tfsdk:"numeric"`
+	MinNumeric      types.Int64  `tfsdk:"min_numeric"`
+	MinUpper        types.Int64  `tfsdk:"min_upper"`
+	MinLower        types.Int64  `tfsdk:"min_lower"`
+	MinSpecial      types.Int64  `tfsdk:"min_special"`
+	OverrideSpecial types.String `tfsdk:"override_special"`
+	Result          types.String `tfsdk:"result"`
+	BcryptHash      types.String `tfsdk:"bcrypt_hash"`
+}
+
+type passwordModelV3 struct {
 	ID              types.String `tfsdk:"id"`
 	Keepers         types.Map    `tfsdk:"keepers"`
 	Length          types.Int64  `tfsdk:"length"`
