@@ -96,18 +96,20 @@ func (r *stringResource) ImportState(ctx context.Context, req resource.ImportSta
 	id := req.ID
 
 	state := stringModelV3{
-		ID:         types.String{Value: id},
-		Result:     types.String{Value: id},
-		Length:     types.Int64{Value: int64(len(id))},
-		Special:    types.Bool{Value: true},
-		Upper:      types.Bool{Value: true},
-		Lower:      types.Bool{Value: true},
-		Number:     types.Bool{Value: true},
-		Numeric:    types.Bool{Value: true},
-		MinSpecial: types.Int64{Value: 0},
-		MinUpper:   types.Int64{Value: 0},
-		MinLower:   types.Int64{Value: 0},
-		MinNumeric: types.Int64{Value: 0},
+		ID:              types.String{Value: id},
+		Result:          types.String{Value: id},
+		Length:          types.Int64{Value: int64(len(id))},
+		Special:         types.Bool{Value: true},
+		Upper:           types.Bool{Value: true},
+		Lower:           types.Bool{Value: true},
+		Number:          types.Bool{Value: true},
+		Numeric:         types.Bool{Value: true},
+		MinSpecial:      types.Int64{Value: 0},
+		MinUpper:        types.Int64{Value: 0},
+		MinLower:        types.Int64{Value: 0},
+		MinNumeric:      types.Int64{Value: 0},
+		OverrideSpecial: types.String{Null: true},
+		Keepers:         types.Map{Null: true},
 	}
 
 	state.Keepers.ElemType = types.StringType

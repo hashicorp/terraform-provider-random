@@ -64,7 +64,7 @@ func TestGenerateHash(t *testing.T) {
 	}
 }
 
-func TestAccResourcePassword(t *testing.T) {
+func TestAccResourcePassword_Import(t *testing.T) {
 	resource.UnitTest(t, resource.TestCase{
 		ProtoV5ProviderFactories: protoV5ProviderFactories(),
 		Steps: []resource.TestStep{

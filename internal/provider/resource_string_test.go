@@ -15,7 +15,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 )
 
-func TestAccResourceString(t *testing.T) {
+func TestAccResourceString_Import(t *testing.T) {
 	resource.UnitTest(t, resource.TestCase{
 		ProtoV5ProviderFactories: protoV5ProviderFactories(),
 		Steps: []resource.TestStep{
