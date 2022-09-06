@@ -803,12 +803,12 @@ func TestAccResourceString_OverrideSpecial_FromVersion3_3_2(t *testing.T) {
 	resource.ParallelTest(t, resource.TestCase{
 		Steps: []resource.TestStep{
 			{
-				ExternalProviders: providerVersion342(),
+				ExternalProviders: providerVersion332(),
 				Config: `resource "random_string" "test" {
 							length = 12
 						}`,
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttr("random_string.test", "override_special", ""),
+					resource.TestCheckNoResourceAttr("random_string.test", "override_special"),
 					testExtractResourceAttr("random_string.test", "result", &result1),
 				),
 			},
