@@ -282,9 +282,12 @@ func (r *stringResource) ImportState(ctx context.Context, req resource.ImportSta
 		MinUpper:   types.Int64{Value: 0},
 		MinLower:   types.Int64{Value: 0},
 		MinNumeric: types.Int64{Value: 0},
+		Keepers: types.Map{
+			ElemType: types.StringType,
+			Null:     true,
+		},
+		OverrideSpecial: types.String{Null: true},
 	}
-
-	state.Keepers.ElemType = types.StringType
 
 	diags := resp.State.Set(ctx, &state)
 	resp.Diagnostics.Append(diags...)
