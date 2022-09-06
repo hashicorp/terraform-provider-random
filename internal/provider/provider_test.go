@@ -39,3 +39,12 @@ func providerVersion332() map[string]resource.ExternalProvider {
 		},
 	}
 }
+
+func providerVersion342() map[string]resource.ExternalProvider {
+	return map[string]resource.ExternalProvider{
+		"random": {
+			VersionConstraint: "3.4.2",
+			Source:            "hashicorp/random",
+		},
+	}
+}
