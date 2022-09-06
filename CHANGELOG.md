@@ -1,3 +1,17 @@
+## 3.4.3 (Unreleased)
+
+NOTES:
+
+* resource/random_password: If the resource was created between versions 3.4.0 and 3.4.2, the `bcrypt_hash` value would not correctly verify against the `result` value. Affected resources will automatically regenerate a valid `bcrypt_hash` after this upgrade. ([#308](https://github.com/hashicorp/terraform-provider-random/pull/308))
+* resource/random_password: The `override_special` attribute may show a plan difference from empty string (`""`) to `null` if previously applied with version 3.4.2. The plan should show this as an in-place update and it should occur only once after upgrading. ([#312](https://github.com/hashicorp/terraform-provider-random/pull/312))
+* resource/random_string: The `override_special` attribute may show a plan difference from empty string (`""`) to `null` if previously applied with version 3.4.2. The plan should show this as an in-place update and it should occur only once after upgrading. ([#312](https://github.com/hashicorp/terraform-provider-random/pull/312))
+
+BUG FIXES:
+
+* resource/random_password: Fixed incorrect `bcrypt_hash` generation since version 3.4.0 ([#308](https://github.com/hashicorp/terraform-provider-random/pull/308))
+* resource/random_password: Prevented difference with `override_special` when upgrading from version 3.3.2 and earlier ([#312](https://github.com/hashicorp/terraform-provider-random/pull/312))
+* resource/random_password: Prevented difference with `override_special` when upgrading from version 3.3.2 and earlier ([#312](https://github.com/hashicorp/terraform-provider-random/pull/312))
+
 ## 3.4.2 (September 02, 2022)
 
 BUG FIXES:
