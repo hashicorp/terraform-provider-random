@@ -2586,6 +2586,7 @@ func composeImportStateCheck(fs ...resource.ImportStateCheckFunc) resource.Impor
 	}
 }
 
+//nolint:unparam
 func testExtractResourceAttrInstanceState(attributeName string, attributeValue *string) resource.ImportStateCheckFunc {
 	return func(is []*terraform.InstanceState) error {
 		if len(is) != 1 {
