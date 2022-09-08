@@ -293,39 +293,24 @@ func TestAccResourcePassword_Import_FromVersion3_1_3(t *testing.T) {
 				Config: `resource "random_password" "test" {
 							length = 12
 						}`,
-				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttrWith("random_password.test", "result", testCheckLen(12)),
-					testExtractResourceAttr("random_password.test", "result", &result1),
+				ResourceName:       "random_password.test",
+				ImportState:        true,
+				ImportStateId:      "Z=:cbrJE?Ltg",
+				ImportStatePersist: true,
+				ImportStateCheck: composeImportStateCheck(
+					testCheckNoResourceAttrInstanceState("length"),
+					testCheckNoResourceAttrInstanceState("number"),
+					testCheckNoResourceAttrInstanceState("upper"),
+					testCheckNoResourceAttrInstanceState("lower"),
+					testCheckNoResourceAttrInstanceState("special"),
+					testCheckNoResourceAttrInstanceState("min_numeric"),
+					testCheckNoResourceAttrInstanceState("min_upper"),
+					testCheckNoResourceAttrInstanceState("min_lower"),
+					testCheckNoResourceAttrInstanceState("min_special"),
+					testExtractResourceAttrInstanceState("result", &result1),
 				),
 			},
 			{
-				ExternalProviders: providerVersion313(),
-				ResourceName:      "random_password.test",
-				// Usage of ImportStateIdFunc is required as the value passed to the `terraform import` command needs
-				// to be the password itself, as the password resource sets ID to "none" and "result" to the password
-				// supplied during import.
-				ImportStateIdFunc: func(s *terraform.State) (string, error) {
-					id := "random_password.test"
-					rs, ok := s.RootModule().Resources[id]
-					if !ok {
-						return "", fmt.Errorf("not found: %s", id)
-					}
-					if rs.Primary.ID == "" {
-						return "", fmt.Errorf("no ID is set")
-					}
-
-					return rs.Primary.Attributes["result"], nil
-				},
-				ImportState: true,
-				// These checks should fail as running terraform import with v3.1.3 stores null for result and number
-				// attributes in state.
-				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttrWith("random_password.test", "result", testCheckLen(12)),
-					resource.TestCheckResourceAttr("random_password.test", "number", "true"),
-				),
-			},
-			{
-				// This test is not really verifying desired behaviour as the import is populating length, number etc
 				ProtoV5ProviderFactories: protoV5ProviderFactories(),
 				Config: `resource "random_password" "test" {
 					length = 12
@@ -333,13 +318,21 @@ func TestAccResourcePassword_Import_FromVersion3_1_3(t *testing.T) {
 				PlanOnly: true,
 			},
 			{
-				// This test is not really verifying desired behaviour as the import is populating length, number etc
 				ProtoV5ProviderFactories: protoV5ProviderFactories(),
 				Config: `resource "random_password" "test" {
 							length = 12
 						}`,
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttrWith("random_password.test", "result", testCheckLen(12)),
+					resource.TestCheckResourceAttr("random_password.test", "number", "true"),
+					resource.TestCheckResourceAttr("random_password.test", "numeric", "true"),
+					resource.TestCheckResourceAttr("random_password.test", "upper", "true"),
+					resource.TestCheckResourceAttr("random_password.test", "lower", "true"),
+					resource.TestCheckResourceAttr("random_password.test", "special", "true"),
+					resource.TestCheckResourceAttr("random_password.test", "min_numeric", "0"),
+					resource.TestCheckResourceAttr("random_password.test", "min_upper", "0"),
+					resource.TestCheckResourceAttr("random_password.test", "min_lower", "0"),
+					resource.TestCheckResourceAttr("random_password.test", "min_special", "0"),
 					testExtractResourceAttr("random_password.test", "result", &result2),
 					testCheckAttributeValuesEqual(&result1, &result2),
 				),
@@ -361,39 +354,24 @@ func TestAccResourcePassword_Import_FromVersion3_2_0(t *testing.T) {
 				Config: `resource "random_password" "test" {
 							length = 12
 						}`,
-				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttrWith("random_password.test", "result", testCheckLen(12)),
-					testExtractResourceAttr("random_password.test", "result", &result1),
+				ResourceName:       "random_password.test",
+				ImportState:        true,
+				ImportStateId:      "Z=:cbrJE?Ltg",
+				ImportStatePersist: true,
+				ImportStateCheck: composeImportStateCheck(
+					testCheckNoResourceAttrInstanceState("length"),
+					testCheckNoResourceAttrInstanceState("number"),
+					testCheckNoResourceAttrInstanceState("upper"),
+					testCheckNoResourceAttrInstanceState("lower"),
+					testCheckNoResourceAttrInstanceState("special"),
+					testCheckNoResourceAttrInstanceState("min_numeric"),
+					testCheckNoResourceAttrInstanceState("min_upper"),
+					testCheckNoResourceAttrInstanceState("min_lower"),
+					testCheckNoResourceAttrInstanceState("min_special"),
+					testExtractResourceAttrInstanceState("result", &result1),
 				),
 			},
 			{
-				ExternalProviders: providerVersion320(),
-				ResourceName:      "random_password.test",
-				// Usage of ImportStateIdFunc is required as the value passed to the `terraform import` command needs
-				// to be the password itself, as the password resource sets ID to "none" and "result" to the password
-				// supplied during import.
-				ImportStateIdFunc: func(s *terraform.State) (string, error) {
-					id := "random_password.test"
-					rs, ok := s.RootModule().Resources[id]
-					if !ok {
-						return "", fmt.Errorf("not found: %s", id)
-					}
-					if rs.Primary.ID == "" {
-						return "", fmt.Errorf("no ID is set")
-					}
-
-					return rs.Primary.Attributes["result"], nil
-				},
-				ImportState: true,
-				// These checks should fail as running terraform import with v3.2.0 stores null for result and number
-				// attributes in state.
-				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttrWith("random_password.test", "result", testCheckLen(12)),
-					resource.TestCheckResourceAttr("random_password.test", "number", "true"),
-				),
-			},
-			{
-				// This test is not really verifying desired behaviour as the import is populating length, number etc
 				ProtoV5ProviderFactories: protoV5ProviderFactories(),
 				Config: `resource "random_password" "test" {
 					length = 12
@@ -401,13 +379,21 @@ func TestAccResourcePassword_Import_FromVersion3_2_0(t *testing.T) {
 				PlanOnly: true,
 			},
 			{
-				// This test is not really verifying desired behaviour as the import is populating length, number etc
 				ProtoV5ProviderFactories: protoV5ProviderFactories(),
 				Config: `resource "random_password" "test" {
 							length = 12
 						}`,
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttrWith("random_password.test", "result", testCheckLen(12)),
+					resource.TestCheckResourceAttr("random_password.test", "number", "true"),
+					resource.TestCheckResourceAttr("random_password.test", "numeric", "true"),
+					resource.TestCheckResourceAttr("random_password.test", "upper", "true"),
+					resource.TestCheckResourceAttr("random_password.test", "lower", "true"),
+					resource.TestCheckResourceAttr("random_password.test", "special", "true"),
+					resource.TestCheckResourceAttr("random_password.test", "min_numeric", "0"),
+					resource.TestCheckResourceAttr("random_password.test", "min_upper", "0"),
+					resource.TestCheckResourceAttr("random_password.test", "min_lower", "0"),
+					resource.TestCheckResourceAttr("random_password.test", "min_special", "0"),
 					testExtractResourceAttr("random_password.test", "result", &result2),
 					testCheckAttributeValuesEqual(&result1, &result2),
 				),
@@ -416,7 +402,7 @@ func TestAccResourcePassword_Import_FromVersion3_2_0(t *testing.T) {
 	})
 }
 
-// TestAccResourcePassword_Import_FromVersion3_2_0 verifies behaviour when resource has been imported and stores
+// TestAccResourcePassword_Import_FromVersion3_4_2 verifies behaviour when resource has been imported and stores
 // empty map {} for keepers and empty string for override_special in state.
 // v3.4.2 was selected as this is the last provider version using schema version 2.
 func TestAccResourcePassword_Import_FromVersion3_4_2(t *testing.T) {
@@ -429,35 +415,22 @@ func TestAccResourcePassword_Import_FromVersion3_4_2(t *testing.T) {
 				Config: `resource "random_password" "test" {
 							length = 12
 						}`,
-				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttrWith("random_password.test", "result", testCheckLen(12)),
-					testExtractResourceAttr("random_password.test", "result", &result1),
-				),
-			},
-			{
-				ExternalProviders: providerVersion342(),
-				ResourceName:      "random_password.test",
-				// Usage of ImportStateIdFunc is required as the value passed to the `terraform import` command needs
-				// to be the password itself, as the password resource sets ID to "none" and "result" to the password
-				// supplied during import.
-				ImportStateIdFunc: func(s *terraform.State) (string, error) {
-					id := "random_password.test"
-					rs, ok := s.RootModule().Resources[id]
-					if !ok {
-						return "", fmt.Errorf("not found: %s", id)
-					}
-					if rs.Primary.ID == "" {
-						return "", fmt.Errorf("no ID is set")
-					}
-
-					return rs.Primary.Attributes["result"], nil
-				},
-				ImportState: true,
-				// These checks should fail as running terraform import with v3.2.0 stores null for result and number
-				// attributes in state.
-				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttrWith("random_password.test", "result", testCheckLen(12)),
-					resource.TestCheckResourceAttr("random_password.test", "override_special", ""),
+				ResourceName:       "random_password.test",
+				ImportState:        true,
+				ImportStateId:      "Z=:cbrJE?Ltg",
+				ImportStatePersist: true,
+				ImportStateCheck: composeImportStateCheck(
+					testCheckResourceAttrInstanceState("length"),
+					testCheckResourceAttrInstanceState("number"),
+					testCheckResourceAttrInstanceState("numeric"),
+					testCheckResourceAttrInstanceState("upper"),
+					testCheckResourceAttrInstanceState("lower"),
+					testCheckResourceAttrInstanceState("special"),
+					testCheckResourceAttrInstanceState("min_numeric"),
+					testCheckResourceAttrInstanceState("min_upper"),
+					testCheckResourceAttrInstanceState("min_lower"),
+					testCheckResourceAttrInstanceState("min_special"),
+					testExtractResourceAttrInstanceState("result", &result1),
 				),
 			},
 			{
@@ -467,6 +440,15 @@ func TestAccResourcePassword_Import_FromVersion3_4_2(t *testing.T) {
 						}`,
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttrWith("random_password.test", "result", testCheckLen(12)),
+					resource.TestCheckResourceAttr("random_password.test", "number", "true"),
+					resource.TestCheckResourceAttr("random_password.test", "numeric", "true"),
+					resource.TestCheckResourceAttr("random_password.test", "upper", "true"),
+					resource.TestCheckResourceAttr("random_password.test", "lower", "true"),
+					resource.TestCheckResourceAttr("random_password.test", "special", "true"),
+					resource.TestCheckResourceAttr("random_password.test", "min_numeric", "0"),
+					resource.TestCheckResourceAttr("random_password.test", "min_upper", "0"),
+					resource.TestCheckResourceAttr("random_password.test", "min_lower", "0"),
+					resource.TestCheckResourceAttr("random_password.test", "min_special", "0"),
 					testExtractResourceAttr("random_password.test", "result", &result2),
 					testCheckAttributeValuesEqual(&result1, &result2),
 				),
@@ -475,10 +457,10 @@ func TestAccResourcePassword_Import_FromVersion3_4_2(t *testing.T) {
 	})
 }
 
-// TestAccResourcePassword_StateUpgradeV0toV2 covers the state upgrades from V0 to V2.
-// This includes the the addition of `numeric` and `bcrypt_hash` attributes.
+// TestAccResourcePassword_StateUpgradeV0toV3 covers the state upgrades from V0 to V3.
+// This includes the addition of `numeric` and `bcrypt_hash` attributes.
 // v3.1.3 is used as this is last version before `bcrypt_hash` attributed was added.
-func TestAccResourcePassword_StateUpgradeV0toV2(t *testing.T) {
+func TestAccResourcePassword_StateUpgradeV0toV3(t *testing.T) {
 	t.Parallel()
 
 	cases := []struct {
@@ -673,11 +655,11 @@ func TestAccResourcePassword_StateUpgradeV0toV2(t *testing.T) {
 	}
 }
 
-// TestAccResourcePassword_StateUpgrade_V1toV2 covers the state upgrades from V1 to V2.
+// TestAccResourcePassword_StateUpgrade_V1toV3 covers the state upgrades from V1 to V3.
 // This includes the addition of `numeric` attribute.
 // v3.2.0 was used as this is the last version before `number` was deprecated and `numeric` attribute
 // was added.
-func TestAccResourcePassword_StateUpgradeV1toV2(t *testing.T) {
+func TestAccResourcePassword_StateUpgradeV1toV3(t *testing.T) {
 	t.Parallel()
 
 	cases := []struct {
@@ -2589,5 +2571,70 @@ func testBcryptHashValid(hash *string, password *string) resource.TestCheckFunc 
 		}
 
 		return bcrypt.CompareHashAndPassword([]byte(*hash), []byte(*password))
+	}
+}
+
+func composeImportStateCheck(fs ...resource.ImportStateCheckFunc) resource.ImportStateCheckFunc {
+	return func(s []*terraform.InstanceState) error {
+		for i, f := range fs {
+			if err := f(s); err != nil {
+				return fmt.Errorf("check %d/%d error: %s", i+1, len(fs), err)
+			}
+		}
+
+		return nil
+	}
+}
+
+func testExtractResourceAttrInstanceState(attributeName string, attributeValue *string) resource.ImportStateCheckFunc {
+	return func(is []*terraform.InstanceState) error {
+		if len(is) != 1 {
+			return fmt.Errorf("unexpected number of instance states: %d", len(is))
+		}
+
+		s := is[0]
+
+		attrValue, ok := s.Attributes[attributeName]
+		if !ok {
+			return fmt.Errorf("attribute %s not found in instance state", attributeName)
+		}
+
+		*attributeValue = attrValue
+
+		return nil
+	}
+}
+
+func testCheckNoResourceAttrInstanceState(attributeName string) resource.ImportStateCheckFunc {
+	return func(is []*terraform.InstanceState) error {
+		if len(is) != 1 {
+			return fmt.Errorf("unexpected number of instance states: %d", len(is))
+		}
+
+		s := is[0]
+
+		_, ok := s.Attributes[attributeName]
+		if ok {
+			return fmt.Errorf("attribute %s found in instance state", attributeName)
+		}
+
+		return nil
+	}
+}
+
+func testCheckResourceAttrInstanceState(attributeName string) resource.ImportStateCheckFunc {
+	return func(is []*terraform.InstanceState) error {
+		if len(is) != 1 {
+			return fmt.Errorf("unexpected number of instance states: %d", len(is))
+		}
+
+		s := is[0]
+
+		_, ok := s.Attributes[attributeName]
+		if !ok {
+			return fmt.Errorf("attribute %s not found in instance state", attributeName)
+		}
+
+		return nil
 	}
 }
