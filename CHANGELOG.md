@@ -1,16 +1,20 @@
-## 3.4.3 (Unreleased)
+## 3.4.3 (September 08, 2022)
 
 NOTES:
 
+* resource/random_password: The values for `lower`, `number`, `special`, `upper`, `min_lower`, `min_numeric`, `min_special`, `min_upper` and `length` could be null if the resource was imported using version 3.3.1 or before. The value for `length` will be automatically calculated and assigned and default values will be assigned for the other attributes listed after this upgrade ([#313](https://github.com/hashicorp/terraform-provider-random/pull/313))
+* resource/random_string: The values for `lower`, `number`, `special`, `upper`, `min_lower`, `min_numeric`, `min_special`, `min_upper` and `length` could be null if the resource was imported using version 3.3.1 or before. The value for `length` will be automatically calculated and assigned and default values will be assigned for the other attributes listed after this upgrade ([#313](https://github.com/hashicorp/terraform-provider-random/pull/313))
 * resource/random_password: If the resource was created between versions 3.4.0 and 3.4.2, the `bcrypt_hash` value would not correctly verify against the `result` value. Affected resources will automatically regenerate a valid `bcrypt_hash` after this upgrade. ([#308](https://github.com/hashicorp/terraform-provider-random/pull/308))
 * resource/random_password: The `override_special` attribute may show a plan difference from empty string (`""`) to `null` if previously applied with version 3.4.2. The plan should show this as an in-place update and it should occur only once after upgrading. ([#312](https://github.com/hashicorp/terraform-provider-random/pull/312))
 * resource/random_string: The `override_special` attribute may show a plan difference from empty string (`""`) to `null` if previously applied with version 3.4.2. The plan should show this as an in-place update and it should occur only once after upgrading. ([#312](https://github.com/hashicorp/terraform-provider-random/pull/312))
 
 BUG FIXES:
 
+* resource/random_password: Assign default values to `lower`, `number`, `special`, `upper`, `min_lower`, `min_numeric`, `min_special` and `min_upper` if null. Assign length of `result` to `length` if null ([#313](https://github.com/hashicorp/terraform-provider-random/pull/313))
+* resource/random_string: Assign default values to `lower`, `number`, `special`, `upper`, `min_lower`, `min_numeric`, `min_special` and `min_upper` if null. Assign length of `result` to `length` if null ([#313](https://github.com/hashicorp/terraform-provider-random/pull/313))
 * resource/random_password: Fixed incorrect `bcrypt_hash` generation since version 3.4.0 ([#308](https://github.com/hashicorp/terraform-provider-random/pull/308))
 * resource/random_password: Prevented difference with `override_special` when upgrading from version 3.3.2 and earlier ([#312](https://github.com/hashicorp/terraform-provider-random/pull/312))
-* resource/random_password: Prevented difference with `override_special` when upgrading from version 3.3.2 and earlier ([#312](https://github.com/hashicorp/terraform-provider-random/pull/312))
+* resource/random_string: Prevented difference with `override_special` when upgrading from version 3.3.2 and earlier ([#312](https://github.com/hashicorp/terraform-provider-random/pull/312))
 
 ## 3.4.2 (September 02, 2022)
 

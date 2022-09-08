@@ -15,8 +15,9 @@ import (
 	"github.com/hashicorp/terraform-plugin-go/tftypes"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
-	"github.com/terraform-providers/terraform-provider-random/internal/random"
 	"golang.org/x/crypto/bcrypt"
+
+	"github.com/terraform-providers/terraform-provider-random/internal/random"
 )
 
 func TestGenerateHash(t *testing.T) {
@@ -63,7 +64,7 @@ func TestGenerateHash(t *testing.T) {
 	}
 }
 
-func TestAccResourcePassword(t *testing.T) {
+func TestAccResourcePassword_Import(t *testing.T) {
 	resource.UnitTest(t, resource.TestCase{
 		ProtoV5ProviderFactories: protoV5ProviderFactories(),
 		Steps: []resource.TestStep{
@@ -279,10 +280,187 @@ func TestAccResourcePassword_OverrideSpecial_FromVersion3_4_2(t *testing.T) {
 	})
 }
 
-// TestAccResourcePassword_StateUpgradeV0toV2 covers the state upgrades from V0 to V2.
-// This includes the the addition of `numeric` and `bcrypt_hash` attributes.
+// TestAccResourcePassword_Import_FromVersion3_1_3 verifies behaviour when resource has been imported and stores
+// null for length, lower, number, special, upper, min_lower, min_numeric, min_special, min_upper attributes in state.
+// v3.1.3 was selected as this is the last provider version using schema version 0.
+func TestAccResourcePassword_Import_FromVersion3_1_3(t *testing.T) {
+	var result1, result2 string
+
+	resource.ParallelTest(t, resource.TestCase{
+		Steps: []resource.TestStep{
+			{
+				ExternalProviders: providerVersion313(),
+				Config: `resource "random_password" "test" {
+							length = 12
+						}`,
+				ResourceName:       "random_password.test",
+				ImportState:        true,
+				ImportStateId:      "Z=:cbrJE?Ltg",
+				ImportStatePersist: true,
+				ImportStateCheck: composeImportStateCheck(
+					testCheckNoResourceAttrInstanceState("length"),
+					testCheckNoResourceAttrInstanceState("number"),
+					testCheckNoResourceAttrInstanceState("upper"),
+					testCheckNoResourceAttrInstanceState("lower"),
+					testCheckNoResourceAttrInstanceState("special"),
+					testCheckNoResourceAttrInstanceState("min_numeric"),
+					testCheckNoResourceAttrInstanceState("min_upper"),
+					testCheckNoResourceAttrInstanceState("min_lower"),
+					testCheckNoResourceAttrInstanceState("min_special"),
+					testExtractResourceAttrInstanceState("result", &result1),
+				),
+			},
+			{
+				ProtoV5ProviderFactories: protoV5ProviderFactories(),
+				Config: `resource "random_password" "test" {
+					length = 12
+				}`,
+				PlanOnly: true,
+			},
+			{
+				ProtoV5ProviderFactories: protoV5ProviderFactories(),
+				Config: `resource "random_password" "test" {
+							length = 12
+						}`,
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttrWith("random_password.test", "result", testCheckLen(12)),
+					resource.TestCheckResourceAttr("random_password.test", "number", "true"),
+					resource.TestCheckResourceAttr("random_password.test", "numeric", "true"),
+					resource.TestCheckResourceAttr("random_password.test", "upper", "true"),
+					resource.TestCheckResourceAttr("random_password.test", "lower", "true"),
+					resource.TestCheckResourceAttr("random_password.test", "special", "true"),
+					resource.TestCheckResourceAttr("random_password.test", "min_numeric", "0"),
+					resource.TestCheckResourceAttr("random_password.test", "min_upper", "0"),
+					resource.TestCheckResourceAttr("random_password.test", "min_lower", "0"),
+					resource.TestCheckResourceAttr("random_password.test", "min_special", "0"),
+					testExtractResourceAttr("random_password.test", "result", &result2),
+					testCheckAttributeValuesEqual(&result1, &result2),
+				),
+			},
+		},
+	})
+}
+
+// TestAccResourcePassword_Import_FromVersion3_2_0 verifies behaviour when resource has been imported and stores
+// null for length, lower, number, special, upper, min_lower, min_numeric, min_special, min_upper attributes in state.
+// v3.2.0 was selected as this is the last provider version using schema version 1.
+func TestAccResourcePassword_Import_FromVersion3_2_0(t *testing.T) {
+	var result1, result2 string
+
+	resource.ParallelTest(t, resource.TestCase{
+		Steps: []resource.TestStep{
+			{
+				ExternalProviders: providerVersion320(),
+				Config: `resource "random_password" "test" {
+							length = 12
+						}`,
+				ResourceName:       "random_password.test",
+				ImportState:        true,
+				ImportStateId:      "Z=:cbrJE?Ltg",
+				ImportStatePersist: true,
+				ImportStateCheck: composeImportStateCheck(
+					testCheckNoResourceAttrInstanceState("length"),
+					testCheckNoResourceAttrInstanceState("number"),
+					testCheckNoResourceAttrInstanceState("upper"),
+					testCheckNoResourceAttrInstanceState("lower"),
+					testCheckNoResourceAttrInstanceState("special"),
+					testCheckNoResourceAttrInstanceState("min_numeric"),
+					testCheckNoResourceAttrInstanceState("min_upper"),
+					testCheckNoResourceAttrInstanceState("min_lower"),
+					testCheckNoResourceAttrInstanceState("min_special"),
+					testExtractResourceAttrInstanceState("result", &result1),
+				),
+			},
+			{
+				ProtoV5ProviderFactories: protoV5ProviderFactories(),
+				Config: `resource "random_password" "test" {
+					length = 12
+				}`,
+				PlanOnly: true,
+			},
+			{
+				ProtoV5ProviderFactories: protoV5ProviderFactories(),
+				Config: `resource "random_password" "test" {
+							length = 12
+						}`,
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttrWith("random_password.test", "result", testCheckLen(12)),
+					resource.TestCheckResourceAttr("random_password.test", "number", "true"),
+					resource.TestCheckResourceAttr("random_password.test", "numeric", "true"),
+					resource.TestCheckResourceAttr("random_password.test", "upper", "true"),
+					resource.TestCheckResourceAttr("random_password.test", "lower", "true"),
+					resource.TestCheckResourceAttr("random_password.test", "special", "true"),
+					resource.TestCheckResourceAttr("random_password.test", "min_numeric", "0"),
+					resource.TestCheckResourceAttr("random_password.test", "min_upper", "0"),
+					resource.TestCheckResourceAttr("random_password.test", "min_lower", "0"),
+					resource.TestCheckResourceAttr("random_password.test", "min_special", "0"),
+					testExtractResourceAttr("random_password.test", "result", &result2),
+					testCheckAttributeValuesEqual(&result1, &result2),
+				),
+			},
+		},
+	})
+}
+
+// TestAccResourcePassword_Import_FromVersion3_4_2 verifies behaviour when resource has been imported and stores
+// empty map {} for keepers and empty string for override_special in state.
+// v3.4.2 was selected as this is the last provider version using schema version 2.
+func TestAccResourcePassword_Import_FromVersion3_4_2(t *testing.T) {
+	var result1, result2 string
+
+	resource.ParallelTest(t, resource.TestCase{
+		Steps: []resource.TestStep{
+			{
+				ExternalProviders: providerVersion342(),
+				Config: `resource "random_password" "test" {
+							length = 12
+						}`,
+				ResourceName:       "random_password.test",
+				ImportState:        true,
+				ImportStateId:      "Z=:cbrJE?Ltg",
+				ImportStatePersist: true,
+				ImportStateCheck: composeImportStateCheck(
+					testCheckResourceAttrInstanceState("length"),
+					testCheckResourceAttrInstanceState("number"),
+					testCheckResourceAttrInstanceState("numeric"),
+					testCheckResourceAttrInstanceState("upper"),
+					testCheckResourceAttrInstanceState("lower"),
+					testCheckResourceAttrInstanceState("special"),
+					testCheckResourceAttrInstanceState("min_numeric"),
+					testCheckResourceAttrInstanceState("min_upper"),
+					testCheckResourceAttrInstanceState("min_lower"),
+					testCheckResourceAttrInstanceState("min_special"),
+					testExtractResourceAttrInstanceState("result", &result1),
+				),
+			},
+			{
+				ProtoV5ProviderFactories: protoV5ProviderFactories(),
+				Config: `resource "random_password" "test" {
+							length = 12
+						}`,
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttrWith("random_password.test", "result", testCheckLen(12)),
+					resource.TestCheckResourceAttr("random_password.test", "number", "true"),
+					resource.TestCheckResourceAttr("random_password.test", "numeric", "true"),
+					resource.TestCheckResourceAttr("random_password.test", "upper", "true"),
+					resource.TestCheckResourceAttr("random_password.test", "lower", "true"),
+					resource.TestCheckResourceAttr("random_password.test", "special", "true"),
+					resource.TestCheckResourceAttr("random_password.test", "min_numeric", "0"),
+					resource.TestCheckResourceAttr("random_password.test", "min_upper", "0"),
+					resource.TestCheckResourceAttr("random_password.test", "min_lower", "0"),
+					resource.TestCheckResourceAttr("random_password.test", "min_special", "0"),
+					testExtractResourceAttr("random_password.test", "result", &result2),
+					testCheckAttributeValuesEqual(&result1, &result2),
+				),
+			},
+		},
+	})
+}
+
+// TestAccResourcePassword_StateUpgradeV0toV3 covers the state upgrades from V0 to V3.
+// This includes the addition of `numeric` and `bcrypt_hash` attributes.
 // v3.1.3 is used as this is last version before `bcrypt_hash` attributed was added.
-func TestAccResourcePassword_StateUpgradeV0toV2(t *testing.T) {
+func TestAccResourcePassword_StateUpgradeV0toV3(t *testing.T) {
 	t.Parallel()
 
 	cases := []struct {
@@ -477,11 +655,11 @@ func TestAccResourcePassword_StateUpgradeV0toV2(t *testing.T) {
 	}
 }
 
-// TestAccResourcePassword_StateUpgrade_V1toV2 covers the state upgrades from V1 to V2.
+// TestAccResourcePassword_StateUpgrade_V1toV3 covers the state upgrades from V1 to V3.
 // This includes the addition of `numeric` attribute.
 // v3.2.0 was used as this is the last version before `number` was deprecated and `numeric` attribute
 // was added.
-func TestAccResourcePassword_StateUpgradeV1toV2(t *testing.T) {
+func TestAccResourcePassword_StateUpgradeV1toV3(t *testing.T) {
 	t.Parallel()
 
 	cases := []struct {
@@ -942,6 +1120,8 @@ func TestAccResourcePassword_UpgradeFromVersion3_3_2(t *testing.T) {
 }
 
 func TestUpgradePasswordStateV0toV3(t *testing.T) {
+	t.Parallel()
+
 	raw := tftypes.NewValue(tftypes.Object{}, map[string]tftypes.Value{
 		"id":               tftypes.NewValue(tftypes.String, "none"),
 		"keepers":          tftypes.NewValue(tftypes.Map{ElementType: tftypes.String}, nil),
@@ -1009,7 +1189,79 @@ func TestUpgradePasswordStateV0toV3(t *testing.T) {
 	}
 }
 
+func TestUpgradePasswordStateV0toV3_NullValues(t *testing.T) {
+	t.Parallel()
+
+	raw := tftypes.NewValue(tftypes.Object{}, map[string]tftypes.Value{
+		"id":               tftypes.NewValue(tftypes.String, "none"),
+		"keepers":          tftypes.NewValue(tftypes.Map{ElementType: tftypes.String}, nil),
+		"length":           tftypes.NewValue(tftypes.Number, nil),
+		"lower":            tftypes.NewValue(tftypes.Bool, nil),
+		"min_lower":        tftypes.NewValue(tftypes.Number, nil),
+		"min_numeric":      tftypes.NewValue(tftypes.Number, nil),
+		"min_special":      tftypes.NewValue(tftypes.Number, nil),
+		"min_upper":        tftypes.NewValue(tftypes.Number, nil),
+		"number":           tftypes.NewValue(tftypes.Bool, nil),
+		"override_special": tftypes.NewValue(tftypes.String, nil),
+		"result":           tftypes.NewValue(tftypes.String, "DZy_3*tnonj%Q%Yx"),
+		"special":          tftypes.NewValue(tftypes.Bool, nil),
+		"upper":            tftypes.NewValue(tftypes.Bool, nil),
+	})
+
+	req := res.UpgradeStateRequest{
+		State: &tfsdk.State{
+			Raw:    raw,
+			Schema: passwordSchemaV0(),
+		},
+	}
+
+	resp := &res.UpgradeStateResponse{
+		State: tfsdk.State{
+			Schema: passwordSchemaV3(),
+		},
+	}
+
+	upgradePasswordStateV0toV3(context.Background(), req, resp)
+
+	expected := passwordModelV3{
+		ID:              types.String{Value: "none"},
+		Keepers:         types.Map{Null: true, ElemType: types.StringType},
+		Length:          types.Int64{Value: 16},
+		Special:         types.Bool{Value: true},
+		Upper:           types.Bool{Value: true},
+		Lower:           types.Bool{Value: true},
+		Number:          types.Bool{Value: true},
+		Numeric:         types.Bool{Value: true},
+		MinNumeric:      types.Int64{Value: 0},
+		MinUpper:        types.Int64{Value: 0},
+		MinLower:        types.Int64{Value: 0},
+		MinSpecial:      types.Int64{Value: 0},
+		OverrideSpecial: types.String{Null: true},
+		Result:          types.String{Value: "DZy_3*tnonj%Q%Yx"},
+	}
+
+	actual := passwordModelV3{}
+	diags := resp.State.Get(context.Background(), &actual)
+	if diags.HasError() {
+		t.Errorf("error getting state: %v", diags)
+	}
+
+	err := bcrypt.CompareHashAndPassword([]byte(actual.BcryptHash.Value), []byte(actual.Result.Value))
+	if err != nil {
+		t.Errorf("unexpected bcrypt comparison error: %s", err)
+	}
+
+	// Setting actual.BcryptHash to zero value to allow direct comparison of expected and actual.
+	actual.BcryptHash = types.String{}
+
+	if !cmp.Equal(expected, actual) {
+		t.Errorf("expected: %+v, got: %+v", expected, actual)
+	}
+}
+
 func TestUpgradePasswordStateV1toV3(t *testing.T) {
+	t.Parallel()
+
 	raw := tftypes.NewValue(tftypes.Object{}, map[string]tftypes.Value{
 		"id":               tftypes.NewValue(tftypes.String, "none"),
 		"keepers":          tftypes.NewValue(tftypes.Map{ElementType: tftypes.String}, nil),
@@ -1056,6 +1308,70 @@ func TestUpgradePasswordStateV1toV3(t *testing.T) {
 		MinLower:        types.Int64{Value: 0},
 		MinSpecial:      types.Int64{Value: 0},
 		OverrideSpecial: types.String{Value: "!#$%\u0026*()-_=+[]{}\u003c\u003e:?"},
+		BcryptHash:      types.String{Value: "bcrypt_hash"},
+		Result:          types.String{Value: "DZy_3*tnonj%Q%Yx"},
+	}
+
+	actual := passwordModelV3{}
+	diags := resp.State.Get(context.Background(), &actual)
+	if diags.HasError() {
+		t.Errorf("error getting state: %v", diags)
+	}
+
+	if !cmp.Equal(expected, actual) {
+		t.Errorf("expected: %+v, got: %+v", expected, actual)
+	}
+}
+
+func TestUpgradePasswordStateV1toV3_NullValues(t *testing.T) {
+	t.Parallel()
+
+	raw := tftypes.NewValue(tftypes.Object{}, map[string]tftypes.Value{
+		"id":               tftypes.NewValue(tftypes.String, "none"),
+		"keepers":          tftypes.NewValue(tftypes.Map{ElementType: tftypes.String}, nil),
+		"length":           tftypes.NewValue(tftypes.Number, nil),
+		"lower":            tftypes.NewValue(tftypes.Bool, nil),
+		"min_lower":        tftypes.NewValue(tftypes.Number, nil),
+		"min_numeric":      tftypes.NewValue(tftypes.Number, nil),
+		"min_special":      tftypes.NewValue(tftypes.Number, nil),
+		"min_upper":        tftypes.NewValue(tftypes.Number, nil),
+		"number":           tftypes.NewValue(tftypes.Bool, nil),
+		"override_special": tftypes.NewValue(tftypes.String, nil),
+		"result":           tftypes.NewValue(tftypes.String, "DZy_3*tnonj%Q%Yx"),
+		"special":          tftypes.NewValue(tftypes.Bool, nil),
+		"upper":            tftypes.NewValue(tftypes.Bool, nil),
+		"bcrypt_hash":      tftypes.NewValue(tftypes.String, "bcrypt_hash"),
+	})
+
+	req := res.UpgradeStateRequest{
+		State: &tfsdk.State{
+			Raw:    raw,
+			Schema: passwordSchemaV1(),
+		},
+	}
+
+	resp := &res.UpgradeStateResponse{
+		State: tfsdk.State{
+			Schema: passwordSchemaV3(),
+		},
+	}
+
+	upgradePasswordStateV1toV3(context.Background(), req, resp)
+
+	expected := passwordModelV3{
+		ID:              types.String{Value: "none"},
+		Keepers:         types.Map{Null: true, ElemType: types.StringType},
+		Length:          types.Int64{Value: 16},
+		Special:         types.Bool{Value: true},
+		Upper:           types.Bool{Value: true},
+		Lower:           types.Bool{Value: true},
+		Number:          types.Bool{Value: true},
+		Numeric:         types.Bool{Value: true},
+		MinNumeric:      types.Int64{Value: 0},
+		MinUpper:        types.Int64{Value: 0},
+		MinLower:        types.Int64{Value: 0},
+		MinSpecial:      types.Int64{Value: 0},
+		OverrideSpecial: types.String{Null: true},
 		BcryptHash:      types.String{Value: "bcrypt_hash"},
 		Result:          types.String{Value: "DZy_3*tnonj%Q%Yx"},
 	}
@@ -1239,6 +1555,90 @@ func TestUpgradePasswordStateV2toV3(t *testing.T) {
 						"numeric":          tftypes.NewValue(tftypes.Bool, true),
 						"override_special": tftypes.NewValue(tftypes.String, ""),
 						"result":           tftypes.NewValue(tftypes.String, "$7r>NiN4Z%uAxpU]:DuB"),
+						"special":          tftypes.NewValue(tftypes.Bool, true),
+						"upper":            tftypes.NewValue(tftypes.Bool, true),
+					}),
+					Schema: passwordSchemaV3(),
+				},
+			},
+		},
+		"valid-hash-null-values": {
+			request: res.UpgradeStateRequest{
+				State: &tfsdk.State{
+					Raw: tftypes.NewValue(tftypes.Object{
+						AttributeTypes: map[string]tftypes.Type{
+							"bcrypt_hash":      tftypes.String,
+							"id":               tftypes.String,
+							"keepers":          tftypes.Map{ElementType: tftypes.String},
+							"length":           tftypes.Number,
+							"lower":            tftypes.Bool,
+							"min_lower":        tftypes.Number,
+							"min_numeric":      tftypes.Number,
+							"min_special":      tftypes.Number,
+							"min_upper":        tftypes.Number,
+							"number":           tftypes.Bool,
+							"numeric":          tftypes.Bool,
+							"override_special": tftypes.String,
+							"result":           tftypes.String,
+							"special":          tftypes.Bool,
+							"upper":            tftypes.Bool,
+						},
+					}, map[string]tftypes.Value{
+						"bcrypt_hash":      tftypes.NewValue(tftypes.String, "$2a$10$d9zhEkVg.O1jZ6fEIMRlRuu/vMa0/4UIzeK5joaTBhZJlYiIPhWWa"),
+						"id":               tftypes.NewValue(tftypes.String, "none"),
+						"keepers":          tftypes.NewValue(tftypes.Map{ElementType: tftypes.String}, nil),
+						"length":           tftypes.NewValue(tftypes.Number, nil),
+						"lower":            tftypes.NewValue(tftypes.Bool, nil),
+						"min_lower":        tftypes.NewValue(tftypes.Number, nil),
+						"min_numeric":      tftypes.NewValue(tftypes.Number, nil),
+						"min_special":      tftypes.NewValue(tftypes.Number, nil),
+						"min_upper":        tftypes.NewValue(tftypes.Number, nil),
+						"number":           tftypes.NewValue(tftypes.Bool, nil),
+						"numeric":          tftypes.NewValue(tftypes.Bool, nil),
+						"override_special": tftypes.NewValue(tftypes.String, ""),
+						"result":           tftypes.NewValue(tftypes.String, "n:um[a9kO&x!L=9og[EM"),
+						"special":          tftypes.NewValue(tftypes.Bool, nil),
+						"upper":            tftypes.NewValue(tftypes.Bool, nil),
+					}),
+					Schema: passwordSchemaV2(),
+				},
+			},
+			expected: &res.UpgradeStateResponse{
+				State: tfsdk.State{
+					Raw: tftypes.NewValue(tftypes.Object{
+						AttributeTypes: map[string]tftypes.Type{
+							"bcrypt_hash":      tftypes.String,
+							"id":               tftypes.String,
+							"keepers":          tftypes.Map{ElementType: tftypes.String},
+							"length":           tftypes.Number,
+							"lower":            tftypes.Bool,
+							"min_lower":        tftypes.Number,
+							"min_numeric":      tftypes.Number,
+							"min_special":      tftypes.Number,
+							"min_upper":        tftypes.Number,
+							"number":           tftypes.Bool,
+							"numeric":          tftypes.Bool,
+							"override_special": tftypes.String,
+							"result":           tftypes.String,
+							"special":          tftypes.Bool,
+							"upper":            tftypes.Bool,
+						},
+					}, map[string]tftypes.Value{
+						// The difference checking should compare this actual
+						// value since it should not be updated.
+						"bcrypt_hash":      tftypes.NewValue(tftypes.String, "$2a$10$d9zhEkVg.O1jZ6fEIMRlRuu/vMa0/4UIzeK5joaTBhZJlYiIPhWWa"),
+						"id":               tftypes.NewValue(tftypes.String, "none"),
+						"keepers":          tftypes.NewValue(tftypes.Map{ElementType: tftypes.String}, nil),
+						"length":           tftypes.NewValue(tftypes.Number, 20),
+						"lower":            tftypes.NewValue(tftypes.Bool, true),
+						"min_lower":        tftypes.NewValue(tftypes.Number, 0),
+						"min_numeric":      tftypes.NewValue(tftypes.Number, 0),
+						"min_special":      tftypes.NewValue(tftypes.Number, 0),
+						"min_upper":        tftypes.NewValue(tftypes.Number, 0),
+						"number":           tftypes.NewValue(tftypes.Bool, true),
+						"numeric":          tftypes.NewValue(tftypes.Bool, true),
+						"override_special": tftypes.NewValue(tftypes.String, ""),
+						"result":           tftypes.NewValue(tftypes.String, "n:um[a9kO&x!L=9og[EM"),
 						"special":          tftypes.NewValue(tftypes.Bool, true),
 						"upper":            tftypes.NewValue(tftypes.Bool, true),
 					}),
@@ -2171,5 +2571,71 @@ func testBcryptHashValid(hash *string, password *string) resource.TestCheckFunc 
 		}
 
 		return bcrypt.CompareHashAndPassword([]byte(*hash), []byte(*password))
+	}
+}
+
+func composeImportStateCheck(fs ...resource.ImportStateCheckFunc) resource.ImportStateCheckFunc {
+	return func(s []*terraform.InstanceState) error {
+		for i, f := range fs {
+			if err := f(s); err != nil {
+				return fmt.Errorf("check %d/%d error: %s", i+1, len(fs), err)
+			}
+		}
+
+		return nil
+	}
+}
+
+//nolint:unparam
+func testExtractResourceAttrInstanceState(attributeName string, attributeValue *string) resource.ImportStateCheckFunc {
+	return func(is []*terraform.InstanceState) error {
+		if len(is) != 1 {
+			return fmt.Errorf("unexpected number of instance states: %d", len(is))
+		}
+
+		s := is[0]
+
+		attrValue, ok := s.Attributes[attributeName]
+		if !ok {
+			return fmt.Errorf("attribute %s not found in instance state", attributeName)
+		}
+
+		*attributeValue = attrValue
+
+		return nil
+	}
+}
+
+func testCheckNoResourceAttrInstanceState(attributeName string) resource.ImportStateCheckFunc {
+	return func(is []*terraform.InstanceState) error {
+		if len(is) != 1 {
+			return fmt.Errorf("unexpected number of instance states: %d", len(is))
+		}
+
+		s := is[0]
+
+		_, ok := s.Attributes[attributeName]
+		if ok {
+			return fmt.Errorf("attribute %s found in instance state", attributeName)
+		}
+
+		return nil
+	}
+}
+
+func testCheckResourceAttrInstanceState(attributeName string) resource.ImportStateCheckFunc {
+	return func(is []*terraform.InstanceState) error {
+		if len(is) != 1 {
+			return fmt.Errorf("unexpected number of instance states: %d", len(is))
+		}
+
+		s := is[0]
+
+		_, ok := s.Attributes[attributeName]
+		if !ok {
+			return fmt.Errorf("attribute %s not found in instance state", attributeName)
+		}
+
+		return nil
 	}
 }

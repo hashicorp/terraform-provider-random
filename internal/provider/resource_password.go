@@ -182,18 +182,81 @@ func upgradePasswordStateV0toV3(ctx context.Context, req resource.UpgradeStateRe
 		return
 	}
 
+	// Setting fields that can contain null to non-null to prevent forced replacement.
+	// This can occur in cases where import has been used in provider versions v3.3.1 and earlier.
+	// If import has been used with v3.3.1, for instance then length, lower, number, special, upper,
+	// min_lower, min_numeric, min_special and min_upper attributes will all be null in state.
+	length := passwordDataV0.Length
+
+	if length.IsNull() {
+		length.Null = false
+		length.Value = int64(len(passwordDataV0.Result.Value))
+	}
+
+	minNumeric := passwordDataV0.MinNumeric
+
+	if minNumeric.IsNull() {
+		minNumeric.Null = false
+	}
+
+	minUpper := passwordDataV0.MinUpper
+
+	if minUpper.IsNull() {
+		minUpper.Null = false
+	}
+
+	minLower := passwordDataV0.MinLower
+
+	if minLower.IsNull() {
+		minLower.Null = false
+	}
+
+	minSpecial := passwordDataV0.MinSpecial
+
+	if minSpecial.IsNull() {
+		minSpecial.Null = false
+	}
+
+	special := passwordDataV0.Special
+
+	if special.IsNull() {
+		special.Null = false
+		special.Value = true
+	}
+
+	upper := passwordDataV0.Upper
+
+	if upper.IsNull() {
+		upper.Null = false
+		upper.Value = true
+	}
+
+	lower := passwordDataV0.Lower
+
+	if lower.IsNull() {
+		lower.Null = false
+		lower.Value = true
+	}
+
+	number := passwordDataV0.Number
+
+	if number.IsNull() {
+		number.Null = false
+		number.Value = true
+	}
+
 	passwordDataV3 := passwordModelV3{
 		Keepers:         passwordDataV0.Keepers,
-		Length:          passwordDataV0.Length,
-		Special:         passwordDataV0.Special,
-		Upper:           passwordDataV0.Upper,
-		Lower:           passwordDataV0.Lower,
-		Number:          passwordDataV0.Number,
-		Numeric:         passwordDataV0.Number,
-		MinNumeric:      passwordDataV0.MinNumeric,
-		MinUpper:        passwordDataV0.MinUpper,
-		MinLower:        passwordDataV0.MinLower,
-		MinSpecial:      passwordDataV0.MinSpecial,
+		Length:          length,
+		Special:         special,
+		Upper:           upper,
+		Lower:           lower,
+		Number:          number,
+		Numeric:         number,
+		MinNumeric:      minNumeric,
+		MinUpper:        minUpper,
+		MinLower:        minLower,
+		MinSpecial:      minSpecial,
 		OverrideSpecial: passwordDataV0.OverrideSpecial,
 		Result:          passwordDataV0.Result,
 		ID:              passwordDataV0.ID,
@@ -236,18 +299,81 @@ func upgradePasswordStateV1toV3(ctx context.Context, req resource.UpgradeStateRe
 		return
 	}
 
+	// Setting fields that can contain null to non-null to prevent forced replacement.
+	// This can occur in cases where import has been used in provider versions v3.3.1 and earlier.
+	// If import has been used with v3.3.1, for instance then length, lower, number, special, upper,
+	// min_lower, min_numeric, min_special and min_upper attributes will all be null in state.
+	length := passwordDataV1.Length
+
+	if length.IsNull() {
+		length.Null = false
+		length.Value = int64(len(passwordDataV1.Result.Value))
+	}
+
+	minNumeric := passwordDataV1.MinNumeric
+
+	if minNumeric.IsNull() {
+		minNumeric.Null = false
+	}
+
+	minUpper := passwordDataV1.MinUpper
+
+	if minUpper.IsNull() {
+		minUpper.Null = false
+	}
+
+	minLower := passwordDataV1.MinLower
+
+	if minLower.IsNull() {
+		minLower.Null = false
+	}
+
+	minSpecial := passwordDataV1.MinSpecial
+
+	if minSpecial.IsNull() {
+		minSpecial.Null = false
+	}
+
+	special := passwordDataV1.Special
+
+	if special.IsNull() {
+		special.Null = false
+		special.Value = true
+	}
+
+	upper := passwordDataV1.Upper
+
+	if upper.IsNull() {
+		upper.Null = false
+		upper.Value = true
+	}
+
+	lower := passwordDataV1.Lower
+
+	if lower.IsNull() {
+		lower.Null = false
+		lower.Value = true
+	}
+
+	number := passwordDataV1.Number
+
+	if number.IsNull() {
+		number.Null = false
+		number.Value = true
+	}
+
 	passwordDataV3 := passwordModelV3{
 		Keepers:         passwordDataV1.Keepers,
-		Length:          passwordDataV1.Length,
-		Special:         passwordDataV1.Special,
-		Upper:           passwordDataV1.Upper,
-		Lower:           passwordDataV1.Lower,
-		Number:          passwordDataV1.Number,
-		Numeric:         passwordDataV1.Number,
-		MinNumeric:      passwordDataV1.MinNumeric,
-		MinUpper:        passwordDataV1.MinUpper,
-		MinLower:        passwordDataV1.MinLower,
-		MinSpecial:      passwordDataV1.MinSpecial,
+		Length:          length,
+		Special:         special,
+		Upper:           upper,
+		Lower:           lower,
+		Number:          number,
+		Numeric:         number,
+		MinNumeric:      minNumeric,
+		MinUpper:        minUpper,
+		MinLower:        minLower,
+		MinSpecial:      minSpecial,
 		OverrideSpecial: passwordDataV1.OverrideSpecial,
 		BcryptHash:      passwordDataV1.BcryptHash,
 		Result:          passwordDataV1.Result,
@@ -259,6 +385,24 @@ func upgradePasswordStateV1toV3(ctx context.Context, req resource.UpgradeStateRe
 }
 
 func upgradePasswordStateV2toV3(ctx context.Context, req resource.UpgradeStateRequest, resp *resource.UpgradeStateResponse) {
+	type passwordModelV2 struct {
+		ID              types.String `tfsdk:"id"`
+		Keepers         types.Map    `tfsdk:"keepers"`
+		Length          types.Int64  `tfsdk:"length"`
+		Special         types.Bool   `tfsdk:"special"`
+		Upper           types.Bool   `tfsdk:"upper"`
+		Lower           types.Bool   `tfsdk:"lower"`
+		Number          types.Bool   `tfsdk:"number"`
+		Numeric         types.Bool   `tfsdk:"numeric"`
+		MinNumeric      types.Int64  `tfsdk:"min_numeric"`
+		MinUpper        types.Int64  `tfsdk:"min_upper"`
+		MinLower        types.Int64  `tfsdk:"min_lower"`
+		MinSpecial      types.Int64  `tfsdk:"min_special"`
+		OverrideSpecial types.String `tfsdk:"override_special"`
+		Result          types.String `tfsdk:"result"`
+		BcryptHash      types.String `tfsdk:"bcrypt_hash"`
+	}
+
 	var passwordDataV2 passwordModelV2
 
 	resp.Diagnostics.Append(req.State.Get(ctx, &passwordDataV2)...)
@@ -267,26 +411,95 @@ func upgradePasswordStateV2toV3(ctx context.Context, req resource.UpgradeStateRe
 		return
 	}
 
+	// Setting fields that can contain null to non-null to prevent forced replacement.
+	// This can occur in cases where import has been used in provider versions v3.3.1 and earlier.
+	// If import has been used with v3.3.1, for instance then length, lower, number, special, upper,
+	// min_lower, min_numeric, min_special and min_upper attributes will all be null in state.
+	length := passwordDataV2.Length
+
+	if length.IsNull() {
+		length.Null = false
+		length.Value = int64(len(passwordDataV2.Result.Value))
+	}
+
+	minNumeric := passwordDataV2.MinNumeric
+
+	if minNumeric.IsNull() {
+		minNumeric.Null = false
+	}
+
+	minUpper := passwordDataV2.MinUpper
+
+	if minUpper.IsNull() {
+		minUpper.Null = false
+	}
+
+	minLower := passwordDataV2.MinLower
+
+	if minLower.IsNull() {
+		minLower.Null = false
+	}
+
+	minSpecial := passwordDataV2.MinSpecial
+
+	if minSpecial.IsNull() {
+		minSpecial.Null = false
+	}
+
+	special := passwordDataV2.Special
+
+	if special.IsNull() {
+		special.Null = false
+		special.Value = true
+	}
+
+	upper := passwordDataV2.Upper
+
+	if upper.IsNull() {
+		upper.Null = false
+		upper.Value = true
+	}
+
+	lower := passwordDataV2.Lower
+
+	if lower.IsNull() {
+		lower.Null = false
+		lower.Value = true
+	}
+
+	number := passwordDataV2.Number
+
+	if number.IsNull() {
+		number.Null = false
+		number.Value = true
+	}
+
+	numeric := passwordDataV2.Number
+
+	if numeric.IsNull() {
+		numeric.Null = false
+		numeric.Value = true
+	}
+
 	// Schema version 2 to schema version 3 is a duplicate of the data,
 	// however the BcryptHash value may have been incorrectly generated.
-
 	//nolint:gosimple // V3 model will expand over time so all fields are written out to help future code changes.
 	passwordDataV3 := passwordModelV3{
 		BcryptHash:      passwordDataV2.BcryptHash,
 		ID:              passwordDataV2.ID,
 		Keepers:         passwordDataV2.Keepers,
-		Length:          passwordDataV2.Length,
-		Lower:           passwordDataV2.Lower,
-		MinLower:        passwordDataV2.MinLower,
-		MinNumeric:      passwordDataV2.MinNumeric,
-		MinSpecial:      passwordDataV2.MinSpecial,
-		MinUpper:        passwordDataV2.MinUpper,
-		Number:          passwordDataV2.Number,
-		Numeric:         passwordDataV2.Numeric,
+		Length:          length,
+		Lower:           lower,
+		MinLower:        minLower,
+		MinNumeric:      minNumeric,
+		MinSpecial:      minSpecial,
+		MinUpper:        minUpper,
+		Number:          number,
+		Numeric:         numeric,
 		OverrideSpecial: passwordDataV2.OverrideSpecial,
 		Result:          passwordDataV2.Result,
-		Special:         passwordDataV2.Special,
-		Upper:           passwordDataV2.Upper,
+		Special:         special,
+		Upper:           upper,
 	}
 
 	// Set the duplicated data now so we can easily return early below.
@@ -1027,24 +1240,6 @@ func passwordSchemaV0() tfsdk.Schema {
 }
 
 type passwordModelV3 struct {
-	ID              types.String `tfsdk:"id"`
-	Keepers         types.Map    `tfsdk:"keepers"`
-	Length          types.Int64  `tfsdk:"length"`
-	Special         types.Bool   `tfsdk:"special"`
-	Upper           types.Bool   `tfsdk:"upper"`
-	Lower           types.Bool   `tfsdk:"lower"`
-	Number          types.Bool   `tfsdk:"number"`
-	Numeric         types.Bool   `tfsdk:"numeric"`
-	MinNumeric      types.Int64  `tfsdk:"min_numeric"`
-	MinUpper        types.Int64  `tfsdk:"min_upper"`
-	MinLower        types.Int64  `tfsdk:"min_lower"`
-	MinSpecial      types.Int64  `tfsdk:"min_special"`
-	OverrideSpecial types.String `tfsdk:"override_special"`
-	Result          types.String `tfsdk:"result"`
-	BcryptHash      types.String `tfsdk:"bcrypt_hash"`
-}
-
-type passwordModelV2 struct {
 	ID              types.String `tfsdk:"id"`
 	Keepers         types.Map    `tfsdk:"keepers"`
 	Length          types.Int64  `tfsdk:"length"`
