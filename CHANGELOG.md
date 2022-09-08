@@ -1,4 +1,4 @@
-## 3.4.3 (Unreleased)
+## 3.4.3 (September 08, 2022)
 
 NOTES:
 
