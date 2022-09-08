@@ -1137,7 +1137,7 @@ func TestAccResourcePassword_UpgradeFromVersion3_3_2(t *testing.T) {
 	})
 }
 
-func TestUpgradePasswordStateV0toV4(t *testing.T) {
+func TestUpgradePasswordStateV0toV3(t *testing.T) {
 	t.Parallel()
 
 	raw := tftypes.NewValue(tftypes.Object{}, map[string]tftypes.Value{
@@ -1165,13 +1165,13 @@ func TestUpgradePasswordStateV0toV4(t *testing.T) {
 
 	resp := &res.UpgradeStateResponse{
 		State: tfsdk.State{
-			Schema: passwordSchemaV4(),
+			Schema: passwordSchemaV3(),
 		},
 	}
 
-	upgradePasswordStateV0toV4(context.Background(), req, resp)
+	upgradePasswordStateV0toV3(context.Background(), req, resp)
 
-	expected := passwordModelV4{
+	expected := passwordModelV3{
 		ID:              types.String{Value: "none"},
 		Keepers:         types.Map{Null: true, ElemType: types.StringType},
 		Length:          types.Int64{Value: 16},
@@ -1188,7 +1188,7 @@ func TestUpgradePasswordStateV0toV4(t *testing.T) {
 		Result:          types.String{Value: "DZy_3*tnonj%Q%Yx"},
 	}
 
-	actual := passwordModelV4{}
+	actual := passwordModelV3{}
 	diags := resp.State.Get(context.Background(), &actual)
 	if diags.HasError() {
 		t.Errorf("error getting state: %v", diags)
@@ -1207,7 +1207,7 @@ func TestUpgradePasswordStateV0toV4(t *testing.T) {
 	}
 }
 
-func TestUpgradePasswordStateV0toV4_NullValues(t *testing.T) {
+func TestUpgradePasswordStateV0toV3_NullValues(t *testing.T) {
 	t.Parallel()
 
 	raw := tftypes.NewValue(tftypes.Object{}, map[string]tftypes.Value{
@@ -1235,13 +1235,13 @@ func TestUpgradePasswordStateV0toV4_NullValues(t *testing.T) {
 
 	resp := &res.UpgradeStateResponse{
 		State: tfsdk.State{
-			Schema: passwordSchemaV4(),
+			Schema: passwordSchemaV3(),
 		},
 	}
 
-	upgradePasswordStateV0toV4(context.Background(), req, resp)
+	upgradePasswordStateV0toV3(context.Background(), req, resp)
 
-	expected := passwordModelV4{
+	expected := passwordModelV3{
 		ID:              types.String{Value: "none"},
 		Keepers:         types.Map{Null: true, ElemType: types.StringType},
 		Length:          types.Int64{Value: 16},
@@ -1258,7 +1258,7 @@ func TestUpgradePasswordStateV0toV4_NullValues(t *testing.T) {
 		Result:          types.String{Value: "DZy_3*tnonj%Q%Yx"},
 	}
 
-	actual := passwordModelV4{}
+	actual := passwordModelV3{}
 	diags := resp.State.Get(context.Background(), &actual)
 	if diags.HasError() {
 		t.Errorf("error getting state: %v", diags)
@@ -1277,7 +1277,7 @@ func TestUpgradePasswordStateV0toV4_NullValues(t *testing.T) {
 	}
 }
 
-func TestUpgradePasswordStateV1toV4(t *testing.T) {
+func TestUpgradePasswordStateV1toV3(t *testing.T) {
 	t.Parallel()
 
 	raw := tftypes.NewValue(tftypes.Object{}, map[string]tftypes.Value{
@@ -1306,13 +1306,13 @@ func TestUpgradePasswordStateV1toV4(t *testing.T) {
 
 	resp := &res.UpgradeStateResponse{
 		State: tfsdk.State{
-			Schema: passwordSchemaV4(),
+			Schema: passwordSchemaV3(),
 		},
 	}
 
-	upgradePasswordStateV1toV4(context.Background(), req, resp)
+	upgradePasswordStateV1toV3(context.Background(), req, resp)
 
-	expected := passwordModelV4{
+	expected := passwordModelV3{
 		ID:              types.String{Value: "none"},
 		Keepers:         types.Map{Null: true, ElemType: types.StringType},
 		Length:          types.Int64{Value: 16},
@@ -1330,7 +1330,7 @@ func TestUpgradePasswordStateV1toV4(t *testing.T) {
 		Result:          types.String{Value: "DZy_3*tnonj%Q%Yx"},
 	}
 
-	actual := passwordModelV4{}
+	actual := passwordModelV3{}
 	diags := resp.State.Get(context.Background(), &actual)
 	if diags.HasError() {
 		t.Errorf("error getting state: %v", diags)
@@ -1341,7 +1341,7 @@ func TestUpgradePasswordStateV1toV4(t *testing.T) {
 	}
 }
 
-func TestUpgradePasswordStateV1toV4_NullValues(t *testing.T) {
+func TestUpgradePasswordStateV1toV3_NullValues(t *testing.T) {
 	t.Parallel()
 
 	raw := tftypes.NewValue(tftypes.Object{}, map[string]tftypes.Value{
@@ -1370,13 +1370,13 @@ func TestUpgradePasswordStateV1toV4_NullValues(t *testing.T) {
 
 	resp := &res.UpgradeStateResponse{
 		State: tfsdk.State{
-			Schema: passwordSchemaV4(),
+			Schema: passwordSchemaV3(),
 		},
 	}
 
-	upgradePasswordStateV1toV4(context.Background(), req, resp)
+	upgradePasswordStateV1toV3(context.Background(), req, resp)
 
-	expected := passwordModelV4{
+	expected := passwordModelV3{
 		ID:              types.String{Value: "none"},
 		Keepers:         types.Map{Null: true, ElemType: types.StringType},
 		Length:          types.Int64{Value: 16},
@@ -1394,7 +1394,7 @@ func TestUpgradePasswordStateV1toV4_NullValues(t *testing.T) {
 		Result:          types.String{Value: "DZy_3*tnonj%Q%Yx"},
 	}
 
-	actual := passwordModelV4{}
+	actual := passwordModelV3{}
 	diags := resp.State.Get(context.Background(), &actual)
 	if diags.HasError() {
 		t.Errorf("error getting state: %v", diags)
@@ -1405,7 +1405,7 @@ func TestUpgradePasswordStateV1toV4_NullValues(t *testing.T) {
 	}
 }
 
-func TestUpgradePasswordStateV2toV4(t *testing.T) {
+func TestUpgradePasswordStateV2toV3(t *testing.T) {
 	t.Parallel()
 
 	testCases := map[string]struct {
@@ -1492,7 +1492,7 @@ func TestUpgradePasswordStateV2toV4(t *testing.T) {
 						"special":          tftypes.NewValue(tftypes.Bool, true),
 						"upper":            tftypes.NewValue(tftypes.Bool, true),
 					}),
-					Schema: passwordSchemaV4(),
+					Schema: passwordSchemaV3(),
 				},
 			},
 		},
@@ -1576,7 +1576,7 @@ func TestUpgradePasswordStateV2toV4(t *testing.T) {
 						"special":          tftypes.NewValue(tftypes.Bool, true),
 						"upper":            tftypes.NewValue(tftypes.Bool, true),
 					}),
-					Schema: passwordSchemaV4(),
+					Schema: passwordSchemaV3(),
 				},
 			},
 		},
@@ -1660,7 +1660,7 @@ func TestUpgradePasswordStateV2toV4(t *testing.T) {
 						"special":          tftypes.NewValue(tftypes.Bool, true),
 						"upper":            tftypes.NewValue(tftypes.Bool, true),
 					}),
-					Schema: passwordSchemaV4(),
+					Schema: passwordSchemaV3(),
 				},
 			},
 		},
@@ -1678,7 +1678,7 @@ func TestUpgradePasswordStateV2toV4(t *testing.T) {
 				},
 			}
 
-			upgradePasswordStateV2toV4(context.Background(), testCase.request, &got)
+			upgradePasswordStateV2toV3(context.Background(), testCase.request, &got)
 
 			// Since bcrypt_hash is generated, this test is very involved to
 			// ensure the test case is set up properly and the generated
@@ -1796,136 +1796,6 @@ func TestUpgradePasswordStateV2toV4(t *testing.T) {
 				t.Errorf("unexpected difference: %s", diff)
 			}
 		})
-	}
-}
-
-func TestUpgradePasswordStateV3toV4(t *testing.T) {
-	t.Parallel()
-
-	raw := tftypes.NewValue(tftypes.Object{}, map[string]tftypes.Value{
-		"id":               tftypes.NewValue(tftypes.String, "none"),
-		"keepers":          tftypes.NewValue(tftypes.Map{ElementType: tftypes.String}, nil),
-		"length":           tftypes.NewValue(tftypes.Number, 16),
-		"lower":            tftypes.NewValue(tftypes.Bool, true),
-		"min_lower":        tftypes.NewValue(tftypes.Number, 0),
-		"min_numeric":      tftypes.NewValue(tftypes.Number, 0),
-		"min_special":      tftypes.NewValue(tftypes.Number, 0),
-		"min_upper":        tftypes.NewValue(tftypes.Number, 0),
-		"number":           tftypes.NewValue(tftypes.Bool, true),
-		"numeric":          tftypes.NewValue(tftypes.Bool, true),
-		"override_special": tftypes.NewValue(tftypes.String, "!#$%\u0026*()-_=+[]{}\u003c\u003e:?"),
-		"result":           tftypes.NewValue(tftypes.String, "DZy_3*tnonj%Q%Yx"),
-		"special":          tftypes.NewValue(tftypes.Bool, true),
-		"upper":            tftypes.NewValue(tftypes.Bool, true),
-		"bcrypt_hash":      tftypes.NewValue(tftypes.String, "bcrypt_hash"),
-	})
-
-	req := res.UpgradeStateRequest{
-		State: &tfsdk.State{
-			Raw:    raw,
-			Schema: passwordSchemaV3(),
-		},
-	}
-
-	resp := &res.UpgradeStateResponse{
-		State: tfsdk.State{
-			Schema: passwordSchemaV4(),
-		},
-	}
-
-	upgradePasswordStateV3toV4(context.Background(), req, resp)
-
-	expected := passwordModelV4{
-		ID:              types.String{Value: "none"},
-		Keepers:         types.Map{Null: true, ElemType: types.StringType},
-		Length:          types.Int64{Value: 16},
-		Special:         types.Bool{Value: true},
-		Upper:           types.Bool{Value: true},
-		Lower:           types.Bool{Value: true},
-		Number:          types.Bool{Value: true},
-		Numeric:         types.Bool{Value: true},
-		MinNumeric:      types.Int64{Value: 0},
-		MinUpper:        types.Int64{Value: 0},
-		MinLower:        types.Int64{Value: 0},
-		MinSpecial:      types.Int64{Value: 0},
-		OverrideSpecial: types.String{Value: "!#$%\u0026*()-_=+[]{}\u003c\u003e:?"},
-		BcryptHash:      types.String{Value: "bcrypt_hash"},
-		Result:          types.String{Value: "DZy_3*tnonj%Q%Yx"},
-	}
-
-	actual := passwordModelV4{}
-	diags := resp.State.Get(context.Background(), &actual)
-	if diags.HasError() {
-		t.Errorf("error getting state: %v", diags)
-	}
-
-	if !cmp.Equal(expected, actual) {
-		t.Errorf("expected: %+v, got: %+v", expected, actual)
-	}
-}
-
-func TestUpgradePasswordStateV3toV4_NullValues(t *testing.T) {
-	t.Parallel()
-
-	raw := tftypes.NewValue(tftypes.Object{}, map[string]tftypes.Value{
-		"id":               tftypes.NewValue(tftypes.String, "none"),
-		"keepers":          tftypes.NewValue(tftypes.Map{ElementType: tftypes.String}, nil),
-		"length":           tftypes.NewValue(tftypes.Number, nil),
-		"lower":            tftypes.NewValue(tftypes.Bool, true),
-		"min_lower":        tftypes.NewValue(tftypes.Number, nil),
-		"min_numeric":      tftypes.NewValue(tftypes.Number, nil),
-		"min_special":      tftypes.NewValue(tftypes.Number, nil),
-		"min_upper":        tftypes.NewValue(tftypes.Number, nil),
-		"number":           tftypes.NewValue(tftypes.Bool, nil),
-		"numeric":          tftypes.NewValue(tftypes.Bool, nil),
-		"override_special": tftypes.NewValue(tftypes.String, "!#$%\u0026*()-_=+[]{}\u003c\u003e:?"),
-		"result":           tftypes.NewValue(tftypes.String, "DZy_3*tnonj%Q%Yx"),
-		"special":          tftypes.NewValue(tftypes.Bool, nil),
-		"upper":            tftypes.NewValue(tftypes.Bool, nil),
-		"bcrypt_hash":      tftypes.NewValue(tftypes.String, "bcrypt_hash"),
-	})
-
-	req := res.UpgradeStateRequest{
-		State: &tfsdk.State{
-			Raw:    raw,
-			Schema: passwordSchemaV3(),
-		},
-	}
-
-	resp := &res.UpgradeStateResponse{
-		State: tfsdk.State{
-			Schema: passwordSchemaV4(),
-		},
-	}
-
-	upgradePasswordStateV3toV4(context.Background(), req, resp)
-
-	expected := passwordModelV4{
-		ID:              types.String{Value: "none"},
-		Keepers:         types.Map{Null: true, ElemType: types.StringType},
-		Length:          types.Int64{Value: 16},
-		Special:         types.Bool{Value: true},
-		Upper:           types.Bool{Value: true},
-		Lower:           types.Bool{Value: true},
-		Number:          types.Bool{Value: true},
-		Numeric:         types.Bool{Value: true},
-		MinNumeric:      types.Int64{Value: 0},
-		MinUpper:        types.Int64{Value: 0},
-		MinLower:        types.Int64{Value: 0},
-		MinSpecial:      types.Int64{Value: 0},
-		OverrideSpecial: types.String{Value: "!#$%\u0026*()-_=+[]{}\u003c\u003e:?"},
-		BcryptHash:      types.String{Value: "bcrypt_hash"},
-		Result:          types.String{Value: "DZy_3*tnonj%Q%Yx"},
-	}
-
-	actual := passwordModelV4{}
-	diags := resp.State.Get(context.Background(), &actual)
-	if diags.HasError() {
-		t.Errorf("error getting state: %v", diags)
-	}
-
-	if !cmp.Equal(expected, actual) {
-		t.Errorf("expected: %+v, got: %+v", expected, actual)
 	}
 }
 
