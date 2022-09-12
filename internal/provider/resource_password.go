@@ -7,7 +7,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework-validators/int64validator"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/path"
-	"github.com/hashicorp/terraform-plugin-framework/provider"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/tfsdk"
 	"github.com/hashicorp/terraform-plugin-framework/types"
@@ -18,25 +17,25 @@ import (
 	"github.com/terraform-providers/terraform-provider-random/internal/random"
 )
 
-var _ provider.ResourceType = (*passwordResourceType)(nil)
-
-type passwordResourceType struct{}
-
-func (r *passwordResourceType) GetSchema(context.Context) (tfsdk.Schema, diag.Diagnostics) {
-	return passwordSchemaV3(), nil
-}
-
-func (r *passwordResourceType) NewResource(_ context.Context, _ provider.Provider) (resource.Resource, diag.Diagnostics) {
-	return &passwordResource{}, nil
-}
-
 var (
 	_ resource.Resource                 = (*passwordResource)(nil)
 	_ resource.ResourceWithImportState  = (*passwordResource)(nil)
 	_ resource.ResourceWithUpgradeState = (*passwordResource)(nil)
 )
 
+func NewPasswordResource() resource.Resource {
+	return &passwordResource{}
+}
+
 type passwordResource struct{}
+
+func (r *passwordResource) Metadata(_ context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
+	resp.TypeName = req.ProviderTypeName + "_password"
+}
+
+func (r *passwordResource) GetSchema(context.Context) (tfsdk.Schema, diag.Diagnostics) {
+	return passwordSchemaV3(), nil
+}
 
 func (r *passwordResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
 	var plan passwordModelV3

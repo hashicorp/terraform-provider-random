@@ -7,7 +7,6 @@ import (
 
 	petname "github.com/dustinkirkland/golang-petname"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
-	"github.com/hashicorp/terraform-plugin-framework/provider"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/tfsdk"
 	"github.com/hashicorp/terraform-plugin-framework/types"
@@ -15,11 +14,19 @@ import (
 	"github.com/terraform-providers/terraform-provider-random/internal/planmodifiers"
 )
 
-var _ provider.ResourceType = (*petResourceType)(nil)
+var _ resource.Resource = (*petResource)(nil)
 
-type petResourceType struct{}
+func NewPetResource() resource.Resource {
+	return &petResource{}
+}
 
-func (r *petResourceType) GetSchema(context.Context) (tfsdk.Schema, diag.Diagnostics) {
+type petResource struct{}
+
+func (r *petResource) Metadata(_ context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
+	resp.TypeName = req.ProviderTypeName + "_pet"
+}
+
+func (r *petResource) GetSchema(context.Context) (tfsdk.Schema, diag.Diagnostics) {
 	return tfsdk.Schema{
 		Description: "The resource `random_pet` generates random pet names that are intended to be used as " +
 			"unique identifiers for other resources.\n" +
@@ -76,14 +83,6 @@ func (r *petResourceType) GetSchema(context.Context) (tfsdk.Schema, diag.Diagnos
 		},
 	}, nil
 }
-
-func (r *petResourceType) NewResource(_ context.Context, p provider.Provider) (resource.Resource, diag.Diagnostics) {
-	return &petResource{}, nil
-}
-
-var _ resource.Resource = (*petResource)(nil)
-
-type petResource struct{}
 
 func (r *petResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
 	// This is necessary to ensure each call to petname is properly randomised:

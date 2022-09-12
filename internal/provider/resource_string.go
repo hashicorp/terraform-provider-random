@@ -6,7 +6,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework-validators/int64validator"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/path"
-	"github.com/hashicorp/terraform-plugin-framework/provider"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/tfsdk"
 	"github.com/hashicorp/terraform-plugin-framework/types"
@@ -16,25 +15,25 @@ import (
 	"github.com/terraform-providers/terraform-provider-random/internal/random"
 )
 
-var _ provider.ResourceType = (*stringResourceType)(nil)
-
-type stringResourceType struct{}
-
-func (r stringResourceType) GetSchema(context.Context) (tfsdk.Schema, diag.Diagnostics) {
-	return stringSchemaV3(), nil
-}
-
-func (r stringResourceType) NewResource(_ context.Context, p provider.Provider) (resource.Resource, diag.Diagnostics) {
-	return &stringResource{}, nil
-}
-
 var (
 	_ resource.Resource                 = (*stringResource)(nil)
 	_ resource.ResourceWithImportState  = (*stringResource)(nil)
 	_ resource.ResourceWithUpgradeState = (*stringResource)(nil)
 )
 
+func NewStringResource() resource.Resource {
+	return &stringResource{}
+}
+
 type stringResource struct{}
+
+func (r *stringResource) Metadata(_ context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
+	resp.TypeName = req.ProviderTypeName + "_string"
+}
+
+func (r *stringResource) GetSchema(context.Context) (tfsdk.Schema, diag.Diagnostics) {
+	return stringSchemaV3(), nil
+}
 
 func (r *stringResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
 	var plan stringModelV3
