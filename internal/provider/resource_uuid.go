@@ -6,7 +6,6 @@ import (
 
 	"github.com/hashicorp/go-uuid"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
-	"github.com/hashicorp/terraform-plugin-framework/provider"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/tfsdk"
 	"github.com/hashicorp/terraform-plugin-framework/types"
@@ -15,11 +14,22 @@ import (
 	"github.com/terraform-providers/terraform-provider-random/internal/planmodifiers"
 )
 
-var _ provider.ResourceType = (*uuidResourceType)(nil)
+var (
+	_ resource.Resource                = (*uuidResource)(nil)
+	_ resource.ResourceWithImportState = (*uuidResource)(nil)
+)
 
-type uuidResourceType struct{}
+func NewUuidResource() resource.Resource {
+	return &uuidResource{}
+}
 
-func (r *uuidResourceType) GetSchema(context.Context) (tfsdk.Schema, diag.Diagnostics) {
+type uuidResource struct{}
+
+func (r *uuidResource) Metadata(_ context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
+	resp.TypeName = req.ProviderTypeName + "_uuid"
+}
+
+func (r *uuidResource) GetSchema(context.Context) (tfsdk.Schema, diag.Diagnostics) {
 	return tfsdk.Schema{
 		Description: "The resource `random_uuid` generates random uuid string that is intended to be " +
 			"used as unique identifiers for other resources.\n" +
@@ -56,18 +66,6 @@ func (r *uuidResourceType) GetSchema(context.Context) (tfsdk.Schema, diag.Diagno
 			},
 		},
 	}, nil
-}
-
-func (r uuidResourceType) NewResource(_ context.Context, p provider.Provider) (resource.Resource, diag.Diagnostics) {
-	return &uuidResource{}, nil
-}
-
-var (
-	_ resource.Resource                = (*uuidResource)(nil)
-	_ resource.ResourceWithImportState = (*uuidResource)(nil)
-)
-
-type uuidResource struct {
 }
 
 func (r *uuidResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {

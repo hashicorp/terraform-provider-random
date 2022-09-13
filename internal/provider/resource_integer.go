@@ -7,7 +7,6 @@ import (
 	"strings"
 
 	"github.com/hashicorp/terraform-plugin-framework/diag"
-	"github.com/hashicorp/terraform-plugin-framework/provider"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/tfsdk"
 	"github.com/hashicorp/terraform-plugin-framework/types"
@@ -16,11 +15,22 @@ import (
 	"github.com/terraform-providers/terraform-provider-random/internal/random"
 )
 
-var _ provider.ResourceType = (*integerResourceType)(nil)
+var (
+	_ resource.Resource                = (*integerResource)(nil)
+	_ resource.ResourceWithImportState = (*integerResource)(nil)
+)
 
-type integerResourceType struct{}
+func NewIntegerResource() resource.Resource {
+	return &integerResource{}
+}
 
-func (r *integerResourceType) GetSchema(context.Context) (tfsdk.Schema, diag.Diagnostics) {
+type integerResource struct{}
+
+func (r *integerResource) Metadata(_ context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
+	resp.TypeName = req.ProviderTypeName + "_integer"
+}
+
+func (r *integerResource) GetSchema(context.Context) (tfsdk.Schema, diag.Diagnostics) {
 	return tfsdk.Schema{
 		Description: "The resource `random_integer` generates random values from a given range, described " +
 			"by the `min` and `max` attributes of a given resource.\n" +
@@ -77,17 +87,6 @@ func (r *integerResourceType) GetSchema(context.Context) (tfsdk.Schema, diag.Dia
 		},
 	}, nil
 }
-
-func (r *integerResourceType) NewResource(_ context.Context, _ provider.Provider) (resource.Resource, diag.Diagnostics) {
-	return &integerResource{}, nil
-}
-
-var (
-	_ resource.Resource                = (*integerResource)(nil)
-	_ resource.ResourceWithImportState = (*integerResource)(nil)
-)
-
-type integerResource struct{}
 
 func (r *integerResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
 	var plan integerModelV0

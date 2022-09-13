@@ -5,7 +5,6 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
-	"github.com/hashicorp/terraform-plugin-framework/provider"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/tfsdk"
 	"github.com/hashicorp/terraform-plugin-framework/types"
@@ -14,11 +13,19 @@ import (
 	"github.com/terraform-providers/terraform-provider-random/internal/random"
 )
 
-var _ provider.ResourceType = (*shuffleResourceType)(nil)
+var _ resource.Resource = (*shuffleResource)(nil)
 
-type shuffleResourceType struct{}
+func NewShuffleResource() resource.Resource {
+	return &shuffleResource{}
+}
 
-func (r *shuffleResourceType) GetSchema(context.Context) (tfsdk.Schema, diag.Diagnostics) {
+type shuffleResource struct{}
+
+func (r *shuffleResource) Metadata(_ context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
+	resp.TypeName = req.ProviderTypeName + "_shuffle"
+}
+
+func (r *shuffleResource) GetSchema(context.Context) (tfsdk.Schema, diag.Diagnostics) {
 	return tfsdk.Schema{
 		Description: "The resource `random_shuffle` generates a random permutation of a list of strings " +
 			"given as an argument.",
@@ -89,14 +96,6 @@ func (r *shuffleResourceType) GetSchema(context.Context) (tfsdk.Schema, diag.Dia
 		},
 	}, nil
 }
-
-func (r *shuffleResourceType) NewResource(_ context.Context, p provider.Provider) (resource.Resource, diag.Diagnostics) {
-	return &shuffleResource{}, nil
-}
-
-var _ resource.Resource = (*shuffleResource)(nil)
-
-type shuffleResource struct{}
 
 func (r *shuffleResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
 	var plan shuffleModelV0
