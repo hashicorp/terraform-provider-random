@@ -7,7 +7,7 @@ require (
 	github.com/google/go-cmp v0.5.9
 	github.com/hashicorp/go-uuid v1.0.3
 	github.com/hashicorp/terraform-plugin-docs v0.13.0
-	github.com/hashicorp/terraform-plugin-framework v0.12.0
+	github.com/hashicorp/terraform-plugin-framework v0.13.0
 	github.com/hashicorp/terraform-plugin-framework-validators v0.5.0
 	github.com/hashicorp/terraform-plugin-go v0.14.0
 	github.com/hashicorp/terraform-plugin-sdk/v2 v2.22.0
