@@ -10,7 +10,7 @@ require (
 	github.com/hashicorp/terraform-plugin-framework v0.13.0
 	github.com/hashicorp/terraform-plugin-framework-validators v0.5.0
 	github.com/hashicorp/terraform-plugin-go v0.14.0
-	github.com/hashicorp/terraform-plugin-sdk/v2 v2.22.0
+	github.com/hashicorp/terraform-plugin-sdk/v2 v2.23.0
 	golang.org/x/crypto v0.0.0-20220622213112-05595931fe9d
 )
 
