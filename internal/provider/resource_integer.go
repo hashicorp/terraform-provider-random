@@ -97,9 +97,9 @@ func (r *integerResource) Create(ctx context.Context, req resource.CreateRequest
 		return
 	}
 
-	max := int(plan.Max.Value)
-	min := int(plan.Min.Value)
-	seed := plan.Seed.Value
+	max := int(plan.Max.ValueInt64())
+	min := int(plan.Min.ValueInt64())
+	seed := plan.Seed.ValueString()
 
 	if max < min {
 		resp.Diagnostics.AddError(
@@ -121,9 +121,9 @@ func (r *integerResource) Create(ctx context.Context, req resource.CreateRequest
 	}
 
 	if seed != "" {
-		u.Seed.Value = seed
+		u.Seed = types.StringValue(seed)
 	} else {
-		u.Seed.Null = true
+		u.Seed = types.StringNull()
 	}
 
 	diags = resp.State.Set(ctx, u)
@@ -197,17 +197,22 @@ func (r *integerResource) ImportState(ctx context.Context, req resource.ImportSt
 
 	var state integerModelV0
 
-	state.ID.Value = parts[0]
-	state.Keepers.ElemType = types.StringType
-	state.Result.Value = result
-	state.Min.Value = min
-	state.Max.Value = max
+	state.ID = types.StringValue(parts[0])
+	keepers, diags := types.MapValue(types.StringType, nil)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+	state.Keepers = keepers
+	state.Result = types.Int64Value(result)
+	state.Min = types.Int64Value(min)
+	state.Max = types.Int64Value(max)
 
 	if len(parts) == 4 {
-		state.Seed.Value = parts[3]
+		state.Seed = types.StringValue(parts[3])
 	}
 
-	diags := resp.State.Set(ctx, &state)
+	diags = resp.State.Set(ctx, &state)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
 		return

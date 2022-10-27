@@ -106,25 +106,25 @@ func (r *shuffleResource) Create(ctx context.Context, req resource.CreateRequest
 	}
 
 	input := plan.Input
-	seed := plan.Seed.Value
-	resultCount := plan.ResultCount.Value
+	seed := plan.Seed.ValueString()
+	resultCount := plan.ResultCount.ValueInt64()
 
 	if resultCount == 0 {
-		resultCount = int64(len(input.Elems))
+		resultCount = int64(len(input.Elements()))
 	}
 
 	result := make([]attr.Value, 0, resultCount)
 
-	if len(input.Elems) > 0 {
+	if len(input.Elements()) > 0 {
 		rand := random.NewRand(seed)
 
 		// Keep producing permutations until we fill our result
 	Batches:
 		for {
-			perm := rand.Perm(len(input.Elems))
+			perm := rand.Perm(len(input.Elements()))
 
 			for _, i := range perm {
-				result = append(result, input.Elems[i])
+				result = append(result, input.Elements()[i])
 
 				if int64(len(result)) >= resultCount {
 					break Batches
@@ -133,28 +133,29 @@ func (r *shuffleResource) Create(ctx context.Context, req resource.CreateRequest
 		}
 	}
 
+	res, diags := types.ListValue(types.StringType, result)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
 	s := shuffleModelV0{
-		ID:      types.String{Value: "-"},
+		ID:      types.StringValue("-"),
 		Keepers: plan.Keepers,
 		Input:   plan.Input,
-		Result: types.List{
-			Unknown:  false,
-			Null:     false,
-			Elems:    result,
-			ElemType: types.StringType,
-		},
+		Result:  res,
 	}
 
-	if plan.Seed.Null {
-		s.Seed.Null = true
+	if plan.Seed.IsNull() {
+		s.Seed = types.StringNull()
 	} else {
-		s.Seed.Value = seed
+		s.Seed = types.StringValue(seed)
 	}
 
-	if plan.ResultCount.Null {
-		s.ResultCount.Null = true
+	if plan.ResultCount.IsNull() {
+		s.ResultCount = types.Int64Null()
 	} else {
-		s.ResultCount.Value = resultCount
+		s.ResultCount = types.Int64Value(resultCount)
 	}
 
 	diags = resp.State.Set(ctx, s)

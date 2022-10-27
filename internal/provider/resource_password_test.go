@@ -1154,20 +1154,20 @@ func TestUpgradePasswordStateV0toV3(t *testing.T) {
 	upgradePasswordStateV0toV3(context.Background(), req, resp)
 
 	expected := passwordModelV3{
-		ID:              types.String{Value: "none"},
-		Keepers:         types.Map{Null: true, ElemType: types.StringType},
-		Length:          types.Int64{Value: 16},
-		Special:         types.Bool{Value: true},
-		Upper:           types.Bool{Value: true},
-		Lower:           types.Bool{Value: true},
-		Number:          types.Bool{Value: true},
-		Numeric:         types.Bool{Value: true},
-		MinNumeric:      types.Int64{Value: 0},
-		MinUpper:        types.Int64{Value: 0},
-		MinLower:        types.Int64{Value: 0},
-		MinSpecial:      types.Int64{Value: 0},
-		OverrideSpecial: types.String{Value: "!#$%\u0026*()-_=+[]{}\u003c\u003e:?"},
-		Result:          types.String{Value: "DZy_3*tnonj%Q%Yx"},
+		ID:              types.StringValue("none"),
+		Keepers:         types.MapNull(types.StringType),
+		Length:          types.Int64Value(16),
+		Special:         types.BoolValue(true),
+		Upper:           types.BoolValue(true),
+		Lower:           types.BoolValue(true),
+		Number:          types.BoolValue(true),
+		Numeric:         types.BoolValue(true),
+		MinNumeric:      types.Int64Value(0),
+		MinUpper:        types.Int64Value(0),
+		MinLower:        types.Int64Value(0),
+		MinSpecial:      types.Int64Value(0),
+		OverrideSpecial: types.StringValue("!#$%\u0026*()-_=+[]{}\u003c\u003e:?"),
+		Result:          types.StringValue("DZy_3*tnonj%Q%Yx"),
 	}
 
 	actual := passwordModelV3{}
@@ -1176,7 +1176,7 @@ func TestUpgradePasswordStateV0toV3(t *testing.T) {
 		t.Errorf("error getting state: %v", diags)
 	}
 
-	err := bcrypt.CompareHashAndPassword([]byte(actual.BcryptHash.Value), []byte(actual.Result.Value))
+	err := bcrypt.CompareHashAndPassword([]byte(actual.BcryptHash.ValueString()), []byte(actual.Result.ValueString()))
 	if err != nil {
 		t.Errorf("unexpected bcrypt comparison error: %s", err)
 	}
@@ -1246,7 +1246,7 @@ func TestUpgradePasswordStateV0toV3_NullValues(t *testing.T) {
 		t.Errorf("error getting state: %v", diags)
 	}
 
-	err := bcrypt.CompareHashAndPassword([]byte(actual.BcryptHash.Value), []byte(actual.Result.Value))
+	err := bcrypt.CompareHashAndPassword([]byte(actual.BcryptHash.ValueString()), []byte(actual.Result.ValueString()))
 	if err != nil {
 		t.Errorf("unexpected bcrypt comparison error: %s", err)
 	}
