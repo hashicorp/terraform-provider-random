@@ -113,11 +113,11 @@ func (r *integerResource) Create(ctx context.Context, req resource.CreateRequest
 	number := rand.Intn((max+1)-min) + min
 
 	u := &integerModelV0{
-		ID:      types.String{Value: strconv.Itoa(number)},
+		ID:      types.StringValue(strconv.Itoa(number)),
 		Keepers: plan.Keepers,
-		Min:     types.Int64{Value: int64(min)},
-		Max:     types.Int64{Value: int64(max)},
-		Result:  types.Int64{Value: int64(number)},
+		Min:     types.Int64Value(int64(min)),
+		Max:     types.Int64Value(int64(max)),
+		Result:  types.Int64Value(int64(number)),
 	}
 
 	if seed != "" {

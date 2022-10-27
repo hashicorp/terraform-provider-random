@@ -89,8 +89,8 @@ func (r *uuidResource) Create(ctx context.Context, req resource.CreateRequest, r
 	}
 
 	u := &uuidModelV0{
-		ID:      types.String{Value: result},
-		Result:  types.String{Value: result},
+		ID:      types.StringValue(result),
+		Result:  types.StringValue(result),
 		Keepers: plan.Keepers,
 	}
 

@@ -52,7 +52,7 @@ func (r *petResource) GetSchema(context.Context) (tfsdk.Schema, diag.Diagnostics
 				Optional:    true,
 				Computed:    true,
 				PlanModifiers: []tfsdk.AttributePlanModifier{
-					planmodifiers.DefaultValue(types.Int64{Value: 2}),
+					planmodifiers.DefaultValue(types.Int64Value(2)),
 					planmodifiers.RequiresReplace(),
 				},
 			},
@@ -68,7 +68,7 @@ func (r *petResource) GetSchema(context.Context) (tfsdk.Schema, diag.Diagnostics
 				Optional:    true,
 				Computed:    true,
 				PlanModifiers: []tfsdk.AttributePlanModifier{
-					planmodifiers.DefaultValue(types.String{Value: "-"}),
+					planmodifiers.DefaultValue(types.StringValue("-")),
 					planmodifiers.RequiresReplace(),
 				},
 			},
@@ -106,8 +106,8 @@ func (r *petResource) Create(ctx context.Context, req resource.CreateRequest, re
 
 	pn := petModelV0{
 		Keepers:   plan.Keepers,
-		Length:    types.Int64{Value: length},
-		Separator: types.String{Value: separator},
+		Length:    types.Int64Value(length),
+		Separator: types.StringValue(separator),
 	}
 
 	if prefix != "" {

@@ -63,8 +63,8 @@ func (r *stringResource) Create(ctx context.Context, req resource.CreateRequest,
 		return
 	}
 
-	plan.ID = types.String{Value: string(result)}
-	plan.Result = types.String{Value: string(result)}
+	plan.ID = types.StringValue(string(result))
+	plan.Result = types.StringValue(string(result))
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, plan)...)
 }
@@ -388,7 +388,7 @@ func stringSchemaV3() tfsdk.Schema {
 				Optional:    true,
 				Computed:    true,
 				PlanModifiers: []tfsdk.AttributePlanModifier{
-					planmodifiers.DefaultValue(types.Bool{Value: true}),
+					planmodifiers.DefaultValue(types.BoolValue(true)),
 					planmodifiers.RequiresReplace(),
 				},
 			},
@@ -399,7 +399,7 @@ func stringSchemaV3() tfsdk.Schema {
 				Optional:    true,
 				Computed:    true,
 				PlanModifiers: []tfsdk.AttributePlanModifier{
-					planmodifiers.DefaultValue(types.Bool{Value: true}),
+					planmodifiers.DefaultValue(types.BoolValue(true)),
 					planmodifiers.RequiresReplace(),
 				},
 			},
@@ -410,7 +410,7 @@ func stringSchemaV3() tfsdk.Schema {
 				Optional:    true,
 				Computed:    true,
 				PlanModifiers: []tfsdk.AttributePlanModifier{
-					planmodifiers.DefaultValue(types.Bool{Value: true}),
+					planmodifiers.DefaultValue(types.BoolValue(true)),
 					planmodifiers.RequiresReplace(),
 				},
 			},
@@ -445,7 +445,7 @@ func stringSchemaV3() tfsdk.Schema {
 				Optional:    true,
 				Computed:    true,
 				PlanModifiers: []tfsdk.AttributePlanModifier{
-					planmodifiers.DefaultValue(types.Int64{Value: 0}),
+					planmodifiers.DefaultValue(types.Int64Value(0)),
 					planmodifiers.RequiresReplace(),
 				},
 			},
@@ -456,7 +456,7 @@ func stringSchemaV3() tfsdk.Schema {
 				Optional:    true,
 				Computed:    true,
 				PlanModifiers: []tfsdk.AttributePlanModifier{
-					planmodifiers.DefaultValue(types.Int64{Value: 0}),
+					planmodifiers.DefaultValue(types.Int64Value(0)),
 					planmodifiers.RequiresReplace(),
 				},
 			},
@@ -467,7 +467,7 @@ func stringSchemaV3() tfsdk.Schema {
 				Optional:    true,
 				Computed:    true,
 				PlanModifiers: []tfsdk.AttributePlanModifier{
-					planmodifiers.DefaultValue(types.Int64{Value: 0}),
+					planmodifiers.DefaultValue(types.Int64Value(0)),
 					planmodifiers.RequiresReplace(),
 				},
 			},
@@ -478,7 +478,7 @@ func stringSchemaV3() tfsdk.Schema {
 				Optional:    true,
 				Computed:    true,
 				PlanModifiers: []tfsdk.AttributePlanModifier{
-					planmodifiers.DefaultValue(types.Int64{Value: 0}),
+					planmodifiers.DefaultValue(types.Int64Value(0)),
 					planmodifiers.RequiresReplace(),
 				},
 			},
@@ -566,7 +566,7 @@ func stringSchemaV2() tfsdk.Schema {
 				Optional:    true,
 				Computed:    true,
 				PlanModifiers: []tfsdk.AttributePlanModifier{
-					planmodifiers.DefaultValue(types.Bool{Value: true}),
+					planmodifiers.DefaultValue(types.BoolValue(true)),
 					planmodifiers.RequiresReplace(),
 				},
 			},
@@ -577,7 +577,7 @@ func stringSchemaV2() tfsdk.Schema {
 				Optional:    true,
 				Computed:    true,
 				PlanModifiers: []tfsdk.AttributePlanModifier{
-					planmodifiers.DefaultValue(types.Bool{Value: true}),
+					planmodifiers.DefaultValue(types.BoolValue(true)),
 					planmodifiers.RequiresReplace(),
 				},
 			},
@@ -588,7 +588,7 @@ func stringSchemaV2() tfsdk.Schema {
 				Optional:    true,
 				Computed:    true,
 				PlanModifiers: []tfsdk.AttributePlanModifier{
-					planmodifiers.DefaultValue(types.Bool{Value: true}),
+					planmodifiers.DefaultValue(types.BoolValue(true)),
 					planmodifiers.RequiresReplace(),
 				},
 			},
@@ -623,7 +623,7 @@ func stringSchemaV2() tfsdk.Schema {
 				Optional:    true,
 				Computed:    true,
 				PlanModifiers: []tfsdk.AttributePlanModifier{
-					planmodifiers.DefaultValue(types.Int64{Value: 0}),
+					planmodifiers.DefaultValue(types.Int64Value(0)),
 					planmodifiers.RequiresReplace(),
 				},
 			},
@@ -634,7 +634,7 @@ func stringSchemaV2() tfsdk.Schema {
 				Optional:    true,
 				Computed:    true,
 				PlanModifiers: []tfsdk.AttributePlanModifier{
-					planmodifiers.DefaultValue(types.Int64{Value: 0}),
+					planmodifiers.DefaultValue(types.Int64Value(0)),
 					planmodifiers.RequiresReplace(),
 				},
 			},
@@ -645,7 +645,7 @@ func stringSchemaV2() tfsdk.Schema {
 				Optional:    true,
 				Computed:    true,
 				PlanModifiers: []tfsdk.AttributePlanModifier{
-					planmodifiers.DefaultValue(types.Int64{Value: 0}),
+					planmodifiers.DefaultValue(types.Int64Value(0)),
 					planmodifiers.RequiresReplace(),
 				},
 			},
@@ -656,7 +656,7 @@ func stringSchemaV2() tfsdk.Schema {
 				Optional:    true,
 				Computed:    true,
 				PlanModifiers: []tfsdk.AttributePlanModifier{
-					planmodifiers.DefaultValue(types.Int64{Value: 0}),
+					planmodifiers.DefaultValue(types.Int64Value(0)),
 					planmodifiers.RequiresReplace(),
 				},
 			},
@@ -744,7 +744,7 @@ func stringSchemaV1() tfsdk.Schema {
 				Optional:    true,
 				Computed:    true,
 				PlanModifiers: []tfsdk.AttributePlanModifier{
-					planmodifiers.DefaultValue(types.Bool{Value: true}),
+					planmodifiers.DefaultValue(types.BoolValue(true)),
 					planmodifiers.RequiresReplace(),
 				},
 			},
@@ -755,7 +755,7 @@ func stringSchemaV1() tfsdk.Schema {
 				Optional:    true,
 				Computed:    true,
 				PlanModifiers: []tfsdk.AttributePlanModifier{
-					planmodifiers.DefaultValue(types.Bool{Value: true}),
+					planmodifiers.DefaultValue(types.BoolValue(true)),
 					planmodifiers.RequiresReplace(),
 				},
 			},
@@ -766,7 +766,7 @@ func stringSchemaV1() tfsdk.Schema {
 				Optional:    true,
 				Computed:    true,
 				PlanModifiers: []tfsdk.AttributePlanModifier{
-					planmodifiers.DefaultValue(types.Bool{Value: true}),
+					planmodifiers.DefaultValue(types.BoolValue(true)),
 					planmodifiers.RequiresReplace(),
 				},
 			},
@@ -777,7 +777,7 @@ func stringSchemaV1() tfsdk.Schema {
 				Optional:    true,
 				Computed:    true,
 				PlanModifiers: []tfsdk.AttributePlanModifier{
-					planmodifiers.DefaultValue(types.Bool{Value: true}),
+					planmodifiers.DefaultValue(types.BoolValue(true)),
 					planmodifiers.RequiresReplace(),
 				},
 			},
@@ -788,7 +788,7 @@ func stringSchemaV1() tfsdk.Schema {
 				Optional:    true,
 				Computed:    true,
 				PlanModifiers: []tfsdk.AttributePlanModifier{
-					planmodifiers.DefaultValue(types.Int64{Value: 0}),
+					planmodifiers.DefaultValue(types.Int64Value(0)),
 					planmodifiers.RequiresReplace(),
 				},
 			},
@@ -799,7 +799,7 @@ func stringSchemaV1() tfsdk.Schema {
 				Optional:    true,
 				Computed:    true,
 				PlanModifiers: []tfsdk.AttributePlanModifier{
-					planmodifiers.DefaultValue(types.Int64{Value: 0}),
+					planmodifiers.DefaultValue(types.Int64Value(0)),
 					planmodifiers.RequiresReplace(),
 				},
 			},
@@ -810,7 +810,7 @@ func stringSchemaV1() tfsdk.Schema {
 				Optional:    true,
 				Computed:    true,
 				PlanModifiers: []tfsdk.AttributePlanModifier{
-					planmodifiers.DefaultValue(types.Int64{Value: 0}),
+					planmodifiers.DefaultValue(types.Int64Value(0)),
 					planmodifiers.RequiresReplace(),
 				},
 			},
@@ -821,7 +821,7 @@ func stringSchemaV1() tfsdk.Schema {
 				Optional:    true,
 				Computed:    true,
 				PlanModifiers: []tfsdk.AttributePlanModifier{
-					planmodifiers.DefaultValue(types.Int64{Value: 0}),
+					planmodifiers.DefaultValue(types.Int64Value(0)),
 					planmodifiers.RequiresReplace(),
 				},
 			},
