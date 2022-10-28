@@ -79,7 +79,7 @@ jobs:
       uses: actions/checkout@v3
 
     - name: Setup Terraform ${{ matrix.terraform }}
-      uses: hashicorp/setup-terraform@v2
+      uses: hashicorp/setup-terraform@73d00bf3fd8b34f69204a0dcef07598ba579bfd9
       with:
         terraform_version: ${{ matrix.terraform }}
         terraform_wrapper: false
