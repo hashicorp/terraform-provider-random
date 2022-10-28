@@ -1,9 +1,3 @@
-## 3.5.0 (September 08, 2022)
-
-NOTES:
-
-* all: This Go module has been updated for deprecations in terraform-plugin-framework version 0.15.0
-
 ## 3.4.3 (September 08, 2022)
 
 NOTES:

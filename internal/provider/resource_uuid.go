@@ -148,17 +148,11 @@ func (r *uuidResource) ImportState(ctx context.Context, req resource.ImportState
 
 	var state uuidModelV0
 
-	keepers, diags := types.MapValue(types.StringType, nil)
-	resp.Diagnostics.Append(diags...)
-	if resp.Diagnostics.HasError() {
-		return
-	}
-
 	state.ID = types.StringValue(result)
 	state.Result = types.StringValue(result)
-	state.Keepers = keepers
+	state.Keepers = types.MapValueMust(types.StringType, nil)
 
-	diags = resp.State.Set(ctx, &state)
+	diags := resp.State.Set(ctx, &state)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
 		return

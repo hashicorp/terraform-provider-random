@@ -198,12 +198,8 @@ func (r *integerResource) ImportState(ctx context.Context, req resource.ImportSt
 	var state integerModelV0
 
 	state.ID = types.StringValue(parts[0])
-	keepers, diags := types.MapValue(types.StringType, nil)
-	resp.Diagnostics.Append(diags...)
-	if resp.Diagnostics.HasError() {
-		return
-	}
-	state.Keepers = keepers
+	// Using types.MapValueMust to ensure map is known.
+	state.Keepers = types.MapValueMust(types.StringType, nil)
 	state.Result = types.Int64Value(result)
 	state.Min = types.Int64Value(min)
 	state.Max = types.Int64Value(max)
@@ -212,7 +208,7 @@ func (r *integerResource) ImportState(ctx context.Context, req resource.ImportSt
 		state.Seed = types.StringValue(parts[3])
 	}
 
-	diags = resp.State.Set(ctx, &state)
+	diags := resp.State.Set(ctx, &state)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
 		return

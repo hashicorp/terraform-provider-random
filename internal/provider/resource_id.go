@@ -228,12 +228,8 @@ func (r *idResource) ImportState(ctx context.Context, req resource.ImportStateRe
 
 	state.ID = types.StringValue(id)
 	state.ByteLength = types.Int64Value(int64(len(bytes)))
-	keepers, diags := types.MapValue(types.StringType, nil)
-	resp.Diagnostics.Append(diags...)
-	if resp.Diagnostics.HasError() {
-		return
-	}
-	state.Keepers = keepers
+	// Using types.MapValueMust to ensure map is known.
+	state.Keepers = types.MapValueMust(types.StringType, nil)
 	state.B64Std = types.StringValue(prefix + b64Std)
 	state.B64URL = types.StringValue(prefix + id)
 	state.Hex = types.StringValue(prefix + hexStr)
@@ -245,7 +241,7 @@ func (r *idResource) ImportState(ctx context.Context, req resource.ImportStateRe
 		state.Prefix = types.StringValue(prefix)
 	}
 
-	diags = resp.State.Set(ctx, &state)
+	diags := resp.State.Set(ctx, &state)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
 		return
