@@ -9,6 +9,7 @@ import (
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
+	"github.com/hashicorp/terraform-plugin-framework/path"
 	res "github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/tfsdk"
 	"github.com/hashicorp/terraform-plugin-go/tftypes"
@@ -1207,6 +1208,23 @@ func TestUpgradePasswordStateV0toV3(t *testing.T) {
 		},
 	}
 
+	var bcryptHash, result string
+
+	diags := resp.State.GetAttribute(context.Background(), path.Root("bcrypt_hash"), &bcryptHash)
+	if diags.HasError() {
+		t.Errorf("error retrieving bcyrpt_hash from state: %s", diags.Errors())
+	}
+
+	diags = resp.State.GetAttribute(context.Background(), path.Root("result"), &result)
+	if diags.HasError() {
+		t.Errorf("error retrieving bcyrpt_hash from state: %s", diags.Errors())
+	}
+
+	err := bcrypt.CompareHashAndPassword([]byte(bcryptHash), []byte(result))
+	if err != nil {
+		t.Errorf("unexpected bcrypt comparison error: %s", err)
+	}
+
 	// rawTransformed allows equality testing to be used by mutating the bcrypt_hash value in the response to a known value.
 	rawTransformed, err := tftypes.Transform(resp.State.Raw, func(path *tftypes.AttributePath, value tftypes.Value) (tftypes.Value, error) {
 		bcryptHashPath := tftypes.NewAttributePath().WithAttributeName("bcrypt_hash")
@@ -1313,6 +1331,23 @@ func TestUpgradePasswordStateV0toV3_NullValues(t *testing.T) {
 			}),
 			Schema: passwordSchemaV3(),
 		},
+	}
+
+	var bcryptHash, result string
+
+	diags := resp.State.GetAttribute(context.Background(), path.Root("bcrypt_hash"), &bcryptHash)
+	if diags.HasError() {
+		t.Errorf("error retrieving bcyrpt_hash from state: %s", diags.Errors())
+	}
+
+	diags = resp.State.GetAttribute(context.Background(), path.Root("result"), &result)
+	if diags.HasError() {
+		t.Errorf("error retrieving bcyrpt_hash from state: %s", diags.Errors())
+	}
+
+	err := bcrypt.CompareHashAndPassword([]byte(bcryptHash), []byte(result))
+	if err != nil {
+		t.Errorf("unexpected bcrypt comparison error: %s", err)
 	}
 
 	// rawTransformed allows equality testing to be used by mutating the bcrypt_hash value in the response to a known value.
