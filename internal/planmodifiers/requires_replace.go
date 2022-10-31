@@ -43,7 +43,7 @@ func RequiresReplaceUnlessEmptyStringToNull() resource.RequiresReplaceIfFunc {
 		}
 
 		// If the state is not an empty string, replace the resource.
-		if stateString.Value != "" {
+		if stateString.ValueString() != "" {
 			return true, diags
 		}
 

@@ -134,7 +134,7 @@ func (r *idResource) Create(ctx context.Context, req resource.CreateRequest, res
 		return
 	}
 
-	byteLength := plan.ByteLength.Value
+	byteLength := plan.ByteLength.ValueInt64()
 	bytes := make([]byte, byteLength)
 
 	n, err := rand.Reader.Read(bytes)
@@ -148,7 +148,7 @@ func (r *idResource) Create(ctx context.Context, req resource.CreateRequest, res
 	}
 
 	id := base64.RawURLEncoding.EncodeToString(bytes)
-	prefix := plan.Prefix.Value
+	prefix := plan.Prefix.ValueString()
 	b64Std := base64.StdEncoding.EncodeToString(bytes)
 	hexStr := hex.EncodeToString(bytes)
 
@@ -157,14 +157,14 @@ func (r *idResource) Create(ctx context.Context, req resource.CreateRequest, res
 	dec := bigInt.String()
 
 	i := idModelV0{
-		ID:         types.String{Value: id},
+		ID:         types.StringValue(id),
 		Keepers:    plan.Keepers,
-		ByteLength: types.Int64{Value: plan.ByteLength.Value},
+		ByteLength: types.Int64Value(plan.ByteLength.ValueInt64()),
 		Prefix:     plan.Prefix,
-		B64URL:     types.String{Value: prefix + id},
-		B64Std:     types.String{Value: prefix + b64Std},
-		Hex:        types.String{Value: prefix + hexStr},
-		Dec:        types.String{Value: prefix + dec},
+		B64URL:     types.StringValue(prefix + id),
+		B64Std:     types.StringValue(prefix + b64Std),
+		Hex:        types.StringValue(prefix + hexStr),
+		Dec:        types.StringValue(prefix + dec),
 	}
 
 	diags = resp.State.Set(ctx, i)
@@ -226,18 +226,19 @@ func (r *idResource) ImportState(ctx context.Context, req resource.ImportStateRe
 
 	var state idModelV0
 
-	state.ID.Value = id
-	state.ByteLength.Value = int64(len(bytes))
-	state.Keepers.ElemType = types.StringType
-	state.B64Std.Value = prefix + b64Std
-	state.B64URL.Value = prefix + id
-	state.Hex.Value = prefix + hexStr
-	state.Dec.Value = prefix + dec
+	state.ID = types.StringValue(id)
+	state.ByteLength = types.Int64Value(int64(len(bytes)))
+	// Using types.MapValueMust to ensure map is known.
+	state.Keepers = types.MapValueMust(types.StringType, nil)
+	state.B64Std = types.StringValue(prefix + b64Std)
+	state.B64URL = types.StringValue(prefix + id)
+	state.Hex = types.StringValue(prefix + hexStr)
+	state.Dec = types.StringValue(prefix + dec)
 
 	if prefix == "" {
-		state.Prefix.Null = true
+		state.Prefix = types.StringNull()
 	} else {
-		state.Prefix.Value = prefix
+		state.Prefix = types.StringValue(prefix)
 	}
 
 	diags := resp.State.Set(ctx, &state)

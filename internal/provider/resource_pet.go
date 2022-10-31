@@ -52,7 +52,7 @@ func (r *petResource) GetSchema(context.Context) (tfsdk.Schema, diag.Diagnostics
 				Optional:    true,
 				Computed:    true,
 				PlanModifiers: []tfsdk.AttributePlanModifier{
-					planmodifiers.DefaultValue(types.Int64{Value: 2}),
+					planmodifiers.DefaultValue(types.Int64Value(2)),
 					planmodifiers.RequiresReplace(),
 				},
 			},
@@ -68,7 +68,7 @@ func (r *petResource) GetSchema(context.Context) (tfsdk.Schema, diag.Diagnostics
 				Optional:    true,
 				Computed:    true,
 				PlanModifiers: []tfsdk.AttributePlanModifier{
-					planmodifiers.DefaultValue(types.String{Value: "-"}),
+					planmodifiers.DefaultValue(types.StringValue("-")),
 					planmodifiers.RequiresReplace(),
 				},
 			},
@@ -98,26 +98,26 @@ func (r *petResource) Create(ctx context.Context, req resource.CreateRequest, re
 		return
 	}
 
-	length := plan.Length.Value
-	separator := plan.Separator.Value
-	prefix := plan.Prefix.Value
+	length := plan.Length.ValueInt64()
+	separator := plan.Separator.ValueString()
+	prefix := plan.Prefix.ValueString()
 
 	pet := strings.ToLower(petname.Generate(int(length), separator))
 
 	pn := petModelV0{
 		Keepers:   plan.Keepers,
-		Length:    types.Int64{Value: length},
-		Separator: types.String{Value: separator},
+		Length:    types.Int64Value(length),
+		Separator: types.StringValue(separator),
 	}
 
 	if prefix != "" {
 		pet = fmt.Sprintf("%s%s%s", prefix, separator, pet)
-		pn.Prefix.Value = prefix
+		pn.Prefix = types.StringValue(prefix)
 	} else {
-		pn.Prefix.Null = true
+		pn.Prefix = types.StringNull()
 	}
 
-	pn.ID.Value = pet
+	pn.ID = types.StringValue(pet)
 
 	diags = resp.State.Set(ctx, pn)
 	resp.Diagnostics.Append(diags...)

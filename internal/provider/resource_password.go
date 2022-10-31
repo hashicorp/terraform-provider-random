@@ -47,16 +47,16 @@ func (r *passwordResource) Create(ctx context.Context, req resource.CreateReques
 	}
 
 	params := random.StringParams{
-		Length:          plan.Length.Value,
-		Upper:           plan.Upper.Value,
-		MinUpper:        plan.MinUpper.Value,
-		Lower:           plan.Lower.Value,
-		MinLower:        plan.MinLower.Value,
-		Numeric:         plan.Numeric.Value,
-		MinNumeric:      plan.MinNumeric.Value,
-		Special:         plan.Special.Value,
-		MinSpecial:      plan.MinSpecial.Value,
-		OverrideSpecial: plan.OverrideSpecial.Value,
+		Length:          plan.Length.ValueInt64(),
+		Upper:           plan.Upper.ValueBool(),
+		MinUpper:        plan.MinUpper.ValueInt64(),
+		Lower:           plan.Lower.ValueBool(),
+		MinLower:        plan.MinLower.ValueInt64(),
+		Numeric:         plan.Numeric.ValueBool(),
+		MinNumeric:      plan.MinNumeric.ValueInt64(),
+		Special:         plan.Special.ValueBool(),
+		MinSpecial:      plan.MinSpecial.ValueInt64(),
+		OverrideSpecial: plan.OverrideSpecial.ValueString(),
 	}
 
 	result, err := random.CreateString(params)
@@ -70,9 +70,9 @@ func (r *passwordResource) Create(ctx context.Context, req resource.CreateReques
 		resp.Diagnostics.Append(diagnostics.HashGenerationError(err.Error())...)
 	}
 
-	plan.BcryptHash = types.String{Value: hash}
-	plan.ID = types.String{Value: "none"}
-	plan.Result = types.String{Value: string(result)}
+	plan.BcryptHash = types.StringValue(hash)
+	plan.ID = types.StringValue("none")
+	plan.Result = types.StringValue(string(result))
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, plan)...)
 }
@@ -103,23 +103,20 @@ func (r *passwordResource) ImportState(ctx context.Context, req resource.ImportS
 	id := req.ID
 
 	state := passwordModelV3{
-		ID:         types.String{Value: "none"},
-		Result:     types.String{Value: id},
-		Length:     types.Int64{Value: int64(len(id))},
-		Special:    types.Bool{Value: true},
-		Upper:      types.Bool{Value: true},
-		Lower:      types.Bool{Value: true},
-		Number:     types.Bool{Value: true},
-		Numeric:    types.Bool{Value: true},
-		MinSpecial: types.Int64{Value: 0},
-		MinUpper:   types.Int64{Value: 0},
-		MinLower:   types.Int64{Value: 0},
-		MinNumeric: types.Int64{Value: 0},
-		Keepers: types.Map{
-			ElemType: types.StringType,
-			Null:     true,
-		},
-		OverrideSpecial: types.String{Null: true},
+		ID:              types.StringValue("none"),
+		Result:          types.StringValue(id),
+		Length:          types.Int64Value(int64(len(id))),
+		Special:         types.BoolValue(true),
+		Upper:           types.BoolValue(true),
+		Lower:           types.BoolValue(true),
+		Number:          types.BoolValue(true),
+		Numeric:         types.BoolValue(true),
+		MinSpecial:      types.Int64Value(0),
+		MinUpper:        types.Int64Value(0),
+		MinLower:        types.Int64Value(0),
+		MinNumeric:      types.Int64Value(0),
+		Keepers:         types.MapNull(types.StringType),
+		OverrideSpecial: types.StringNull(),
 	}
 
 	hash, err := generateHash(id)
@@ -127,7 +124,7 @@ func (r *passwordResource) ImportState(ctx context.Context, req resource.ImportS
 		resp.Diagnostics.Append(diagnostics.HashGenerationError(err.Error())...)
 	}
 
-	state.BcryptHash = types.String{Value: hash}
+	state.BcryptHash = types.StringValue(hash)
 
 	diags := resp.State.Set(ctx, &state)
 	resp.Diagnostics.Append(diags...)
@@ -188,60 +185,55 @@ func upgradePasswordStateV0toV3(ctx context.Context, req resource.UpgradeStateRe
 	length := passwordDataV0.Length
 
 	if length.IsNull() {
-		length.Null = false
-		length.Value = int64(len(passwordDataV0.Result.Value))
+		length = types.Int64Value(int64(len(passwordDataV0.Result.ValueString())))
 	}
 
 	minNumeric := passwordDataV0.MinNumeric
 
 	if minNumeric.IsNull() {
-		minNumeric.Null = false
+		minNumeric = types.Int64Value(0)
 	}
 
 	minUpper := passwordDataV0.MinUpper
 
 	if minUpper.IsNull() {
-		minUpper.Null = false
+		minUpper = types.Int64Value(0)
 	}
 
 	minLower := passwordDataV0.MinLower
 
 	if minLower.IsNull() {
-		minLower.Null = false
+		minLower = types.Int64Value(0)
 	}
 
 	minSpecial := passwordDataV0.MinSpecial
 
 	if minSpecial.IsNull() {
-		minSpecial.Null = false
+		minSpecial = types.Int64Value(0)
 	}
 
 	special := passwordDataV0.Special
 
 	if special.IsNull() {
-		special.Null = false
-		special.Value = true
+		special = types.BoolValue(true)
 	}
 
 	upper := passwordDataV0.Upper
 
 	if upper.IsNull() {
-		upper.Null = false
-		upper.Value = true
+		upper = types.BoolValue(true)
 	}
 
 	lower := passwordDataV0.Lower
 
 	if lower.IsNull() {
-		lower.Null = false
-		lower.Value = true
+		lower = types.BoolValue(true)
 	}
 
 	number := passwordDataV0.Number
 
 	if number.IsNull() {
-		number.Null = false
-		number.Value = true
+		number = types.BoolValue(true)
 	}
 
 	passwordDataV3 := passwordModelV3{
@@ -261,13 +253,13 @@ func upgradePasswordStateV0toV3(ctx context.Context, req resource.UpgradeStateRe
 		ID:              passwordDataV0.ID,
 	}
 
-	hash, err := generateHash(passwordDataV3.Result.Value)
+	hash, err := generateHash(passwordDataV3.Result.ValueString())
 	if err != nil {
 		resp.Diagnostics.Append(diagnostics.HashGenerationError(err.Error())...)
 		return
 	}
 
-	passwordDataV3.BcryptHash.Value = hash
+	passwordDataV3.BcryptHash = types.StringValue(hash)
 
 	diags := resp.State.Set(ctx, passwordDataV3)
 	resp.Diagnostics.Append(diags...)
@@ -305,60 +297,55 @@ func upgradePasswordStateV1toV3(ctx context.Context, req resource.UpgradeStateRe
 	length := passwordDataV1.Length
 
 	if length.IsNull() {
-		length.Null = false
-		length.Value = int64(len(passwordDataV1.Result.Value))
+		length = types.Int64Value(int64(len(passwordDataV1.Result.ValueString())))
 	}
 
 	minNumeric := passwordDataV1.MinNumeric
 
 	if minNumeric.IsNull() {
-		minNumeric.Null = false
+		minNumeric = types.Int64Value(0)
 	}
 
 	minUpper := passwordDataV1.MinUpper
 
 	if minUpper.IsNull() {
-		minUpper.Null = false
+		minUpper = types.Int64Value(0)
 	}
 
 	minLower := passwordDataV1.MinLower
 
 	if minLower.IsNull() {
-		minLower.Null = false
+		minLower = types.Int64Value(0)
 	}
 
 	minSpecial := passwordDataV1.MinSpecial
 
 	if minSpecial.IsNull() {
-		minSpecial.Null = false
+		minSpecial = types.Int64Value(0)
 	}
 
 	special := passwordDataV1.Special
 
 	if special.IsNull() {
-		special.Null = false
-		special.Value = true
+		special = types.BoolValue(true)
 	}
 
 	upper := passwordDataV1.Upper
 
 	if upper.IsNull() {
-		upper.Null = false
-		upper.Value = true
+		upper = types.BoolValue(true)
 	}
 
 	lower := passwordDataV1.Lower
 
 	if lower.IsNull() {
-		lower.Null = false
-		lower.Value = true
+		lower = types.BoolValue(true)
 	}
 
 	number := passwordDataV1.Number
 
 	if number.IsNull() {
-		number.Null = false
-		number.Value = true
+		number = types.BoolValue(true)
 	}
 
 	passwordDataV3 := passwordModelV3{
@@ -417,67 +404,61 @@ func upgradePasswordStateV2toV3(ctx context.Context, req resource.UpgradeStateRe
 	length := passwordDataV2.Length
 
 	if length.IsNull() {
-		length.Null = false
-		length.Value = int64(len(passwordDataV2.Result.Value))
+		length = types.Int64Value(int64(len(passwordDataV2.Result.ValueString())))
 	}
 
 	minNumeric := passwordDataV2.MinNumeric
 
 	if minNumeric.IsNull() {
-		minNumeric.Null = false
+		minNumeric = types.Int64Value(0)
 	}
 
 	minUpper := passwordDataV2.MinUpper
 
 	if minUpper.IsNull() {
-		minUpper.Null = false
+		minUpper = types.Int64Value(0)
 	}
 
 	minLower := passwordDataV2.MinLower
 
 	if minLower.IsNull() {
-		minLower.Null = false
+		minLower = types.Int64Value(0)
 	}
 
 	minSpecial := passwordDataV2.MinSpecial
 
 	if minSpecial.IsNull() {
-		minSpecial.Null = false
+		minSpecial = types.Int64Value(0)
 	}
 
 	special := passwordDataV2.Special
 
 	if special.IsNull() {
-		special.Null = false
-		special.Value = true
+		special = types.BoolValue(true)
 	}
 
 	upper := passwordDataV2.Upper
 
 	if upper.IsNull() {
-		upper.Null = false
-		upper.Value = true
+		upper = types.BoolValue(true)
 	}
 
 	lower := passwordDataV2.Lower
 
 	if lower.IsNull() {
-		lower.Null = false
-		lower.Value = true
+		lower = types.BoolValue(true)
 	}
 
 	number := passwordDataV2.Number
 
 	if number.IsNull() {
-		number.Null = false
-		number.Value = true
+		number = types.BoolValue(true)
 	}
 
 	numeric := passwordDataV2.Number
 
 	if numeric.IsNull() {
-		numeric.Null = false
-		numeric.Value = true
+		numeric = types.BoolValue(true)
 	}
 
 	// Schema version 2 to schema version 3 is a duplicate of the data,
@@ -511,7 +492,7 @@ func upgradePasswordStateV2toV3(ctx context.Context, req resource.UpgradeStateRe
 
 	// If the BcryptHash value does not correctly verify against the Result
 	// value we should regenerate it.
-	err := bcrypt.CompareHashAndPassword([]byte(passwordDataV2.BcryptHash.Value), []byte(passwordDataV2.Result.Value))
+	err := bcrypt.CompareHashAndPassword([]byte(passwordDataV2.BcryptHash.ValueString()), []byte(passwordDataV2.Result.ValueString()))
 
 	// If the hash matched the password, there is nothing to do.
 	if err == nil {
@@ -529,7 +510,7 @@ func upgradePasswordStateV2toV3(ctx context.Context, req resource.UpgradeStateRe
 	}
 
 	// Regenerate the BcryptHash value.
-	newBcryptHash, err := bcrypt.GenerateFromPassword([]byte(passwordDataV2.Result.Value), bcrypt.DefaultCost)
+	newBcryptHash, err := bcrypt.GenerateFromPassword([]byte(passwordDataV2.Result.ValueString()), bcrypt.DefaultCost)
 
 	if err != nil {
 		resp.Diagnostics.AddError(
@@ -541,7 +522,7 @@ func upgradePasswordStateV2toV3(ctx context.Context, req resource.UpgradeStateRe
 		return
 	}
 
-	passwordDataV3.BcryptHash.Value = string(newBcryptHash)
+	passwordDataV3.BcryptHash = types.StringValue(string(newBcryptHash))
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, passwordDataV3)...)
 }
@@ -598,7 +579,7 @@ func passwordSchemaV3() tfsdk.Schema {
 				Optional:    true,
 				Computed:    true,
 				PlanModifiers: []tfsdk.AttributePlanModifier{
-					planmodifiers.DefaultValue(types.Bool{Value: true}),
+					planmodifiers.DefaultValue(types.BoolValue(true)),
 					planmodifiers.RequiresReplace(),
 				},
 			},
@@ -609,7 +590,7 @@ func passwordSchemaV3() tfsdk.Schema {
 				Optional:    true,
 				Computed:    true,
 				PlanModifiers: []tfsdk.AttributePlanModifier{
-					planmodifiers.DefaultValue(types.Bool{Value: true}),
+					planmodifiers.DefaultValue(types.BoolValue(true)),
 					planmodifiers.RequiresReplace(),
 				},
 			},
@@ -620,7 +601,7 @@ func passwordSchemaV3() tfsdk.Schema {
 				Optional:    true,
 				Computed:    true,
 				PlanModifiers: []tfsdk.AttributePlanModifier{
-					planmodifiers.DefaultValue(types.Bool{Value: true}),
+					planmodifiers.DefaultValue(types.BoolValue(true)),
 					planmodifiers.RequiresReplace(),
 				},
 			},
@@ -655,7 +636,7 @@ func passwordSchemaV3() tfsdk.Schema {
 				Optional:    true,
 				Computed:    true,
 				PlanModifiers: []tfsdk.AttributePlanModifier{
-					planmodifiers.DefaultValue(types.Int64{Value: 0}),
+					planmodifiers.DefaultValue(types.Int64Value(0)),
 					planmodifiers.RequiresReplace(),
 				},
 			},
@@ -666,7 +647,7 @@ func passwordSchemaV3() tfsdk.Schema {
 				Optional:    true,
 				Computed:    true,
 				PlanModifiers: []tfsdk.AttributePlanModifier{
-					planmodifiers.DefaultValue(types.Int64{Value: 0}),
+					planmodifiers.DefaultValue(types.Int64Value(0)),
 					planmodifiers.RequiresReplace(),
 				},
 			},
@@ -677,7 +658,7 @@ func passwordSchemaV3() tfsdk.Schema {
 				Optional:    true,
 				Computed:    true,
 				PlanModifiers: []tfsdk.AttributePlanModifier{
-					planmodifiers.DefaultValue(types.Int64{Value: 0}),
+					planmodifiers.DefaultValue(types.Int64Value(0)),
 					planmodifiers.RequiresReplace(),
 				},
 			},
@@ -688,7 +669,7 @@ func passwordSchemaV3() tfsdk.Schema {
 				Optional:    true,
 				Computed:    true,
 				PlanModifiers: []tfsdk.AttributePlanModifier{
-					planmodifiers.DefaultValue(types.Int64{Value: 0}),
+					planmodifiers.DefaultValue(types.Int64Value(0)),
 					planmodifiers.RequiresReplace(),
 				},
 			},
@@ -786,7 +767,7 @@ func passwordSchemaV2() tfsdk.Schema {
 				Optional:    true,
 				Computed:    true,
 				PlanModifiers: []tfsdk.AttributePlanModifier{
-					planmodifiers.DefaultValue(types.Bool{Value: true}),
+					planmodifiers.DefaultValue(types.BoolValue(true)),
 					planmodifiers.RequiresReplace(),
 				},
 			},
@@ -797,7 +778,7 @@ func passwordSchemaV2() tfsdk.Schema {
 				Optional:    true,
 				Computed:    true,
 				PlanModifiers: []tfsdk.AttributePlanModifier{
-					planmodifiers.DefaultValue(types.Bool{Value: true}),
+					planmodifiers.DefaultValue(types.BoolValue(true)),
 					planmodifiers.RequiresReplace(),
 				},
 			},
@@ -808,7 +789,7 @@ func passwordSchemaV2() tfsdk.Schema {
 				Optional:    true,
 				Computed:    true,
 				PlanModifiers: []tfsdk.AttributePlanModifier{
-					planmodifiers.DefaultValue(types.Bool{Value: true}),
+					planmodifiers.DefaultValue(types.BoolValue(true)),
 					planmodifiers.RequiresReplace(),
 				},
 			},
@@ -843,7 +824,7 @@ func passwordSchemaV2() tfsdk.Schema {
 				Optional:    true,
 				Computed:    true,
 				PlanModifiers: []tfsdk.AttributePlanModifier{
-					planmodifiers.DefaultValue(types.Int64{Value: 0}),
+					planmodifiers.DefaultValue(types.Int64Value(0)),
 					planmodifiers.RequiresReplace(),
 				},
 			},
@@ -854,7 +835,7 @@ func passwordSchemaV2() tfsdk.Schema {
 				Optional:    true,
 				Computed:    true,
 				PlanModifiers: []tfsdk.AttributePlanModifier{
-					planmodifiers.DefaultValue(types.Int64{Value: 0}),
+					planmodifiers.DefaultValue(types.Int64Value(0)),
 					planmodifiers.RequiresReplace(),
 				},
 			},
@@ -865,7 +846,7 @@ func passwordSchemaV2() tfsdk.Schema {
 				Optional:    true,
 				Computed:    true,
 				PlanModifiers: []tfsdk.AttributePlanModifier{
-					planmodifiers.DefaultValue(types.Int64{Value: 0}),
+					planmodifiers.DefaultValue(types.Int64Value(0)),
 					planmodifiers.RequiresReplace(),
 				},
 			},
@@ -876,7 +857,7 @@ func passwordSchemaV2() tfsdk.Schema {
 				Optional:    true,
 				Computed:    true,
 				PlanModifiers: []tfsdk.AttributePlanModifier{
-					planmodifiers.DefaultValue(types.Int64{Value: 0}),
+					planmodifiers.DefaultValue(types.Int64Value(0)),
 					planmodifiers.RequiresReplace(),
 				},
 			},
@@ -889,7 +870,7 @@ func passwordSchemaV2() tfsdk.Schema {
 				Optional: true,
 				Computed: true,
 				PlanModifiers: []tfsdk.AttributePlanModifier{
-					planmodifiers.DefaultValue(types.String{Value: ""}),
+					planmodifiers.DefaultValue(types.StringValue("")),
 					resource.RequiresReplace(),
 				},
 			},
@@ -970,7 +951,7 @@ func passwordSchemaV1() tfsdk.Schema {
 				Optional:    true,
 				Computed:    true,
 				PlanModifiers: []tfsdk.AttributePlanModifier{
-					planmodifiers.DefaultValue(types.Bool{Value: true}),
+					planmodifiers.DefaultValue(types.BoolValue(true)),
 					planmodifiers.RequiresReplace(),
 				},
 			},
@@ -981,7 +962,7 @@ func passwordSchemaV1() tfsdk.Schema {
 				Optional:    true,
 				Computed:    true,
 				PlanModifiers: []tfsdk.AttributePlanModifier{
-					planmodifiers.DefaultValue(types.Bool{Value: true}),
+					planmodifiers.DefaultValue(types.BoolValue(true)),
 					planmodifiers.RequiresReplace(),
 				},
 			},
@@ -992,7 +973,7 @@ func passwordSchemaV1() tfsdk.Schema {
 				Optional:    true,
 				Computed:    true,
 				PlanModifiers: []tfsdk.AttributePlanModifier{
-					planmodifiers.DefaultValue(types.Bool{Value: true}),
+					planmodifiers.DefaultValue(types.BoolValue(true)),
 					planmodifiers.RequiresReplace(),
 				},
 			},
@@ -1003,7 +984,7 @@ func passwordSchemaV1() tfsdk.Schema {
 				Optional:    true,
 				Computed:    true,
 				PlanModifiers: []tfsdk.AttributePlanModifier{
-					planmodifiers.DefaultValue(types.Bool{Value: true}),
+					planmodifiers.DefaultValue(types.BoolValue(true)),
 					planmodifiers.RequiresReplace(),
 				},
 			},
@@ -1014,7 +995,7 @@ func passwordSchemaV1() tfsdk.Schema {
 				Optional:    true,
 				Computed:    true,
 				PlanModifiers: []tfsdk.AttributePlanModifier{
-					planmodifiers.DefaultValue(types.Int64{Value: 0}),
+					planmodifiers.DefaultValue(types.Int64Value(0)),
 					planmodifiers.RequiresReplace(),
 				},
 			},
@@ -1025,7 +1006,7 @@ func passwordSchemaV1() tfsdk.Schema {
 				Optional:    true,
 				Computed:    true,
 				PlanModifiers: []tfsdk.AttributePlanModifier{
-					planmodifiers.DefaultValue(types.Int64{Value: 0}),
+					planmodifiers.DefaultValue(types.Int64Value(0)),
 					planmodifiers.RequiresReplace(),
 				},
 			},
@@ -1036,7 +1017,7 @@ func passwordSchemaV1() tfsdk.Schema {
 				Optional:    true,
 				Computed:    true,
 				PlanModifiers: []tfsdk.AttributePlanModifier{
-					planmodifiers.DefaultValue(types.Int64{Value: 0}),
+					planmodifiers.DefaultValue(types.Int64Value(0)),
 					planmodifiers.RequiresReplace(),
 				},
 			},
@@ -1047,7 +1028,7 @@ func passwordSchemaV1() tfsdk.Schema {
 				Optional:    true,
 				Computed:    true,
 				PlanModifiers: []tfsdk.AttributePlanModifier{
-					planmodifiers.DefaultValue(types.Int64{Value: 0}),
+					planmodifiers.DefaultValue(types.Int64Value(0)),
 					planmodifiers.RequiresReplace(),
 				},
 			},
@@ -1128,7 +1109,7 @@ func passwordSchemaV0() tfsdk.Schema {
 				Optional:    true,
 				Computed:    true,
 				PlanModifiers: []tfsdk.AttributePlanModifier{
-					planmodifiers.DefaultValue(types.Bool{Value: true}),
+					planmodifiers.DefaultValue(types.BoolValue(true)),
 					planmodifiers.RequiresReplace(),
 				},
 			},
@@ -1139,7 +1120,7 @@ func passwordSchemaV0() tfsdk.Schema {
 				Optional:    true,
 				Computed:    true,
 				PlanModifiers: []tfsdk.AttributePlanModifier{
-					planmodifiers.DefaultValue(types.Bool{Value: true}),
+					planmodifiers.DefaultValue(types.BoolValue(true)),
 					planmodifiers.RequiresReplace(),
 				},
 			},
@@ -1150,7 +1131,7 @@ func passwordSchemaV0() tfsdk.Schema {
 				Optional:    true,
 				Computed:    true,
 				PlanModifiers: []tfsdk.AttributePlanModifier{
-					planmodifiers.DefaultValue(types.Bool{Value: true}),
+					planmodifiers.DefaultValue(types.BoolValue(true)),
 					planmodifiers.RequiresReplace(),
 				},
 			},
@@ -1161,7 +1142,7 @@ func passwordSchemaV0() tfsdk.Schema {
 				Optional:    true,
 				Computed:    true,
 				PlanModifiers: []tfsdk.AttributePlanModifier{
-					planmodifiers.DefaultValue(types.Bool{Value: true}),
+					planmodifiers.DefaultValue(types.BoolValue(true)),
 					planmodifiers.RequiresReplace(),
 				},
 			},
@@ -1172,7 +1153,7 @@ func passwordSchemaV0() tfsdk.Schema {
 				Optional:    true,
 				Computed:    true,
 				PlanModifiers: []tfsdk.AttributePlanModifier{
-					planmodifiers.DefaultValue(types.Int64{Value: 0}),
+					planmodifiers.DefaultValue(types.Int64Value(0)),
 					planmodifiers.RequiresReplace(),
 				},
 			},
@@ -1183,7 +1164,7 @@ func passwordSchemaV0() tfsdk.Schema {
 				Optional:    true,
 				Computed:    true,
 				PlanModifiers: []tfsdk.AttributePlanModifier{
-					planmodifiers.DefaultValue(types.Int64{Value: 0}),
+					planmodifiers.DefaultValue(types.Int64Value(0)),
 					planmodifiers.RequiresReplace(),
 				},
 			},
@@ -1194,7 +1175,7 @@ func passwordSchemaV0() tfsdk.Schema {
 				Optional:    true,
 				Computed:    true,
 				PlanModifiers: []tfsdk.AttributePlanModifier{
-					planmodifiers.DefaultValue(types.Int64{Value: 0}),
+					planmodifiers.DefaultValue(types.Int64Value(0)),
 					planmodifiers.RequiresReplace(),
 				},
 			},
@@ -1205,7 +1186,7 @@ func passwordSchemaV0() tfsdk.Schema {
 				Optional:    true,
 				Computed:    true,
 				PlanModifiers: []tfsdk.AttributePlanModifier{
-					planmodifiers.DefaultValue(types.Int64{Value: 0}),
+					planmodifiers.DefaultValue(types.Int64Value(0)),
 					planmodifiers.RequiresReplace(),
 				},
 			},

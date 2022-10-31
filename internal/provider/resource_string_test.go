@@ -9,7 +9,6 @@ import (
 	"github.com/google/go-cmp/cmp"
 	res "github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/tfsdk"
-	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-go/tftypes"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 )
@@ -1267,25 +1266,39 @@ func TestAccResourceString_UpgradeFromVersion3_3_2(t *testing.T) {
 func TestUpgradeStringStateV1toV3(t *testing.T) {
 	t.Parallel()
 
-	raw := tftypes.NewValue(tftypes.Object{}, map[string]tftypes.Value{
-		"id":               tftypes.NewValue(tftypes.String, "none"),
-		"keepers":          tftypes.NewValue(tftypes.Map{ElementType: tftypes.String}, nil),
-		"length":           tftypes.NewValue(tftypes.Number, 16),
-		"lower":            tftypes.NewValue(tftypes.Bool, true),
-		"min_lower":        tftypes.NewValue(tftypes.Number, 0),
-		"min_numeric":      tftypes.NewValue(tftypes.Number, 0),
-		"min_special":      tftypes.NewValue(tftypes.Number, 0),
-		"min_upper":        tftypes.NewValue(tftypes.Number, 0),
-		"number":           tftypes.NewValue(tftypes.Bool, true),
-		"override_special": tftypes.NewValue(tftypes.String, "!#$%\u0026*()-_=+[]{}\u003c\u003e:?"),
-		"result":           tftypes.NewValue(tftypes.String, "DZy_3*tnonj%Q%Yx"),
-		"special":          tftypes.NewValue(tftypes.Bool, true),
-		"upper":            tftypes.NewValue(tftypes.Bool, true),
-	})
-
 	req := res.UpgradeStateRequest{
 		State: &tfsdk.State{
-			Raw:    raw,
+			Raw: tftypes.NewValue(tftypes.Object{
+				AttributeTypes: map[string]tftypes.Type{
+					"id":               tftypes.String,
+					"keepers":          tftypes.Map{ElementType: tftypes.String},
+					"length":           tftypes.Number,
+					"lower":            tftypes.Bool,
+					"min_lower":        tftypes.Number,
+					"min_numeric":      tftypes.Number,
+					"min_special":      tftypes.Number,
+					"min_upper":        tftypes.Number,
+					"number":           tftypes.Bool,
+					"override_special": tftypes.String,
+					"result":           tftypes.String,
+					"special":          tftypes.Bool,
+					"upper":            tftypes.Bool,
+				},
+			}, map[string]tftypes.Value{
+				"id":               tftypes.NewValue(tftypes.String, "none"),
+				"keepers":          tftypes.NewValue(tftypes.Map{ElementType: tftypes.String}, nil),
+				"length":           tftypes.NewValue(tftypes.Number, 16),
+				"lower":            tftypes.NewValue(tftypes.Bool, true),
+				"min_lower":        tftypes.NewValue(tftypes.Number, 0),
+				"min_numeric":      tftypes.NewValue(tftypes.Number, 0),
+				"min_special":      tftypes.NewValue(tftypes.Number, 0),
+				"min_upper":        tftypes.NewValue(tftypes.Number, 0),
+				"number":           tftypes.NewValue(tftypes.Bool, true),
+				"override_special": tftypes.NewValue(tftypes.String, "!#$%\u0026*()-_=+[]{}\u003c\u003e:?"),
+				"result":           tftypes.NewValue(tftypes.String, "DZy_3*tnonj%Q%Yx"),
+				"special":          tftypes.NewValue(tftypes.Bool, true),
+				"upper":            tftypes.NewValue(tftypes.Bool, true),
+			}),
 			Schema: stringSchemaV1(),
 		},
 	}
@@ -1298,38 +1311,70 @@ func TestUpgradeStringStateV1toV3(t *testing.T) {
 
 	upgradeStringStateV1toV3(context.Background(), req, resp)
 
-	expected := stringModelV3{
-		ID:              types.String{Value: "none"},
-		Keepers:         types.Map{Null: true, ElemType: types.StringType},
-		Length:          types.Int64{Value: 16},
-		Special:         types.Bool{Value: true},
-		Upper:           types.Bool{Value: true},
-		Lower:           types.Bool{Value: true},
-		Number:          types.Bool{Value: true},
-		Numeric:         types.Bool{Value: true},
-		MinNumeric:      types.Int64{Value: 0},
-		MinUpper:        types.Int64{Value: 0},
-		MinLower:        types.Int64{Value: 0},
-		MinSpecial:      types.Int64{Value: 0},
-		OverrideSpecial: types.String{Value: "!#$%\u0026*()-_=+[]{}\u003c\u003e:?"},
-		Result:          types.String{Value: "DZy_3*tnonj%Q%Yx"},
+	expectedResp := &res.UpgradeStateResponse{
+		State: tfsdk.State{
+			Raw: tftypes.NewValue(tftypes.Object{
+				AttributeTypes: map[string]tftypes.Type{
+					"id":               tftypes.String,
+					"keepers":          tftypes.Map{ElementType: tftypes.String},
+					"length":           tftypes.Number,
+					"lower":            tftypes.Bool,
+					"min_lower":        tftypes.Number,
+					"min_numeric":      tftypes.Number,
+					"min_special":      tftypes.Number,
+					"min_upper":        tftypes.Number,
+					"number":           tftypes.Bool,
+					"numeric":          tftypes.Bool,
+					"override_special": tftypes.String,
+					"result":           tftypes.String,
+					"special":          tftypes.Bool,
+					"upper":            tftypes.Bool,
+				},
+			}, map[string]tftypes.Value{
+				"id":               tftypes.NewValue(tftypes.String, "none"),
+				"keepers":          tftypes.NewValue(tftypes.Map{ElementType: tftypes.String}, nil),
+				"length":           tftypes.NewValue(tftypes.Number, 16),
+				"lower":            tftypes.NewValue(tftypes.Bool, true),
+				"min_lower":        tftypes.NewValue(tftypes.Number, 0),
+				"min_numeric":      tftypes.NewValue(tftypes.Number, 0),
+				"min_special":      tftypes.NewValue(tftypes.Number, 0),
+				"min_upper":        tftypes.NewValue(tftypes.Number, 0),
+				"number":           tftypes.NewValue(tftypes.Bool, true),
+				"numeric":          tftypes.NewValue(tftypes.Bool, true),
+				"override_special": tftypes.NewValue(tftypes.String, "!#$%\u0026*()-_=+[]{}\u003c\u003e:?"),
+				"result":           tftypes.NewValue(tftypes.String, "DZy_3*tnonj%Q%Yx"),
+				"special":          tftypes.NewValue(tftypes.Bool, true),
+				"upper":            tftypes.NewValue(tftypes.Bool, true),
+			}),
+			Schema: stringSchemaV3(),
+		},
 	}
 
-	actual := stringModelV3{}
-	diags := resp.State.Get(context.Background(), &actual)
-	if diags.HasError() {
-		t.Errorf("error getting state: %v", diags)
-	}
-
-	if !cmp.Equal(expected, actual) {
-		t.Errorf("expected: %+v, got: %+v", expected, actual)
+	if !cmp.Equal(expectedResp, resp) {
+		t.Errorf("expected: %+v, got: %+v", expectedResp, resp)
 	}
 }
 
 func TestUpgradeStringStateV1toV3_NullValues(t *testing.T) {
 	t.Parallel()
 
-	raw := tftypes.NewValue(tftypes.Object{}, map[string]tftypes.Value{
+	raw := tftypes.NewValue(tftypes.Object{
+		AttributeTypes: map[string]tftypes.Type{
+			"id":               tftypes.String,
+			"keepers":          tftypes.Map{ElementType: tftypes.String},
+			"length":           tftypes.Number,
+			"lower":            tftypes.Bool,
+			"min_lower":        tftypes.Number,
+			"min_numeric":      tftypes.Number,
+			"min_special":      tftypes.Number,
+			"min_upper":        tftypes.Number,
+			"number":           tftypes.Bool,
+			"override_special": tftypes.String,
+			"result":           tftypes.String,
+			"special":          tftypes.Bool,
+			"upper":            tftypes.Bool,
+		},
+	}, map[string]tftypes.Value{
 		"id":               tftypes.NewValue(tftypes.String, "none"),
 		"keepers":          tftypes.NewValue(tftypes.Map{ElementType: tftypes.String}, nil),
 		"length":           tftypes.NewValue(tftypes.Number, nil),
@@ -1360,57 +1405,88 @@ func TestUpgradeStringStateV1toV3_NullValues(t *testing.T) {
 
 	upgradeStringStateV1toV3(context.Background(), req, resp)
 
-	expected := stringModelV3{
-		ID:              types.String{Value: "none"},
-		Keepers:         types.Map{Null: true, ElemType: types.StringType},
-		Length:          types.Int64{Value: 16},
-		Special:         types.Bool{Value: true},
-		Upper:           types.Bool{Value: true},
-		Lower:           types.Bool{Value: true},
-		Number:          types.Bool{Value: true},
-		Numeric:         types.Bool{Value: true},
-		MinNumeric:      types.Int64{Value: 0},
-		MinUpper:        types.Int64{Value: 0},
-		MinLower:        types.Int64{Value: 0},
-		MinSpecial:      types.Int64{Value: 0},
-		OverrideSpecial: types.String{Null: true},
-		Result:          types.String{Value: "DZy_3*tnonj%Q%Yx"},
+	expectedResp := &res.UpgradeStateResponse{
+		State: tfsdk.State{
+			Raw: tftypes.NewValue(tftypes.Object{
+				AttributeTypes: map[string]tftypes.Type{
+					"id":               tftypes.String,
+					"keepers":          tftypes.Map{ElementType: tftypes.String},
+					"length":           tftypes.Number,
+					"lower":            tftypes.Bool,
+					"min_lower":        tftypes.Number,
+					"min_numeric":      tftypes.Number,
+					"min_special":      tftypes.Number,
+					"min_upper":        tftypes.Number,
+					"number":           tftypes.Bool,
+					"numeric":          tftypes.Bool,
+					"override_special": tftypes.String,
+					"result":           tftypes.String,
+					"special":          tftypes.Bool,
+					"upper":            tftypes.Bool,
+				},
+			}, map[string]tftypes.Value{
+				"id":               tftypes.NewValue(tftypes.String, "none"),
+				"keepers":          tftypes.NewValue(tftypes.Map{ElementType: tftypes.String}, nil),
+				"length":           tftypes.NewValue(tftypes.Number, 16),
+				"lower":            tftypes.NewValue(tftypes.Bool, true),
+				"min_lower":        tftypes.NewValue(tftypes.Number, 0),
+				"min_numeric":      tftypes.NewValue(tftypes.Number, 0),
+				"min_special":      tftypes.NewValue(tftypes.Number, 0),
+				"min_upper":        tftypes.NewValue(tftypes.Number, 0),
+				"number":           tftypes.NewValue(tftypes.Bool, true),
+				"numeric":          tftypes.NewValue(tftypes.Bool, true),
+				"override_special": tftypes.NewValue(tftypes.String, nil),
+				"result":           tftypes.NewValue(tftypes.String, "DZy_3*tnonj%Q%Yx"),
+				"special":          tftypes.NewValue(tftypes.Bool, true),
+				"upper":            tftypes.NewValue(tftypes.Bool, true),
+			}),
+			Schema: stringSchemaV3(),
+		},
 	}
 
-	actual := stringModelV3{}
-	diags := resp.State.Get(context.Background(), &actual)
-	if diags.HasError() {
-		t.Errorf("error getting state: %v", diags)
-	}
-
-	if !cmp.Equal(expected, actual) {
-		t.Errorf("expected: %+v, got: %+v", expected, actual)
+	if !cmp.Equal(expectedResp, resp) {
+		t.Errorf("expected: %+v, got: %+v", expectedResp, resp)
 	}
 }
 
 func TestUpgradeStringStateV2toV3(t *testing.T) {
 	t.Parallel()
 
-	raw := tftypes.NewValue(tftypes.Object{}, map[string]tftypes.Value{
-		"id":               tftypes.NewValue(tftypes.String, "none"),
-		"keepers":          tftypes.NewValue(tftypes.Map{ElementType: tftypes.String}, nil),
-		"length":           tftypes.NewValue(tftypes.Number, 16),
-		"lower":            tftypes.NewValue(tftypes.Bool, true),
-		"min_lower":        tftypes.NewValue(tftypes.Number, 0),
-		"min_numeric":      tftypes.NewValue(tftypes.Number, 0),
-		"min_special":      tftypes.NewValue(tftypes.Number, 0),
-		"min_upper":        tftypes.NewValue(tftypes.Number, 0),
-		"number":           tftypes.NewValue(tftypes.Bool, true),
-		"numeric":          tftypes.NewValue(tftypes.Bool, true),
-		"override_special": tftypes.NewValue(tftypes.String, "!#$%\u0026*()-_=+[]{}\u003c\u003e:?"),
-		"result":           tftypes.NewValue(tftypes.String, "DZy_3*tnonj%Q%Yx"),
-		"special":          tftypes.NewValue(tftypes.Bool, true),
-		"upper":            tftypes.NewValue(tftypes.Bool, true),
-	})
-
 	req := res.UpgradeStateRequest{
 		State: &tfsdk.State{
-			Raw:    raw,
+			Raw: tftypes.NewValue(tftypes.Object{
+				AttributeTypes: map[string]tftypes.Type{
+					"id":               tftypes.String,
+					"keepers":          tftypes.Map{ElementType: tftypes.String},
+					"length":           tftypes.Number,
+					"lower":            tftypes.Bool,
+					"min_lower":        tftypes.Number,
+					"min_numeric":      tftypes.Number,
+					"min_special":      tftypes.Number,
+					"min_upper":        tftypes.Number,
+					"number":           tftypes.Bool,
+					"numeric":          tftypes.Bool,
+					"override_special": tftypes.String,
+					"result":           tftypes.String,
+					"special":          tftypes.Bool,
+					"upper":            tftypes.Bool,
+				},
+			}, map[string]tftypes.Value{
+				"id":               tftypes.NewValue(tftypes.String, "none"),
+				"keepers":          tftypes.NewValue(tftypes.Map{ElementType: tftypes.String}, nil),
+				"length":           tftypes.NewValue(tftypes.Number, 16),
+				"lower":            tftypes.NewValue(tftypes.Bool, true),
+				"min_lower":        tftypes.NewValue(tftypes.Number, 0),
+				"min_numeric":      tftypes.NewValue(tftypes.Number, 0),
+				"min_special":      tftypes.NewValue(tftypes.Number, 0),
+				"min_upper":        tftypes.NewValue(tftypes.Number, 0),
+				"number":           tftypes.NewValue(tftypes.Bool, true),
+				"numeric":          tftypes.NewValue(tftypes.Bool, true),
+				"override_special": tftypes.NewValue(tftypes.String, "!#$%\u0026*()-_=+[]{}\u003c\u003e:?"),
+				"result":           tftypes.NewValue(tftypes.String, "DZy_3*tnonj%Q%Yx"),
+				"special":          tftypes.NewValue(tftypes.Bool, true),
+				"upper":            tftypes.NewValue(tftypes.Bool, true),
+			}),
 			Schema: stringSchemaV2(),
 		},
 	}
@@ -1423,38 +1499,71 @@ func TestUpgradeStringStateV2toV3(t *testing.T) {
 
 	upgradeStringStateV2toV3(context.Background(), req, resp)
 
-	expected := stringModelV3{
-		ID:              types.String{Value: "none"},
-		Keepers:         types.Map{Null: true, ElemType: types.StringType},
-		Length:          types.Int64{Value: 16},
-		Special:         types.Bool{Value: true},
-		Upper:           types.Bool{Value: true},
-		Lower:           types.Bool{Value: true},
-		Number:          types.Bool{Value: true},
-		Numeric:         types.Bool{Value: true},
-		MinNumeric:      types.Int64{Value: 0},
-		MinUpper:        types.Int64{Value: 0},
-		MinLower:        types.Int64{Value: 0},
-		MinSpecial:      types.Int64{Value: 0},
-		OverrideSpecial: types.String{Value: "!#$%\u0026*()-_=+[]{}\u003c\u003e:?"},
-		Result:          types.String{Value: "DZy_3*tnonj%Q%Yx"},
+	expectedResp := &res.UpgradeStateResponse{
+		State: tfsdk.State{
+			Raw: tftypes.NewValue(tftypes.Object{
+				AttributeTypes: map[string]tftypes.Type{
+					"id":               tftypes.String,
+					"keepers":          tftypes.Map{ElementType: tftypes.String},
+					"length":           tftypes.Number,
+					"lower":            tftypes.Bool,
+					"min_lower":        tftypes.Number,
+					"min_numeric":      tftypes.Number,
+					"min_special":      tftypes.Number,
+					"min_upper":        tftypes.Number,
+					"number":           tftypes.Bool,
+					"numeric":          tftypes.Bool,
+					"override_special": tftypes.String,
+					"result":           tftypes.String,
+					"special":          tftypes.Bool,
+					"upper":            tftypes.Bool,
+				},
+			}, map[string]tftypes.Value{
+				"id":               tftypes.NewValue(tftypes.String, "none"),
+				"keepers":          tftypes.NewValue(tftypes.Map{ElementType: tftypes.String}, nil),
+				"length":           tftypes.NewValue(tftypes.Number, 16),
+				"lower":            tftypes.NewValue(tftypes.Bool, true),
+				"min_lower":        tftypes.NewValue(tftypes.Number, 0),
+				"min_numeric":      tftypes.NewValue(tftypes.Number, 0),
+				"min_special":      tftypes.NewValue(tftypes.Number, 0),
+				"min_upper":        tftypes.NewValue(tftypes.Number, 0),
+				"number":           tftypes.NewValue(tftypes.Bool, true),
+				"numeric":          tftypes.NewValue(tftypes.Bool, true),
+				"override_special": tftypes.NewValue(tftypes.String, "!#$%\u0026*()-_=+[]{}\u003c\u003e:?"),
+				"result":           tftypes.NewValue(tftypes.String, "DZy_3*tnonj%Q%Yx"),
+				"special":          tftypes.NewValue(tftypes.Bool, true),
+				"upper":            tftypes.NewValue(tftypes.Bool, true),
+			}),
+			Schema: stringSchemaV3(),
+		},
 	}
 
-	actual := stringModelV3{}
-	diags := resp.State.Get(context.Background(), &actual)
-	if diags.HasError() {
-		t.Errorf("error getting state: %v", diags)
-	}
-
-	if !cmp.Equal(expected, actual) {
-		t.Errorf("expected: %+v, got: %+v", expected, actual)
+	if !cmp.Equal(expectedResp, resp) {
+		t.Errorf("expected: %+v, got: %+v", expectedResp, resp)
 	}
 }
 
 func TestUpgradeStringStateV2toV3_NullValues(t *testing.T) {
 	t.Parallel()
 
-	raw := tftypes.NewValue(tftypes.Object{}, map[string]tftypes.Value{
+	raw := tftypes.NewValue(tftypes.Object{
+		AttributeTypes: map[string]tftypes.Type{
+			"id":               tftypes.String,
+			"keepers":          tftypes.Map{ElementType: tftypes.String},
+			"length":           tftypes.Number,
+			"lower":            tftypes.Bool,
+			"min_lower":        tftypes.Number,
+			"min_numeric":      tftypes.Number,
+			"min_special":      tftypes.Number,
+			"min_upper":        tftypes.Number,
+			"number":           tftypes.Bool,
+			"numeric":          tftypes.Bool,
+			"override_special": tftypes.String,
+			"result":           tftypes.String,
+			"special":          tftypes.Bool,
+			"upper":            tftypes.Bool,
+		},
+	}, map[string]tftypes.Value{
 		"id":               tftypes.NewValue(tftypes.String, "none"),
 		"keepers":          tftypes.NewValue(tftypes.Map{ElementType: tftypes.String}, nil),
 		"length":           tftypes.NewValue(tftypes.Number, nil),
@@ -1486,31 +1595,47 @@ func TestUpgradeStringStateV2toV3_NullValues(t *testing.T) {
 
 	upgradeStringStateV2toV3(context.Background(), req, resp)
 
-	expected := stringModelV3{
-		ID:              types.String{Value: "none"},
-		Keepers:         types.Map{Null: true, ElemType: types.StringType},
-		Length:          types.Int64{Value: 16},
-		Special:         types.Bool{Value: true},
-		Upper:           types.Bool{Value: true},
-		Lower:           types.Bool{Value: true},
-		Number:          types.Bool{Value: true},
-		Numeric:         types.Bool{Value: true},
-		MinNumeric:      types.Int64{Value: 0},
-		MinUpper:        types.Int64{Value: 0},
-		MinLower:        types.Int64{Value: 0},
-		MinSpecial:      types.Int64{Value: 0},
-		OverrideSpecial: types.String{Null: true},
-		Result:          types.String{Value: "DZy_3*tnonj%Q%Yx"},
+	expectedResp := &res.UpgradeStateResponse{
+		State: tfsdk.State{
+			Raw: tftypes.NewValue(tftypes.Object{
+				AttributeTypes: map[string]tftypes.Type{
+					"id":               tftypes.String,
+					"keepers":          tftypes.Map{ElementType: tftypes.String},
+					"length":           tftypes.Number,
+					"lower":            tftypes.Bool,
+					"min_lower":        tftypes.Number,
+					"min_numeric":      tftypes.Number,
+					"min_special":      tftypes.Number,
+					"min_upper":        tftypes.Number,
+					"number":           tftypes.Bool,
+					"numeric":          tftypes.Bool,
+					"override_special": tftypes.String,
+					"result":           tftypes.String,
+					"special":          tftypes.Bool,
+					"upper":            tftypes.Bool,
+				},
+			}, map[string]tftypes.Value{
+				"id":               tftypes.NewValue(tftypes.String, "none"),
+				"keepers":          tftypes.NewValue(tftypes.Map{ElementType: tftypes.String}, nil),
+				"length":           tftypes.NewValue(tftypes.Number, 16),
+				"lower":            tftypes.NewValue(tftypes.Bool, true),
+				"min_lower":        tftypes.NewValue(tftypes.Number, 0),
+				"min_numeric":      tftypes.NewValue(tftypes.Number, 0),
+				"min_special":      tftypes.NewValue(tftypes.Number, 0),
+				"min_upper":        tftypes.NewValue(tftypes.Number, 0),
+				"number":           tftypes.NewValue(tftypes.Bool, true),
+				"numeric":          tftypes.NewValue(tftypes.Bool, true),
+				"override_special": tftypes.NewValue(tftypes.String, nil),
+				"result":           tftypes.NewValue(tftypes.String, "DZy_3*tnonj%Q%Yx"),
+				"special":          tftypes.NewValue(tftypes.Bool, true),
+				"upper":            tftypes.NewValue(tftypes.Bool, true),
+			}),
+			Schema: stringSchemaV3(),
+		},
 	}
 
-	actual := stringModelV3{}
-	diags := resp.State.Get(context.Background(), &actual)
-	if diags.HasError() {
-		t.Errorf("error getting state: %v", diags)
-	}
-
-	if !cmp.Equal(expected, actual) {
-		t.Errorf("expected: %+v, got: %+v", expected, actual)
+	if !cmp.Equal(expectedResp, resp) {
+		t.Errorf("expected: %+v, got: %+v", expectedResp, resp)
 	}
 }
 

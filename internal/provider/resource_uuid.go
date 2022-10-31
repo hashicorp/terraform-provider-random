@@ -89,8 +89,8 @@ func (r *uuidResource) Create(ctx context.Context, req resource.CreateRequest, r
 	}
 
 	u := &uuidModelV0{
-		ID:      types.String{Value: result},
-		Result:  types.String{Value: result},
+		ID:      types.StringValue(result),
+		Result:  types.StringValue(result),
 		Keepers: plan.Keepers,
 	}
 
@@ -148,9 +148,9 @@ func (r *uuidResource) ImportState(ctx context.Context, req resource.ImportState
 
 	var state uuidModelV0
 
-	state.ID.Value = result
-	state.Result.Value = result
-	state.Keepers.ElemType = types.StringType
+	state.ID = types.StringValue(result)
+	state.Result = types.StringValue(result)
+	state.Keepers = types.MapValueMust(types.StringType, nil)
 
 	diags := resp.State.Set(ctx, &state)
 	resp.Diagnostics.Append(diags...)

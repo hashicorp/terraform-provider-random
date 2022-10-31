@@ -9,9 +9,9 @@ import (
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
+	"github.com/hashicorp/terraform-plugin-framework/path"
 	res "github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/tfsdk"
-	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-go/tftypes"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
@@ -1122,25 +1122,39 @@ func TestAccResourcePassword_UpgradeFromVersion3_3_2(t *testing.T) {
 func TestUpgradePasswordStateV0toV3(t *testing.T) {
 	t.Parallel()
 
-	raw := tftypes.NewValue(tftypes.Object{}, map[string]tftypes.Value{
-		"id":               tftypes.NewValue(tftypes.String, "none"),
-		"keepers":          tftypes.NewValue(tftypes.Map{ElementType: tftypes.String}, nil),
-		"length":           tftypes.NewValue(tftypes.Number, 16),
-		"lower":            tftypes.NewValue(tftypes.Bool, true),
-		"min_lower":        tftypes.NewValue(tftypes.Number, 0),
-		"min_numeric":      tftypes.NewValue(tftypes.Number, 0),
-		"min_special":      tftypes.NewValue(tftypes.Number, 0),
-		"min_upper":        tftypes.NewValue(tftypes.Number, 0),
-		"number":           tftypes.NewValue(tftypes.Bool, true),
-		"override_special": tftypes.NewValue(tftypes.String, "!#$%\u0026*()-_=+[]{}\u003c\u003e:?"),
-		"result":           tftypes.NewValue(tftypes.String, "DZy_3*tnonj%Q%Yx"),
-		"special":          tftypes.NewValue(tftypes.Bool, true),
-		"upper":            tftypes.NewValue(tftypes.Bool, true),
-	})
-
 	req := res.UpgradeStateRequest{
 		State: &tfsdk.State{
-			Raw:    raw,
+			Raw: tftypes.NewValue(tftypes.Object{
+				AttributeTypes: map[string]tftypes.Type{
+					"id":               tftypes.String,
+					"keepers":          tftypes.Map{ElementType: tftypes.String},
+					"length":           tftypes.Number,
+					"lower":            tftypes.Bool,
+					"min_lower":        tftypes.Number,
+					"min_numeric":      tftypes.Number,
+					"min_special":      tftypes.Number,
+					"min_upper":        tftypes.Number,
+					"number":           tftypes.Bool,
+					"override_special": tftypes.String,
+					"result":           tftypes.String,
+					"special":          tftypes.Bool,
+					"upper":            tftypes.Bool,
+				},
+			}, map[string]tftypes.Value{
+				"id":               tftypes.NewValue(tftypes.String, "none"),
+				"keepers":          tftypes.NewValue(tftypes.Map{ElementType: tftypes.String}, nil),
+				"length":           tftypes.NewValue(tftypes.Number, 16),
+				"lower":            tftypes.NewValue(tftypes.Bool, true),
+				"min_lower":        tftypes.NewValue(tftypes.Number, 0),
+				"min_numeric":      tftypes.NewValue(tftypes.Number, 0),
+				"min_special":      tftypes.NewValue(tftypes.Number, 0),
+				"min_upper":        tftypes.NewValue(tftypes.Number, 0),
+				"number":           tftypes.NewValue(tftypes.Bool, true),
+				"override_special": tftypes.NewValue(tftypes.String, "!#$%\u0026*()-_=+[]{}\u003c\u003e:?"),
+				"result":           tftypes.NewValue(tftypes.String, "DZy_3*tnonj%Q%Yx"),
+				"special":          tftypes.NewValue(tftypes.Bool, true),
+				"upper":            tftypes.NewValue(tftypes.Bool, true),
+			}),
 			Schema: passwordSchemaV0(),
 		},
 	}
@@ -1153,64 +1167,119 @@ func TestUpgradePasswordStateV0toV3(t *testing.T) {
 
 	upgradePasswordStateV0toV3(context.Background(), req, resp)
 
-	expected := passwordModelV3{
-		ID:              types.String{Value: "none"},
-		Keepers:         types.Map{Null: true, ElemType: types.StringType},
-		Length:          types.Int64{Value: 16},
-		Special:         types.Bool{Value: true},
-		Upper:           types.Bool{Value: true},
-		Lower:           types.Bool{Value: true},
-		Number:          types.Bool{Value: true},
-		Numeric:         types.Bool{Value: true},
-		MinNumeric:      types.Int64{Value: 0},
-		MinUpper:        types.Int64{Value: 0},
-		MinLower:        types.Int64{Value: 0},
-		MinSpecial:      types.Int64{Value: 0},
-		OverrideSpecial: types.String{Value: "!#$%\u0026*()-_=+[]{}\u003c\u003e:?"},
-		Result:          types.String{Value: "DZy_3*tnonj%Q%Yx"},
+	expectedResp := &res.UpgradeStateResponse{
+		State: tfsdk.State{
+			Raw: tftypes.NewValue(tftypes.Object{
+				AttributeTypes: map[string]tftypes.Type{
+					"bcrypt_hash":      tftypes.String,
+					"id":               tftypes.String,
+					"keepers":          tftypes.Map{ElementType: tftypes.String},
+					"length":           tftypes.Number,
+					"lower":            tftypes.Bool,
+					"min_lower":        tftypes.Number,
+					"min_numeric":      tftypes.Number,
+					"min_special":      tftypes.Number,
+					"min_upper":        tftypes.Number,
+					"number":           tftypes.Bool,
+					"numeric":          tftypes.Bool,
+					"override_special": tftypes.String,
+					"result":           tftypes.String,
+					"special":          tftypes.Bool,
+					"upper":            tftypes.Bool,
+				},
+			}, map[string]tftypes.Value{
+				"bcrypt_hash":      tftypes.NewValue(tftypes.String, "hash"),
+				"id":               tftypes.NewValue(tftypes.String, "none"),
+				"keepers":          tftypes.NewValue(tftypes.Map{ElementType: tftypes.String}, nil),
+				"length":           tftypes.NewValue(tftypes.Number, 16),
+				"lower":            tftypes.NewValue(tftypes.Bool, true),
+				"min_lower":        tftypes.NewValue(tftypes.Number, 0),
+				"min_numeric":      tftypes.NewValue(tftypes.Number, 0),
+				"min_special":      tftypes.NewValue(tftypes.Number, 0),
+				"min_upper":        tftypes.NewValue(tftypes.Number, 0),
+				"number":           tftypes.NewValue(tftypes.Bool, true),
+				"numeric":          tftypes.NewValue(tftypes.Bool, true),
+				"override_special": tftypes.NewValue(tftypes.String, "!#$%\u0026*()-_=+[]{}\u003c\u003e:?"),
+				"result":           tftypes.NewValue(tftypes.String, "DZy_3*tnonj%Q%Yx"),
+				"special":          tftypes.NewValue(tftypes.Bool, true),
+				"upper":            tftypes.NewValue(tftypes.Bool, true),
+			}),
+			Schema: passwordSchemaV3(),
+		},
 	}
 
-	actual := passwordModelV3{}
-	diags := resp.State.Get(context.Background(), &actual)
+	var bcryptHash, result string
+
+	diags := resp.State.GetAttribute(context.Background(), path.Root("bcrypt_hash"), &bcryptHash)
 	if diags.HasError() {
-		t.Errorf("error getting state: %v", diags)
+		t.Errorf("error retrieving bcyrpt_hash from state: %s", diags.Errors())
 	}
 
-	err := bcrypt.CompareHashAndPassword([]byte(actual.BcryptHash.Value), []byte(actual.Result.Value))
+	diags = resp.State.GetAttribute(context.Background(), path.Root("result"), &result)
+	if diags.HasError() {
+		t.Errorf("error retrieving bcyrpt_hash from state: %s", diags.Errors())
+	}
+
+	err := bcrypt.CompareHashAndPassword([]byte(bcryptHash), []byte(result))
 	if err != nil {
 		t.Errorf("unexpected bcrypt comparison error: %s", err)
 	}
 
-	// Setting actual.BcryptHash to zero value to allow direct comparison of expected and actual.
-	actual.BcryptHash = types.String{}
+	// rawTransformed allows equality testing to be used by mutating the bcrypt_hash value in the response to a known value.
+	rawTransformed, err := tftypes.Transform(resp.State.Raw, func(path *tftypes.AttributePath, value tftypes.Value) (tftypes.Value, error) {
+		bcryptHashPath := tftypes.NewAttributePath().WithAttributeName("bcrypt_hash")
 
-	if !cmp.Equal(expected, actual) {
-		t.Errorf("expected: %+v, got: %+v", expected, actual)
+		if path.Equal(bcryptHashPath) {
+			return tftypes.NewValue(tftypes.String, "hash"), nil
+		}
+		return value, nil
+	})
+	if err != nil {
+		t.Errorf("error transforming actual response: %s", err)
+	}
+
+	resp.State.Raw = rawTransformed
+	if !cmp.Equal(expectedResp, resp) {
+		t.Errorf("expected: %+v, got: %+v", expectedResp, resp)
 	}
 }
 
 func TestUpgradePasswordStateV0toV3_NullValues(t *testing.T) {
 	t.Parallel()
 
-	raw := tftypes.NewValue(tftypes.Object{}, map[string]tftypes.Value{
-		"id":               tftypes.NewValue(tftypes.String, "none"),
-		"keepers":          tftypes.NewValue(tftypes.Map{ElementType: tftypes.String}, nil),
-		"length":           tftypes.NewValue(tftypes.Number, nil),
-		"lower":            tftypes.NewValue(tftypes.Bool, nil),
-		"min_lower":        tftypes.NewValue(tftypes.Number, nil),
-		"min_numeric":      tftypes.NewValue(tftypes.Number, nil),
-		"min_special":      tftypes.NewValue(tftypes.Number, nil),
-		"min_upper":        tftypes.NewValue(tftypes.Number, nil),
-		"number":           tftypes.NewValue(tftypes.Bool, nil),
-		"override_special": tftypes.NewValue(tftypes.String, nil),
-		"result":           tftypes.NewValue(tftypes.String, "DZy_3*tnonj%Q%Yx"),
-		"special":          tftypes.NewValue(tftypes.Bool, nil),
-		"upper":            tftypes.NewValue(tftypes.Bool, nil),
-	})
-
 	req := res.UpgradeStateRequest{
 		State: &tfsdk.State{
-			Raw:    raw,
+			Raw: tftypes.NewValue(tftypes.Object{
+				AttributeTypes: map[string]tftypes.Type{
+					"id":               tftypes.String,
+					"keepers":          tftypes.Map{ElementType: tftypes.String},
+					"length":           tftypes.Number,
+					"lower":            tftypes.Bool,
+					"min_lower":        tftypes.Number,
+					"min_numeric":      tftypes.Number,
+					"min_special":      tftypes.Number,
+					"min_upper":        tftypes.Number,
+					"number":           tftypes.Bool,
+					"override_special": tftypes.String,
+					"result":           tftypes.String,
+					"special":          tftypes.Bool,
+					"upper":            tftypes.Bool,
+				},
+			}, map[string]tftypes.Value{
+				"id":               tftypes.NewValue(tftypes.String, "none"),
+				"keepers":          tftypes.NewValue(tftypes.Map{ElementType: tftypes.String}, nil),
+				"length":           tftypes.NewValue(tftypes.Number, nil),
+				"lower":            tftypes.NewValue(tftypes.Bool, nil),
+				"min_lower":        tftypes.NewValue(tftypes.Number, nil),
+				"min_numeric":      tftypes.NewValue(tftypes.Number, nil),
+				"min_special":      tftypes.NewValue(tftypes.Number, nil),
+				"min_upper":        tftypes.NewValue(tftypes.Number, nil),
+				"number":           tftypes.NewValue(tftypes.Bool, nil),
+				"override_special": tftypes.NewValue(tftypes.String, nil),
+				"result":           tftypes.NewValue(tftypes.String, "DZy_3*tnonj%Q%Yx"),
+				"special":          tftypes.NewValue(tftypes.Bool, nil),
+				"upper":            tftypes.NewValue(tftypes.Bool, nil),
+			}),
 			Schema: passwordSchemaV0(),
 		},
 	}
@@ -1223,65 +1292,122 @@ func TestUpgradePasswordStateV0toV3_NullValues(t *testing.T) {
 
 	upgradePasswordStateV0toV3(context.Background(), req, resp)
 
-	expected := passwordModelV3{
-		ID:              types.String{Value: "none"},
-		Keepers:         types.Map{Null: true, ElemType: types.StringType},
-		Length:          types.Int64{Value: 16},
-		Special:         types.Bool{Value: true},
-		Upper:           types.Bool{Value: true},
-		Lower:           types.Bool{Value: true},
-		Number:          types.Bool{Value: true},
-		Numeric:         types.Bool{Value: true},
-		MinNumeric:      types.Int64{Value: 0},
-		MinUpper:        types.Int64{Value: 0},
-		MinLower:        types.Int64{Value: 0},
-		MinSpecial:      types.Int64{Value: 0},
-		OverrideSpecial: types.String{Null: true},
-		Result:          types.String{Value: "DZy_3*tnonj%Q%Yx"},
+	expectedResp := &res.UpgradeStateResponse{
+		State: tfsdk.State{
+			Raw: tftypes.NewValue(tftypes.Object{
+				AttributeTypes: map[string]tftypes.Type{
+					"bcrypt_hash":      tftypes.String,
+					"id":               tftypes.String,
+					"keepers":          tftypes.Map{ElementType: tftypes.String},
+					"length":           tftypes.Number,
+					"lower":            tftypes.Bool,
+					"min_lower":        tftypes.Number,
+					"min_numeric":      tftypes.Number,
+					"min_special":      tftypes.Number,
+					"min_upper":        tftypes.Number,
+					"number":           tftypes.Bool,
+					"numeric":          tftypes.Bool,
+					"override_special": tftypes.String,
+					"result":           tftypes.String,
+					"special":          tftypes.Bool,
+					"upper":            tftypes.Bool,
+				},
+			}, map[string]tftypes.Value{
+				"bcrypt_hash":      tftypes.NewValue(tftypes.String, "hash"),
+				"id":               tftypes.NewValue(tftypes.String, "none"),
+				"keepers":          tftypes.NewValue(tftypes.Map{ElementType: tftypes.String}, nil),
+				"length":           tftypes.NewValue(tftypes.Number, 16),
+				"lower":            tftypes.NewValue(tftypes.Bool, true),
+				"min_lower":        tftypes.NewValue(tftypes.Number, 0),
+				"min_numeric":      tftypes.NewValue(tftypes.Number, 0),
+				"min_special":      tftypes.NewValue(tftypes.Number, 0),
+				"min_upper":        tftypes.NewValue(tftypes.Number, 0),
+				"number":           tftypes.NewValue(tftypes.Bool, true),
+				"numeric":          tftypes.NewValue(tftypes.Bool, true),
+				"override_special": tftypes.NewValue(tftypes.String, nil),
+				"result":           tftypes.NewValue(tftypes.String, "DZy_3*tnonj%Q%Yx"),
+				"special":          tftypes.NewValue(tftypes.Bool, true),
+				"upper":            tftypes.NewValue(tftypes.Bool, true),
+			}),
+			Schema: passwordSchemaV3(),
+		},
 	}
 
-	actual := passwordModelV3{}
-	diags := resp.State.Get(context.Background(), &actual)
+	var bcryptHash, result string
+
+	diags := resp.State.GetAttribute(context.Background(), path.Root("bcrypt_hash"), &bcryptHash)
 	if diags.HasError() {
-		t.Errorf("error getting state: %v", diags)
+		t.Errorf("error retrieving bcyrpt_hash from state: %s", diags.Errors())
 	}
 
-	err := bcrypt.CompareHashAndPassword([]byte(actual.BcryptHash.Value), []byte(actual.Result.Value))
+	diags = resp.State.GetAttribute(context.Background(), path.Root("result"), &result)
+	if diags.HasError() {
+		t.Errorf("error retrieving bcyrpt_hash from state: %s", diags.Errors())
+	}
+
+	err := bcrypt.CompareHashAndPassword([]byte(bcryptHash), []byte(result))
 	if err != nil {
 		t.Errorf("unexpected bcrypt comparison error: %s", err)
 	}
 
-	// Setting actual.BcryptHash to zero value to allow direct comparison of expected and actual.
-	actual.BcryptHash = types.String{}
+	// rawTransformed allows equality testing to be used by mutating the bcrypt_hash value in the response to a known value.
+	rawTransformed, err := tftypes.Transform(resp.State.Raw, func(path *tftypes.AttributePath, value tftypes.Value) (tftypes.Value, error) {
+		bcryptHashPath := tftypes.NewAttributePath().WithAttributeName("bcrypt_hash")
 
-	if !cmp.Equal(expected, actual) {
-		t.Errorf("expected: %+v, got: %+v", expected, actual)
+		if path.Equal(bcryptHashPath) {
+			return tftypes.NewValue(tftypes.String, "hash"), nil
+		}
+		return value, nil
+	})
+	if err != nil {
+		t.Errorf("error transforming actual response: %s", err)
+	}
+
+	resp.State.Raw = rawTransformed
+
+	if !cmp.Equal(expectedResp, resp) {
+		t.Errorf("expected: %+v, got: %+v", expectedResp, resp)
 	}
 }
 
 func TestUpgradePasswordStateV1toV3(t *testing.T) {
 	t.Parallel()
 
-	raw := tftypes.NewValue(tftypes.Object{}, map[string]tftypes.Value{
-		"id":               tftypes.NewValue(tftypes.String, "none"),
-		"keepers":          tftypes.NewValue(tftypes.Map{ElementType: tftypes.String}, nil),
-		"length":           tftypes.NewValue(tftypes.Number, 16),
-		"lower":            tftypes.NewValue(tftypes.Bool, true),
-		"min_lower":        tftypes.NewValue(tftypes.Number, 0),
-		"min_numeric":      tftypes.NewValue(tftypes.Number, 0),
-		"min_special":      tftypes.NewValue(tftypes.Number, 0),
-		"min_upper":        tftypes.NewValue(tftypes.Number, 0),
-		"number":           tftypes.NewValue(tftypes.Bool, true),
-		"override_special": tftypes.NewValue(tftypes.String, "!#$%\u0026*()-_=+[]{}\u003c\u003e:?"),
-		"result":           tftypes.NewValue(tftypes.String, "DZy_3*tnonj%Q%Yx"),
-		"special":          tftypes.NewValue(tftypes.Bool, true),
-		"upper":            tftypes.NewValue(tftypes.Bool, true),
-		"bcrypt_hash":      tftypes.NewValue(tftypes.String, "bcrypt_hash"),
-	})
-
 	req := res.UpgradeStateRequest{
 		State: &tfsdk.State{
-			Raw:    raw,
+			Raw: tftypes.NewValue(tftypes.Object{
+				AttributeTypes: map[string]tftypes.Type{
+					"id":               tftypes.String,
+					"keepers":          tftypes.Map{ElementType: tftypes.String},
+					"length":           tftypes.Number,
+					"lower":            tftypes.Bool,
+					"min_lower":        tftypes.Number,
+					"min_numeric":      tftypes.Number,
+					"min_special":      tftypes.Number,
+					"min_upper":        tftypes.Number,
+					"number":           tftypes.Bool,
+					"override_special": tftypes.String,
+					"result":           tftypes.String,
+					"special":          tftypes.Bool,
+					"upper":            tftypes.Bool,
+					"bcrypt_hash":      tftypes.String,
+				},
+			}, map[string]tftypes.Value{
+				"id":               tftypes.NewValue(tftypes.String, "none"),
+				"keepers":          tftypes.NewValue(tftypes.Map{ElementType: tftypes.String}, nil),
+				"length":           tftypes.NewValue(tftypes.Number, 16),
+				"lower":            tftypes.NewValue(tftypes.Bool, true),
+				"min_lower":        tftypes.NewValue(tftypes.Number, 0),
+				"min_numeric":      tftypes.NewValue(tftypes.Number, 0),
+				"min_special":      tftypes.NewValue(tftypes.Number, 0),
+				"min_upper":        tftypes.NewValue(tftypes.Number, 0),
+				"number":           tftypes.NewValue(tftypes.Bool, true),
+				"override_special": tftypes.NewValue(tftypes.String, "!#$%\u0026*()-_=+[]{}\u003c\u003e:?"),
+				"result":           tftypes.NewValue(tftypes.String, "DZy_3*tnonj%Q%Yx"),
+				"special":          tftypes.NewValue(tftypes.Bool, true),
+				"upper":            tftypes.NewValue(tftypes.Bool, true),
+				"bcrypt_hash":      tftypes.NewValue(tftypes.String, "bcrypt_hash"),
+			}),
 			Schema: passwordSchemaV1(),
 		},
 	}
@@ -1294,58 +1420,90 @@ func TestUpgradePasswordStateV1toV3(t *testing.T) {
 
 	upgradePasswordStateV1toV3(context.Background(), req, resp)
 
-	expected := passwordModelV3{
-		ID:              types.String{Value: "none"},
-		Keepers:         types.Map{Null: true, ElemType: types.StringType},
-		Length:          types.Int64{Value: 16},
-		Special:         types.Bool{Value: true},
-		Upper:           types.Bool{Value: true},
-		Lower:           types.Bool{Value: true},
-		Number:          types.Bool{Value: true},
-		Numeric:         types.Bool{Value: true},
-		MinNumeric:      types.Int64{Value: 0},
-		MinUpper:        types.Int64{Value: 0},
-		MinLower:        types.Int64{Value: 0},
-		MinSpecial:      types.Int64{Value: 0},
-		OverrideSpecial: types.String{Value: "!#$%\u0026*()-_=+[]{}\u003c\u003e:?"},
-		BcryptHash:      types.String{Value: "bcrypt_hash"},
-		Result:          types.String{Value: "DZy_3*tnonj%Q%Yx"},
+	expectedResp := &res.UpgradeStateResponse{
+		State: tfsdk.State{
+			Raw: tftypes.NewValue(tftypes.Object{
+				AttributeTypes: map[string]tftypes.Type{
+					"id":               tftypes.String,
+					"keepers":          tftypes.Map{ElementType: tftypes.String},
+					"length":           tftypes.Number,
+					"lower":            tftypes.Bool,
+					"min_lower":        tftypes.Number,
+					"min_numeric":      tftypes.Number,
+					"min_special":      tftypes.Number,
+					"min_upper":        tftypes.Number,
+					"number":           tftypes.Bool,
+					"numeric":          tftypes.Bool,
+					"override_special": tftypes.String,
+					"result":           tftypes.String,
+					"special":          tftypes.Bool,
+					"upper":            tftypes.Bool,
+					"bcrypt_hash":      tftypes.String,
+				},
+			}, map[string]tftypes.Value{
+				"id":               tftypes.NewValue(tftypes.String, "none"),
+				"keepers":          tftypes.NewValue(tftypes.Map{ElementType: tftypes.String}, nil),
+				"length":           tftypes.NewValue(tftypes.Number, 16),
+				"lower":            tftypes.NewValue(tftypes.Bool, true),
+				"min_lower":        tftypes.NewValue(tftypes.Number, 0),
+				"min_numeric":      tftypes.NewValue(tftypes.Number, 0),
+				"min_special":      tftypes.NewValue(tftypes.Number, 0),
+				"min_upper":        tftypes.NewValue(tftypes.Number, 0),
+				"number":           tftypes.NewValue(tftypes.Bool, true),
+				"numeric":          tftypes.NewValue(tftypes.Bool, true),
+				"override_special": tftypes.NewValue(tftypes.String, "!#$%\u0026*()-_=+[]{}\u003c\u003e:?"),
+				"result":           tftypes.NewValue(tftypes.String, "DZy_3*tnonj%Q%Yx"),
+				"special":          tftypes.NewValue(tftypes.Bool, true),
+				"upper":            tftypes.NewValue(tftypes.Bool, true),
+				"bcrypt_hash":      tftypes.NewValue(tftypes.String, "bcrypt_hash"),
+			}),
+			Schema: passwordSchemaV3(),
+		},
 	}
 
-	actual := passwordModelV3{}
-	diags := resp.State.Get(context.Background(), &actual)
-	if diags.HasError() {
-		t.Errorf("error getting state: %v", diags)
-	}
-
-	if !cmp.Equal(expected, actual) {
-		t.Errorf("expected: %+v, got: %+v", expected, actual)
+	if !cmp.Equal(expectedResp, resp) {
+		t.Errorf("expected: %+v, got: %+v", expectedResp, resp)
 	}
 }
 
 func TestUpgradePasswordStateV1toV3_NullValues(t *testing.T) {
 	t.Parallel()
 
-	raw := tftypes.NewValue(tftypes.Object{}, map[string]tftypes.Value{
-		"id":               tftypes.NewValue(tftypes.String, "none"),
-		"keepers":          tftypes.NewValue(tftypes.Map{ElementType: tftypes.String}, nil),
-		"length":           tftypes.NewValue(tftypes.Number, nil),
-		"lower":            tftypes.NewValue(tftypes.Bool, nil),
-		"min_lower":        tftypes.NewValue(tftypes.Number, nil),
-		"min_numeric":      tftypes.NewValue(tftypes.Number, nil),
-		"min_special":      tftypes.NewValue(tftypes.Number, nil),
-		"min_upper":        tftypes.NewValue(tftypes.Number, nil),
-		"number":           tftypes.NewValue(tftypes.Bool, nil),
-		"override_special": tftypes.NewValue(tftypes.String, nil),
-		"result":           tftypes.NewValue(tftypes.String, "DZy_3*tnonj%Q%Yx"),
-		"special":          tftypes.NewValue(tftypes.Bool, nil),
-		"upper":            tftypes.NewValue(tftypes.Bool, nil),
-		"bcrypt_hash":      tftypes.NewValue(tftypes.String, "bcrypt_hash"),
-	})
-
 	req := res.UpgradeStateRequest{
 		State: &tfsdk.State{
-			Raw:    raw,
+			Raw: tftypes.NewValue(tftypes.Object{
+				AttributeTypes: map[string]tftypes.Type{
+					"id":               tftypes.String,
+					"keepers":          tftypes.Map{ElementType: tftypes.String},
+					"length":           tftypes.Number,
+					"lower":            tftypes.Bool,
+					"min_lower":        tftypes.Number,
+					"min_numeric":      tftypes.Number,
+					"min_special":      tftypes.Number,
+					"min_upper":        tftypes.Number,
+					"number":           tftypes.Bool,
+					"override_special": tftypes.String,
+					"result":           tftypes.String,
+					"special":          tftypes.Bool,
+					"upper":            tftypes.Bool,
+					"bcrypt_hash":      tftypes.String,
+				},
+			}, map[string]tftypes.Value{
+				"id":               tftypes.NewValue(tftypes.String, "none"),
+				"keepers":          tftypes.NewValue(tftypes.Map{ElementType: tftypes.String}, nil),
+				"length":           tftypes.NewValue(tftypes.Number, nil),
+				"lower":            tftypes.NewValue(tftypes.Bool, nil),
+				"min_lower":        tftypes.NewValue(tftypes.Number, nil),
+				"min_numeric":      tftypes.NewValue(tftypes.Number, nil),
+				"min_special":      tftypes.NewValue(tftypes.Number, nil),
+				"min_upper":        tftypes.NewValue(tftypes.Number, nil),
+				"number":           tftypes.NewValue(tftypes.Bool, nil),
+				"override_special": tftypes.NewValue(tftypes.String, nil),
+				"result":           tftypes.NewValue(tftypes.String, "DZy_3*tnonj%Q%Yx"),
+				"special":          tftypes.NewValue(tftypes.Bool, nil),
+				"upper":            tftypes.NewValue(tftypes.Bool, nil),
+				"bcrypt_hash":      tftypes.NewValue(tftypes.String, "bcrypt_hash"),
+			}),
 			Schema: passwordSchemaV1(),
 		},
 	}
@@ -1358,32 +1516,49 @@ func TestUpgradePasswordStateV1toV3_NullValues(t *testing.T) {
 
 	upgradePasswordStateV1toV3(context.Background(), req, resp)
 
-	expected := passwordModelV3{
-		ID:              types.String{Value: "none"},
-		Keepers:         types.Map{Null: true, ElemType: types.StringType},
-		Length:          types.Int64{Value: 16},
-		Special:         types.Bool{Value: true},
-		Upper:           types.Bool{Value: true},
-		Lower:           types.Bool{Value: true},
-		Number:          types.Bool{Value: true},
-		Numeric:         types.Bool{Value: true},
-		MinNumeric:      types.Int64{Value: 0},
-		MinUpper:        types.Int64{Value: 0},
-		MinLower:        types.Int64{Value: 0},
-		MinSpecial:      types.Int64{Value: 0},
-		OverrideSpecial: types.String{Null: true},
-		BcryptHash:      types.String{Value: "bcrypt_hash"},
-		Result:          types.String{Value: "DZy_3*tnonj%Q%Yx"},
+	expectedResp := &res.UpgradeStateResponse{
+		State: tfsdk.State{
+			Raw: tftypes.NewValue(tftypes.Object{
+				AttributeTypes: map[string]tftypes.Type{
+					"id":               tftypes.String,
+					"keepers":          tftypes.Map{ElementType: tftypes.String},
+					"length":           tftypes.Number,
+					"lower":            tftypes.Bool,
+					"min_lower":        tftypes.Number,
+					"min_numeric":      tftypes.Number,
+					"min_special":      tftypes.Number,
+					"min_upper":        tftypes.Number,
+					"number":           tftypes.Bool,
+					"numeric":          tftypes.Bool,
+					"override_special": tftypes.String,
+					"result":           tftypes.String,
+					"special":          tftypes.Bool,
+					"upper":            tftypes.Bool,
+					"bcrypt_hash":      tftypes.String,
+				},
+			}, map[string]tftypes.Value{
+				"id":               tftypes.NewValue(tftypes.String, "none"),
+				"keepers":          tftypes.NewValue(tftypes.Map{ElementType: tftypes.String}, nil),
+				"length":           tftypes.NewValue(tftypes.Number, 16),
+				"lower":            tftypes.NewValue(tftypes.Bool, true),
+				"min_lower":        tftypes.NewValue(tftypes.Number, 0),
+				"min_numeric":      tftypes.NewValue(tftypes.Number, 0),
+				"min_special":      tftypes.NewValue(tftypes.Number, 0),
+				"min_upper":        tftypes.NewValue(tftypes.Number, 0),
+				"number":           tftypes.NewValue(tftypes.Bool, true),
+				"numeric":          tftypes.NewValue(tftypes.Bool, true),
+				"override_special": tftypes.NewValue(tftypes.String, nil),
+				"result":           tftypes.NewValue(tftypes.String, "DZy_3*tnonj%Q%Yx"),
+				"special":          tftypes.NewValue(tftypes.Bool, true),
+				"upper":            tftypes.NewValue(tftypes.Bool, true),
+				"bcrypt_hash":      tftypes.NewValue(tftypes.String, "bcrypt_hash"),
+			}),
+			Schema: passwordSchemaV3(),
+		},
 	}
 
-	actual := passwordModelV3{}
-	diags := resp.State.Get(context.Background(), &actual)
-	if diags.HasError() {
-		t.Errorf("error getting state: %v", diags)
-	}
-
-	if !cmp.Equal(expected, actual) {
-		t.Errorf("expected: %+v, got: %+v", expected, actual)
+	if !cmp.Equal(expectedResp, resp) {
+		t.Errorf("expected: %+v, got: %+v", expectedResp, resp)
 	}
 }
 
