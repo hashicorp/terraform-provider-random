@@ -48,7 +48,7 @@ func TestGenerateHash(t *testing.T) {
 				t.Fatalf("unexpected random.CreateString error: %s", err)
 			}
 
-			hash, err := overridableHashFunc(string(randomBytes))
+			hash, err := generateHash(string(randomBytes))
 
 			if err != nil {
 				t.Fatalf("unexpected generateHash error: %s", err)
@@ -1121,11 +1121,6 @@ func TestAccResourcePassword_UpgradeFromVersion3_3_2(t *testing.T) {
 func TestUpgradePasswordStateV0toV3(t *testing.T) {
 	t.Parallel()
 
-	oldGenerateHash := overridableHashFunc
-	overridableHashFunc = func(string) (string, error) {
-		return "hash", nil
-	}
-
 	req := res.UpgradeStateRequest{
 		State: &tfsdk.State{
 			Raw: tftypes.NewValue(tftypes.Object{
@@ -1212,20 +1207,27 @@ func TestUpgradePasswordStateV0toV3(t *testing.T) {
 		},
 	}
 
+	// rawTransformed allows equality testing to be used by mutating the bcrypt_hash value in the response to a known value.
+	rawTransformed, err := tftypes.Transform(resp.State.Raw, func(path *tftypes.AttributePath, value tftypes.Value) (tftypes.Value, error) {
+		bcryptHashPath := tftypes.NewAttributePath().WithAttributeName("bcrypt_hash")
+
+		if path.Equal(bcryptHashPath) {
+			return tftypes.NewValue(tftypes.String, "hash"), nil
+		}
+		return value, nil
+	})
+	if err != nil {
+		t.Errorf("error transforming actual response: %s", err)
+	}
+
+	resp.State.Raw = rawTransformed
 	if !cmp.Equal(expectedResp, resp) {
 		t.Errorf("expected: %+v, got: %+v", expectedResp, resp)
 	}
-
-	overridableHashFunc = oldGenerateHash
 }
 
 func TestUpgradePasswordStateV0toV3_NullValues(t *testing.T) {
 	t.Parallel()
-
-	oldGenerateHash := overridableHashFunc
-	overridableHashFunc = func(string) (string, error) {
-		return "hash", nil
-	}
 
 	req := res.UpgradeStateRequest{
 		State: &tfsdk.State{
@@ -1313,11 +1315,24 @@ func TestUpgradePasswordStateV0toV3_NullValues(t *testing.T) {
 		},
 	}
 
+	// rawTransformed allows equality testing to be used by mutating the bcrypt_hash value in the response to a known value.
+	rawTransformed, err := tftypes.Transform(resp.State.Raw, func(path *tftypes.AttributePath, value tftypes.Value) (tftypes.Value, error) {
+		bcryptHashPath := tftypes.NewAttributePath().WithAttributeName("bcrypt_hash")
+
+		if path.Equal(bcryptHashPath) {
+			return tftypes.NewValue(tftypes.String, "hash"), nil
+		}
+		return value, nil
+	})
+	if err != nil {
+		t.Errorf("error transforming actual response: %s", err)
+	}
+
+	resp.State.Raw = rawTransformed
+
 	if !cmp.Equal(expectedResp, resp) {
 		t.Errorf("expected: %+v, got: %+v", expectedResp, resp)
 	}
-
-	overridableHashFunc = oldGenerateHash
 }
 
 func TestUpgradePasswordStateV1toV3(t *testing.T) {

@@ -65,7 +65,7 @@ func (r *passwordResource) Create(ctx context.Context, req resource.CreateReques
 		return
 	}
 
-	hash, err := overridableHashFunc(string(result))
+	hash, err := generateHash(string(result))
 	if err != nil {
 		resp.Diagnostics.Append(diagnostics.HashGenerationError(err.Error())...)
 	}
@@ -119,7 +119,7 @@ func (r *passwordResource) ImportState(ctx context.Context, req resource.ImportS
 		OverrideSpecial: types.StringNull(),
 	}
 
-	hash, err := overridableHashFunc(id)
+	hash, err := generateHash(id)
 	if err != nil {
 		resp.Diagnostics.Append(diagnostics.HashGenerationError(err.Error())...)
 	}
@@ -253,7 +253,7 @@ func upgradePasswordStateV0toV3(ctx context.Context, req resource.UpgradeStateRe
 		ID:              passwordDataV0.ID,
 	}
 
-	hash, err := overridableHashFunc(passwordDataV3.Result.ValueString())
+	hash, err := generateHash(passwordDataV3.Result.ValueString())
 	if err != nil {
 		resp.Diagnostics.Append(diagnostics.HashGenerationError(err.Error())...)
 		return
@@ -527,9 +527,7 @@ func upgradePasswordStateV2toV3(ctx context.Context, req resource.UpgradeStateRe
 	resp.Diagnostics.Append(resp.State.Set(ctx, passwordDataV3)...)
 }
 
-// overridableHashFunc normally returns bcrypt.GenerateFromPassword(), but it can
-// be overridden during testing to allow comparison of responses.
-var overridableHashFunc = func(toHash string) (string, error) {
+func generateHash(toHash string) (string, error) {
 	hash, err := bcrypt.GenerateFromPassword([]byte(toHash), bcrypt.DefaultCost)
 
 	return string(hash), err
