@@ -1,3 +1,9 @@
+## 3.5.0 (unreleased)
+
+NEW FEATURES:
+
+* `random_bytes` generates an array of random bytes that is intended to be used as key or secret ([#63](https://github.com/hashicorp/terraform-provider-random/issues/63))
+
 ## 3.4.3 (September 08, 2022)
 
 NOTES:
