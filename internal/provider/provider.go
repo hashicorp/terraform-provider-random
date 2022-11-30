@@ -32,6 +32,7 @@ func (p *randomProvider) Configure(context.Context, provider.ConfigureRequest, *
 func (p *randomProvider) Resources(context.Context) []func() resource.Resource {
 	return []func() resource.Resource{
 		NewIdResource,
+		NewBytesResource,
 		NewIntegerResource,
 		NewPasswordResource,
 		NewPetResource,
