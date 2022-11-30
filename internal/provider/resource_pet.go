@@ -7,6 +7,7 @@ import (
 
 	petname "github.com/dustinkirkland/golang-petname"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
+	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/tfsdk"
 	"github.com/hashicorp/terraform-plugin-framework/types"
@@ -146,6 +147,31 @@ func (r *petResource) Update(ctx context.Context, req resource.UpdateRequest, re
 // Delete does not need to explicitly call resp.State.RemoveResource() as this is automatically handled by the
 // [framework](https://github.com/hashicorp/terraform-plugin-framework/pull/301).
 func (r *petResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
+}
+
+func (r *petResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
+	idParts := strings.Split(req.ID, ",")
+	if len(idParts) != 3 {
+		resp.Diagnostics.AddError(
+			"Unexpected Import Identifier",
+			fmt.Sprintf("Expected import identifier with format: pet_name,separator,prefix. Got: %q", req.ID),
+		)
+		return
+	}
+
+	id, separator, prefix := idParts[0], idParts[1], idParts[2]
+
+	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("id"), id)...)
+	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("length"), int64(len(id)))...)
+
+	if separator == "" {
+		separator = "-"
+	}
+	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("separator"), separator)...)
+
+	if prefix != "" {
+		resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("prefix"), prefix)...)
+	}
 }
 
 type petModelV0 struct {
