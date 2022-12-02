@@ -4,10 +4,8 @@ import (
 	"context"
 
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
-	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/provider"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
-	"github.com/hashicorp/terraform-plugin-framework/tfsdk"
 )
 
 func New() provider.Provider {
@@ -22,8 +20,7 @@ func (p *randomProvider) Metadata(_ context.Context, _ provider.MetadataRequest,
 	resp.TypeName = "random"
 }
 
-func (p *randomProvider) GetSchema(context.Context) (tfsdk.Schema, diag.Diagnostics) {
-	return tfsdk.Schema{}, nil
+func (p *randomProvider) Schema(context.Context, provider.SchemaRequest, *provider.SchemaResponse) {
 }
 
 func (p *randomProvider) Configure(context.Context, provider.ConfigureRequest, *provider.ConfigureResponse) {

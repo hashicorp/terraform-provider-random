@@ -6,12 +6,15 @@ import (
 	"strings"
 
 	petname "github.com/dustinkirkland/golang-petname"
-	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
-	"github.com/hashicorp/terraform-plugin-framework/tfsdk"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 
-	"github.com/terraform-providers/terraform-provider-random/internal/planmodifiers"
+	int64planmodifiers "github.com/terraform-providers/terraform-provider-random/internal/planmodifiers/int64"
+	mapplanmodifiers "github.com/terraform-providers/terraform-provider-random/internal/planmodifiers/map"
+	stringplanmodifiers "github.com/terraform-providers/terraform-provider-random/internal/planmodifiers/string"
 )
 
 var _ resource.Resource = (*petResource)(nil)
@@ -26,62 +29,62 @@ func (r *petResource) Metadata(_ context.Context, req resource.MetadataRequest, 
 	resp.TypeName = req.ProviderTypeName + "_pet"
 }
 
-func (r *petResource) GetSchema(context.Context) (tfsdk.Schema, diag.Diagnostics) {
-	return tfsdk.Schema{
+func (r *petResource) Schema(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
+	resp.Schema = schema.Schema{
 		Description: "The resource `random_pet` generates random pet names that are intended to be used as " +
 			"unique identifiers for other resources.\n" +
 			"\n" +
 			"This resource can be used in conjunction with resources that have the `create_before_destroy` " +
 			"lifecycle flag set, to avoid conflicts with unique names during the brief period where both the old " +
 			"and new resources exist concurrently.",
-		Attributes: map[string]tfsdk.Attribute{
-			"keepers": {
+		Attributes: map[string]schema.Attribute{
+			"keepers": schema.MapAttribute{
 				Description: "Arbitrary map of values that, when changed, will trigger recreation of " +
 					"resource. See [the main provider documentation](../index.html) for more information.",
-				Type: types.MapType{
-					ElemType: types.StringType,
-				},
-				Optional: true,
-				PlanModifiers: []tfsdk.AttributePlanModifier{
-					planmodifiers.RequiresReplaceIfValuesNotNull(),
+				ElementType: types.StringType,
+				Optional:    true,
+				PlanModifiers: []planmodifier.Map{
+					mapplanmodifiers.RequiresReplaceIfValuesNotNull(),
 				},
 			},
-			"length": {
+			"length": schema.Int64Attribute{
 				Description: "The length (in words) of the pet name. Defaults to 2",
-				Type:        types.Int64Type,
 				Optional:    true,
 				Computed:    true,
-				PlanModifiers: []tfsdk.AttributePlanModifier{
-					planmodifiers.DefaultValue(types.Int64Value(2)),
-					planmodifiers.RequiresReplace(),
+				PlanModifiers: []planmodifier.Int64{
+					int64planmodifiers.DefaultValue(
+						types.Int64Value(2),
+					),
+					int64planmodifiers.RequiresReplace(),
 				},
 			},
-			"prefix": {
-				Description:   "A string to prefix the name with.",
-				Type:          types.StringType,
-				Optional:      true,
-				PlanModifiers: []tfsdk.AttributePlanModifier{resource.RequiresReplace()},
+			"prefix": schema.StringAttribute{
+				Description: "A string to prefix the name with.",
+				Optional:    true,
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.RequiresReplace(),
+				},
 			},
-			"separator": {
+			"separator": schema.StringAttribute{
 				Description: "The character to separate words in the pet name. Defaults to \"-\"",
-				Type:        types.StringType,
 				Optional:    true,
 				Computed:    true,
-				PlanModifiers: []tfsdk.AttributePlanModifier{
-					planmodifiers.DefaultValue(types.StringValue("-")),
-					planmodifiers.RequiresReplace(),
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifiers.DefaultValue(
+						types.StringValue("-"),
+					),
+					stringplanmodifiers.RequiresReplace(),
 				},
 			},
-			"id": {
+			"id": schema.StringAttribute{
 				Description: "The random pet name.",
-				Type:        types.StringType,
 				Computed:    true,
-				PlanModifiers: []tfsdk.AttributePlanModifier{
-					resource.UseStateForUnknown(),
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.UseStateForUnknown(),
 				},
 			},
 		},
-	}, nil
+	}
 }
 
 func (r *petResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {

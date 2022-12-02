@@ -5,13 +5,14 @@ import (
 	"fmt"
 
 	"github.com/hashicorp/go-uuid"
-	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
-	"github.com/hashicorp/terraform-plugin-framework/tfsdk"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 
 	"github.com/terraform-providers/terraform-provider-random/internal/diagnostics"
-	"github.com/terraform-providers/terraform-provider-random/internal/planmodifiers"
+	mapplanmodifiers "github.com/terraform-providers/terraform-provider-random/internal/planmodifiers/map"
 )
 
 var (
@@ -29,43 +30,39 @@ func (r *uuidResource) Metadata(_ context.Context, req resource.MetadataRequest,
 	resp.TypeName = req.ProviderTypeName + "_uuid"
 }
 
-func (r *uuidResource) GetSchema(context.Context) (tfsdk.Schema, diag.Diagnostics) {
-	return tfsdk.Schema{
+func (r *uuidResource) Schema(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
+	resp.Schema = schema.Schema{
 		Description: "The resource `random_uuid` generates random uuid string that is intended to be " +
 			"used as unique identifiers for other resources.\n" +
 			"\n" +
 			"This resource uses [hashicorp/go-uuid](https://github.com/hashicorp/go-uuid) to generate a " +
 			"UUID-formatted string for use with services needed a unique string identifier.",
-		Attributes: map[string]tfsdk.Attribute{
-			"keepers": {
+		Attributes: map[string]schema.Attribute{
+			"keepers": schema.MapAttribute{
 				Description: "Arbitrary map of values that, when changed, will trigger recreation of " +
 					"resource. See [the main provider documentation](../index.html) for more information.",
-				Type: types.MapType{
-					ElemType: types.StringType,
-				},
-				Optional: true,
-				PlanModifiers: []tfsdk.AttributePlanModifier{
-					planmodifiers.RequiresReplaceIfValuesNotNull(),
+				ElementType: types.StringType,
+				Optional:    true,
+				PlanModifiers: []planmodifier.Map{
+					mapplanmodifiers.RequiresReplaceIfValuesNotNull(),
 				},
 			},
-			"result": {
+			"result": schema.StringAttribute{
 				Description: "The generated uuid presented in string format.",
-				Type:        types.StringType,
 				Computed:    true,
-				PlanModifiers: []tfsdk.AttributePlanModifier{
-					resource.UseStateForUnknown(),
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.UseStateForUnknown(),
 				},
 			},
-			"id": {
+			"id": schema.StringAttribute{
 				Description: "The generated uuid presented in string format.",
-				Type:        types.StringType,
 				Computed:    true,
-				PlanModifiers: []tfsdk.AttributePlanModifier{
-					resource.UseStateForUnknown(),
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.UseStateForUnknown(),
 				},
 			},
 		},
-	}, nil
+	}
 }
 
 func (r *uuidResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {

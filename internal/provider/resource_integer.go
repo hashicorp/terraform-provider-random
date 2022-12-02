@@ -6,12 +6,14 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
-	"github.com/hashicorp/terraform-plugin-framework/tfsdk"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/int64planmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 
-	"github.com/terraform-providers/terraform-provider-random/internal/planmodifiers"
+	mapplanmodifiers "github.com/terraform-providers/terraform-provider-random/internal/planmodifiers/map"
 	"github.com/terraform-providers/terraform-provider-random/internal/random"
 )
 
@@ -30,62 +32,61 @@ func (r *integerResource) Metadata(_ context.Context, req resource.MetadataReque
 	resp.TypeName = req.ProviderTypeName + "_integer"
 }
 
-func (r *integerResource) GetSchema(context.Context) (tfsdk.Schema, diag.Diagnostics) {
-	return tfsdk.Schema{
+func (r *integerResource) Schema(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
+	resp.Schema = schema.Schema{
 		Description: "The resource `random_integer` generates random values from a given range, described " +
 			"by the `min` and `max` attributes of a given resource.\n" +
 			"\n" +
 			"This resource can be used in conjunction with resources that have the `create_before_destroy` " +
 			"lifecycle flag set, to avoid conflicts with unique names during the brief period where both the " +
 			"old and new resources exist concurrently.",
-		Attributes: map[string]tfsdk.Attribute{
-			"keepers": {
+		Attributes: map[string]schema.Attribute{
+			"keepers": schema.MapAttribute{
 				Description: "Arbitrary map of values that, when changed, will trigger recreation of " +
 					"resource. See [the main provider documentation](../index.html) for more information.",
-				Type: types.MapType{
-					ElemType: types.StringType,
-				},
-				Optional: true,
-				PlanModifiers: []tfsdk.AttributePlanModifier{
-					planmodifiers.RequiresReplaceIfValuesNotNull(),
+				ElementType: types.StringType,
+				Optional:    true,
+				PlanModifiers: []planmodifier.Map{
+					mapplanmodifiers.RequiresReplaceIfValuesNotNull(),
 				},
 			},
-			"min": {
-				Description:   "The minimum inclusive value of the range.",
-				Type:          types.Int64Type,
-				Required:      true,
-				PlanModifiers: []tfsdk.AttributePlanModifier{resource.RequiresReplace()},
+			"min": schema.Int64Attribute{
+				Description: "The minimum inclusive value of the range.",
+				Required:    true,
+				PlanModifiers: []planmodifier.Int64{
+					int64planmodifier.RequiresReplace(),
+				},
 			},
-			"max": {
-				Description:   "The maximum inclusive value of the range.",
-				Type:          types.Int64Type,
-				Required:      true,
-				PlanModifiers: []tfsdk.AttributePlanModifier{resource.RequiresReplace()},
+			"max": schema.Int64Attribute{
+				Description: "The maximum inclusive value of the range.",
+				Required:    true,
+				PlanModifiers: []planmodifier.Int64{
+					int64planmodifier.RequiresReplace(),
+				},
 			},
-			"seed": {
-				Description:   "A custom seed to always produce the same value.",
-				Type:          types.StringType,
-				Optional:      true,
-				PlanModifiers: []tfsdk.AttributePlanModifier{resource.RequiresReplace()},
+			"seed": schema.StringAttribute{
+				Description: "A custom seed to always produce the same value.",
+				Optional:    true,
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.RequiresReplace(),
+				},
 			},
-			"result": {
+			"result": schema.Int64Attribute{
 				Description: "The random integer result.",
-				Type:        types.Int64Type,
 				Computed:    true,
-				PlanModifiers: []tfsdk.AttributePlanModifier{
-					resource.UseStateForUnknown(),
+				PlanModifiers: []planmodifier.Int64{
+					int64planmodifier.UseStateForUnknown(),
 				},
 			},
-			"id": {
+			"id": schema.StringAttribute{
 				Description: "The string representation of the integer result.",
-				Type:        types.StringType,
 				Computed:    true,
-				PlanModifiers: []tfsdk.AttributePlanModifier{
-					resource.UseStateForUnknown(),
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.UseStateForUnknown(),
 				},
 			},
 		},
-	}, nil
+	}
 }
 
 func (r *integerResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
