@@ -60,11 +60,6 @@ func (r RequiresReplaceModifier) MarkdownDescription(ctx context.Context) string
 // PlanModifyBool will trigger replacement (i.e., destroy-create) when `configRaw.IsNull && attrSchema.Computed`,
 // which differs from the behaviour of `resource.RequiresReplace()`.
 func (r RequiresReplaceModifier) PlanModifyBool(ctx context.Context, req planmodifier.BoolRequest, resp *planmodifier.BoolResponse) {
-	if req.ConfigValue.IsNull() || req.PlanValue.IsNull() || req.StateValue.IsNull() {
-		// shouldn't happen, but let's not panic if it does
-		return
-	}
-
 	if req.State.Raw.IsNull() {
 		// if we're creating the resource, no need to delete and
 		// recreate it

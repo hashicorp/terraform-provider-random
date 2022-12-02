@@ -13,11 +13,6 @@ func RequiresReplaceIfValuesNotNull() planmodifier.Map {
 type requiresReplaceIfValuesNotNullModifier struct{}
 
 func (r requiresReplaceIfValuesNotNullModifier) PlanModifyMap(ctx context.Context, req planmodifier.MapRequest, resp *planmodifier.MapResponse) {
-	if req.ConfigValue.IsNull() || req.PlanValue.IsNull() || req.StateValue.IsNull() {
-		// shouldn't happen, but let's not panic if it does
-		return
-	}
-
 	if req.State.Raw.IsNull() {
 		// if we're creating the resource, no need to delete and
 		// recreate it
