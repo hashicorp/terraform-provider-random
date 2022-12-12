@@ -2,6 +2,7 @@ package boolplanmodifiers
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
@@ -19,7 +20,7 @@ type defaultValueAttributePlanModifier struct {
 }
 
 func (d *defaultValueAttributePlanModifier) Description(ctx context.Context) string {
-	return "If the config does not contain a value, a default will be set using val."
+	return fmt.Sprintf("If not configured, defaults to %t", d.val.ValueBool())
 }
 
 func (d *defaultValueAttributePlanModifier) MarkdownDescription(ctx context.Context) string {

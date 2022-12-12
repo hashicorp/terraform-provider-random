@@ -73,7 +73,7 @@ func (r *petResource) Schema(ctx context.Context, req resource.SchemaRequest, re
 					stringplanmodifiers.DefaultValue(
 						types.StringValue("-"),
 					),
-					stringplanmodifiers.RequiresReplace(),
+					stringplanmodifier.RequiresReplace(),
 				},
 			},
 			"id": schema.StringAttribute{

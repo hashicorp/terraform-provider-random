@@ -2,6 +2,7 @@ package int64planmodifiers
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/types"
@@ -18,7 +19,7 @@ type defaultValueAttributePlanModifier struct {
 }
 
 func (d *defaultValueAttributePlanModifier) Description(ctx context.Context) string {
-	return "If the config does not contain a value, a default will be set using val."
+	return fmt.Sprintf("If not configured, defaults to %d", d.val.ValueInt64())
 }
 
 func (d *defaultValueAttributePlanModifier) MarkdownDescription(ctx context.Context) string {

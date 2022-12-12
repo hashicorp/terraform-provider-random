@@ -2,6 +2,7 @@ package stringplanmodifiers
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
@@ -19,7 +20,7 @@ type defaultValueAttributePlanModifier struct {
 }
 
 func (d *defaultValueAttributePlanModifier) Description(ctx context.Context) string {
-	return "If the config does not contain a value, a default will be set using val."
+	return fmt.Sprintf("If not configured, defaults to %s", d.val.ValueString())
 }
 
 func (d *defaultValueAttributePlanModifier) MarkdownDescription(ctx context.Context) string {
@@ -36,49 +37,6 @@ func (d *defaultValueAttributePlanModifier) PlanModifyString(ctx context.Context
 	}
 
 	resp.PlanValue = d.val
-}
-
-// RequiresReplace returns an attribute plan modifier that is identical to resource.RequiresReplace() with
-// the exception that there is no check for `configRaw.IsNull && attrSchema.Computed` as a replacement
-// needs to be triggered when the attribute has been removed from the config.
-func RequiresReplace() planmodifier.String {
-	return RequiresReplaceModifier{}
-}
-
-type RequiresReplaceModifier struct{}
-
-// Description returns a human-readable description of the plan modifier.
-func (r RequiresReplaceModifier) Description(ctx context.Context) string {
-	return "If the value of this attribute changes, Terraform will destroy and recreate the resource."
-}
-
-// MarkdownDescription returns a markdown description of the plan modifier.
-func (r RequiresReplaceModifier) MarkdownDescription(ctx context.Context) string {
-	return r.Description(ctx)
-}
-
-// PlanModifyString will trigger replacement (i.e., destroy-create) when `configRaw.IsNull && attrSchema.Computed`,
-// which differs from the behaviour of `resource.RequiresReplace()`.
-func (r RequiresReplaceModifier) PlanModifyString(ctx context.Context, req planmodifier.StringRequest, resp *planmodifier.StringResponse) {
-	if req.State.Raw.IsNull() {
-		// if we're creating the resource, no need to delete and
-		// recreate it
-		return
-	}
-
-	if req.Plan.Raw.IsNull() {
-		// if we're deleting the resource, no need to delete and
-		// recreate it
-		return
-	}
-
-	if req.PlanValue.Equal(req.StateValue) {
-		// if the plan and the state are in agreement, this attribute
-		// isn't changing, don't require replace
-		return
-	}
-
-	resp.RequiresReplace = true
 }
 
 // RequiresReplaceUnlessEmptyStringToNull returns a
