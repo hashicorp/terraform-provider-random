@@ -12,7 +12,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
-	"github.com/hashicorp/terraform-plugin-framework/tfsdk"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"golang.org/x/crypto/bcrypt"
 
@@ -725,353 +724,294 @@ func passwordSchemaV3() schema.Schema {
 	}
 }
 
-// TODO: passwordSchemaV2 needs to be updated to use schema.Schema once resource.StateUpgrader has been
-// updated to use schema.Schema for PriorSchema.
-//
-//nolint:staticcheck
-func passwordSchemaV2() tfsdk.Schema {
-	return tfsdk.Schema{
+func passwordSchemaV2() schema.Schema {
+	return schema.Schema{
 		Version: 2,
 		Description: "Identical to [random_string](string.html) with the exception that the result is " +
 			"treated as sensitive and, thus, _not_ displayed in console output. Read more about sensitive " +
 			"data handling in the " +
 			"[Terraform documentation](https://www.terraform.io/docs/language/state/sensitive-data.html).\n\n" +
 			"This resource *does* use a cryptographic random number generator.",
-		Attributes: map[string]tfsdk.Attribute{
-			"keepers": {
+		Attributes: map[string]schema.Attribute{
+			"keepers": schema.MapAttribute{
 				Description: "Arbitrary map of values that, when changed, will trigger recreation of " +
 					"resource. See [the main provider documentation](../index.html) for more information.",
-				Type: types.MapType{
-					ElemType: types.StringType,
-				},
-				Optional: true,
+				ElementType: types.StringType,
+				Optional:    true,
 			},
 
-			"length": {
+			"length": schema.Int64Attribute{
 				Description: "The length of the string desired. The minimum value for length is 1 and, length " +
 					"must also be >= (`min_upper` + `min_lower` + `min_numeric` + `min_special`).",
-				Type:     types.Int64Type,
 				Required: true,
 			},
 
-			"special": {
+			"special": schema.BoolAttribute{
 				Description: "Include special characters in the result. These are `!@#$%&*()-_=+[]{}<>:?`. Default value is `true`.",
-				Type:        types.BoolType,
 				Optional:    true,
 				Computed:    true,
 			},
 
-			"upper": {
+			"upper": schema.BoolAttribute{
 				Description: "Include uppercase alphabet characters in the result. Default value is `true`.",
-				Type:        types.BoolType,
 				Optional:    true,
 				Computed:    true,
 			},
 
-			"lower": {
+			"lower": schema.BoolAttribute{
 				Description: "Include lowercase alphabet characters in the result. Default value is `true`.",
-				Type:        types.BoolType,
 				Optional:    true,
 				Computed:    true,
 			},
 
-			"number": {
-				Description: "Include numeric characters in the result. Default value is `true`. " +
-					"**NOTE**: This is deprecated, use `numeric` instead.",
-				Type:               types.BoolType,
-				Optional:           true,
-				Computed:           true,
-				DeprecationMessage: "**NOTE**: This is deprecated, use `numeric` instead.",
-			},
-
-			"numeric": {
+			"number": schema.BoolAttribute{
 				Description: "Include numeric characters in the result. Default value is `true`.",
-				Type:        types.BoolType,
 				Optional:    true,
 				Computed:    true,
 			},
 
-			"min_numeric": {
+			"numeric": schema.BoolAttribute{
+				Description: "Include numeric characters in the result. Default value is `true`.",
+				Optional:    true,
+				Computed:    true,
+			},
+
+			"min_numeric": schema.Int64Attribute{
 				Description: "Minimum number of numeric characters in the result. Default value is `0`.",
-				Type:        types.Int64Type,
 				Optional:    true,
 				Computed:    true,
 			},
 
-			"min_upper": {
+			"min_upper": schema.Int64Attribute{
 				Description: "Minimum number of uppercase alphabet characters in the result. Default value is `0`.",
-				Type:        types.Int64Type,
 				Optional:    true,
 				Computed:    true,
 			},
 
-			"min_lower": {
+			"min_lower": schema.Int64Attribute{
 				Description: "Minimum number of lowercase alphabet characters in the result. Default value is `0`.",
-				Type:        types.Int64Type,
 				Optional:    true,
 				Computed:    true,
 			},
 
-			"min_special": {
+			"min_special": schema.Int64Attribute{
 				Description: "Minimum number of special characters in the result. Default value is `0`.",
-				Type:        types.Int64Type,
 				Optional:    true,
 				Computed:    true,
 			},
 
-			"override_special": {
+			"override_special": schema.StringAttribute{
 				Description: "Supply your own list of special characters to use for string generation.  This " +
 					"overrides the default character list in the special argument.  The `special` argument must " +
 					"still be set to true for any overwritten characters to be used in generation.",
-				Type:     types.StringType,
 				Optional: true,
 				Computed: true,
 			},
 
-			"result": {
+			"result": schema.StringAttribute{
 				Description: "The generated random string.",
-				Type:        types.StringType,
 				Computed:    true,
 				Sensitive:   true,
 			},
 
-			"bcrypt_hash": {
+			"bcrypt_hash": schema.StringAttribute{
 				Description: "A bcrypt hash of the generated random string.",
-				Type:        types.StringType,
 				Computed:    true,
 				Sensitive:   true,
 			},
 
-			"id": {
-				Description: "A static value used internally by Terraform, this should not be referenced in configurations.",
+			"id": schema.StringAttribute{
+				Description: "The generated random string.",
 				Computed:    true,
-				Type:        types.StringType,
 			},
 		},
 	}
 }
 
-// TODO: passwordSchemaV1 needs to be updated to use schema.Schema once resource.StateUpgrader has been
-// updated to use schema.Schema for PriorSchema.
-//
-//nolint:staticcheck
-func passwordSchemaV1() tfsdk.Schema {
-	return tfsdk.Schema{
+func passwordSchemaV1() schema.Schema {
+	return schema.Schema{
 		Version: 1,
 		Description: "Identical to [random_string](string.html) with the exception that the result is " +
 			"treated as sensitive and, thus, _not_ displayed in console output. Read more about sensitive " +
 			"data handling in the " +
 			"[Terraform documentation](https://www.terraform.io/docs/language/state/sensitive-data.html).\n\n" +
 			"This resource *does* use a cryptographic random number generator.",
-		Attributes: map[string]tfsdk.Attribute{
-			"keepers": {
+		Attributes: map[string]schema.Attribute{
+			"keepers": schema.MapAttribute{
 				Description: "Arbitrary map of values that, when changed, will trigger recreation of " +
 					"resource. See [the main provider documentation](../index.html) for more information.",
-				Type: types.MapType{
-					ElemType: types.StringType,
-				},
-				Optional: true,
+				ElementType: types.StringType,
+				Optional:    true,
 			},
 
-			"length": {
+			"length": schema.Int64Attribute{
 				Description: "The length of the string desired. The minimum value for length is 1 and, length " +
 					"must also be >= (`min_upper` + `min_lower` + `min_numeric` + `min_special`).",
-				Type:     types.Int64Type,
 				Required: true,
 			},
 
-			"special": {
+			"special": schema.BoolAttribute{
 				Description: "Include special characters in the result. These are `!@#$%&*()-_=+[]{}<>:?`. Default value is `true`.",
-				Type:        types.BoolType,
 				Optional:    true,
 				Computed:    true,
 			},
 
-			"upper": {
+			"upper": schema.BoolAttribute{
 				Description: "Include uppercase alphabet characters in the result. Default value is `true`.",
-				Type:        types.BoolType,
 				Optional:    true,
 				Computed:    true,
 			},
 
-			"lower": {
+			"lower": schema.BoolAttribute{
 				Description: "Include lowercase alphabet characters in the result. Default value is `true`.",
-				Type:        types.BoolType,
 				Optional:    true,
 				Computed:    true,
 			},
 
-			"number": {
+			"number": schema.BoolAttribute{
 				Description: "Include numeric characters in the result. Default value is `true`.",
-				Type:        types.BoolType,
 				Optional:    true,
 				Computed:    true,
 			},
 
-			"min_numeric": {
+			"min_numeric": schema.Int64Attribute{
 				Description: "Minimum number of numeric characters in the result. Default value is `0`.",
-				Type:        types.Int64Type,
 				Optional:    true,
 				Computed:    true,
 			},
 
-			"min_upper": {
+			"min_upper": schema.Int64Attribute{
 				Description: "Minimum number of uppercase alphabet characters in the result. Default value is `0`.",
-				Type:        types.Int64Type,
 				Optional:    true,
 				Computed:    true,
 			},
 
-			"min_lower": {
+			"min_lower": schema.Int64Attribute{
 				Description: "Minimum number of lowercase alphabet characters in the result. Default value is `0`.",
-				Type:        types.Int64Type,
 				Optional:    true,
 				Computed:    true,
 			},
 
-			"min_special": {
+			"min_special": schema.Int64Attribute{
 				Description: "Minimum number of special characters in the result. Default value is `0`.",
-				Type:        types.Int64Type,
 				Optional:    true,
 				Computed:    true,
 			},
 
-			"override_special": {
+			"override_special": schema.StringAttribute{
 				Description: "Supply your own list of special characters to use for string generation.  This " +
 					"overrides the default character list in the special argument.  The `special` argument must " +
 					"still be set to true for any overwritten characters to be used in generation.",
-				Type:     types.StringType,
 				Optional: true,
 				Computed: true,
 			},
 
-			"result": {
+			"result": schema.StringAttribute{
 				Description: "The generated random string.",
-				Type:        types.StringType,
 				Computed:    true,
 				Sensitive:   true,
 			},
 
-			"bcrypt_hash": {
+			"bcrypt_hash": schema.StringAttribute{
 				Description: "A bcrypt hash of the generated random string.",
-				Type:        types.StringType,
 				Computed:    true,
 				Sensitive:   true,
 			},
 
-			"id": {
-				Description: "A static value used internally by Terraform, this should not be referenced in configurations.",
+			"id": schema.StringAttribute{
+				Description: "The generated random string.",
 				Computed:    true,
-				Type:        types.StringType,
 			},
 		},
 	}
 }
 
-// TODO: passwordSchemaV0 needs to be updated to use schema.Schema once resource.StateUpgrader has been
-// updated to use schema.Schema for PriorSchema.
-//
-//nolint:staticcheck
-func passwordSchemaV0() tfsdk.Schema {
-	return tfsdk.Schema{
+func passwordSchemaV0() schema.Schema {
+	return schema.Schema{
 		Description: "Identical to [random_string](string.html) with the exception that the result is " +
 			"treated as sensitive and, thus, _not_ displayed in console output. Read more about sensitive " +
 			"data handling in the " +
 			"[Terraform documentation](https://www.terraform.io/docs/language/state/sensitive-data.html).\n\n" +
 			"This resource *does* use a cryptographic random number generator.",
-		Attributes: map[string]tfsdk.Attribute{
-			"keepers": {
+		Attributes: map[string]schema.Attribute{
+			"keepers": schema.MapAttribute{
 				Description: "Arbitrary map of values that, when changed, will trigger recreation of " +
 					"resource. See [the main provider documentation](../index.html) for more information.",
-				Type: types.MapType{
-					ElemType: types.StringType,
-				},
-				Optional: true,
+				ElementType: types.StringType,
+				Optional:    true,
 			},
 
-			"length": {
+			"length": schema.Int64Attribute{
 				Description: "The length of the string desired. The minimum value for length is 1 and, length " +
 					"must also be >= (`min_upper` + `min_lower` + `min_numeric` + `min_special`).",
-				Type:     types.Int64Type,
 				Required: true,
 			},
 
-			"special": {
+			"special": schema.BoolAttribute{
 				Description: "Include special characters in the result. These are `!@#$%&*()-_=+[]{}<>:?`. Default value is `true`.",
-				Type:        types.BoolType,
 				Optional:    true,
 				Computed:    true,
 			},
 
-			"upper": {
+			"upper": schema.BoolAttribute{
 				Description: "Include uppercase alphabet characters in the result. Default value is `true`.",
-				Type:        types.BoolType,
 				Optional:    true,
 				Computed:    true,
 			},
 
-			"lower": {
+			"lower": schema.BoolAttribute{
 				Description: "Include lowercase alphabet characters in the result. Default value is `true`.",
-				Type:        types.BoolType,
 				Optional:    true,
 				Computed:    true,
 			},
 
-			"number": {
+			"number": schema.BoolAttribute{
 				Description: "Include numeric characters in the result. Default value is `true`.",
-				Type:        types.BoolType,
 				Optional:    true,
 				Computed:    true,
 			},
 
-			"min_numeric": {
+			"min_numeric": schema.Int64Attribute{
 				Description: "Minimum number of numeric characters in the result. Default value is `0`.",
-				Type:        types.Int64Type,
 				Optional:    true,
 				Computed:    true,
 			},
 
-			"min_upper": {
+			"min_upper": schema.Int64Attribute{
 				Description: "Minimum number of uppercase alphabet characters in the result. Default value is `0`.",
-				Type:        types.Int64Type,
 				Optional:    true,
 				Computed:    true,
 			},
 
-			"min_lower": {
+			"min_lower": schema.Int64Attribute{
 				Description: "Minimum number of lowercase alphabet characters in the result. Default value is `0`.",
-				Type:        types.Int64Type,
 				Optional:    true,
 				Computed:    true,
 			},
 
-			"min_special": {
+			"min_special": schema.Int64Attribute{
 				Description: "Minimum number of special characters in the result. Default value is `0`.",
-				Type:        types.Int64Type,
 				Optional:    true,
 				Computed:    true,
 			},
 
-			"override_special": {
+			"override_special": schema.StringAttribute{
 				Description: "Supply your own list of special characters to use for string generation.  This " +
 					"overrides the default character list in the special argument.  The `special` argument must " +
 					"still be set to true for any overwritten characters to be used in generation.",
-				Type:     types.StringType,
 				Optional: true,
 				Computed: true,
 			},
 
-			"result": {
+			"result": schema.StringAttribute{
 				Description: "The generated random string.",
-				Type:        types.StringType,
 				Computed:    true,
 				Sensitive:   true,
 			},
 
-			"id": {
-				Description: "A static value used internally by Terraform, this should not be referenced in configurations.",
+			"id": schema.StringAttribute{
+				Description: "The generated random string.",
 				Computed:    true,
-				Type:        types.StringType,
 			},
 		},
 	}
