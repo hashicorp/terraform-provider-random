@@ -7,6 +7,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/boolplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/int64planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
@@ -396,7 +397,7 @@ func stringSchemaV3() schema.Schema {
 					boolplanmodifiers.DefaultValue(
 						types.BoolValue(true),
 					),
-					boolplanmodifiers.RequiresReplace(),
+					boolplanmodifier.RequiresReplace(),
 				},
 			},
 
@@ -408,7 +409,7 @@ func stringSchemaV3() schema.Schema {
 					boolplanmodifiers.DefaultValue(
 						types.BoolValue(true),
 					),
-					boolplanmodifiers.RequiresReplace(),
+					boolplanmodifier.RequiresReplace(),
 				},
 			},
 
@@ -420,7 +421,7 @@ func stringSchemaV3() schema.Schema {
 					boolplanmodifiers.DefaultValue(
 						types.BoolValue(true),
 					),
-					boolplanmodifiers.RequiresReplace(),
+					boolplanmodifier.RequiresReplace(),
 				},
 			},
 
@@ -431,7 +432,7 @@ func stringSchemaV3() schema.Schema {
 				Computed: true,
 				PlanModifiers: []planmodifier.Bool{
 					boolplanmodifiers.NumberNumericAttributePlanModifier(),
-					boolplanmodifiers.RequiresReplace(),
+					boolplanmodifier.RequiresReplace(),
 				},
 				DeprecationMessage: "**NOTE**: This is deprecated, use `numeric` instead.",
 			},
@@ -442,7 +443,7 @@ func stringSchemaV3() schema.Schema {
 				Computed:    true,
 				PlanModifiers: []planmodifier.Bool{
 					boolplanmodifiers.NumberNumericAttributePlanModifier(),
-					boolplanmodifiers.RequiresReplace(),
+					boolplanmodifier.RequiresReplace(),
 				},
 			},
 
@@ -454,7 +455,7 @@ func stringSchemaV3() schema.Schema {
 					int64planmodifiers.DefaultValue(
 						types.Int64Value(0),
 					),
-					int64planmodifiers.RequiresReplace(),
+					int64planmodifier.RequiresReplace(),
 				},
 			},
 
@@ -466,7 +467,7 @@ func stringSchemaV3() schema.Schema {
 					int64planmodifiers.DefaultValue(
 						types.Int64Value(0),
 					),
-					int64planmodifiers.RequiresReplace(),
+					int64planmodifier.RequiresReplace(),
 				},
 			},
 
@@ -478,7 +479,7 @@ func stringSchemaV3() schema.Schema {
 					int64planmodifiers.DefaultValue(
 						types.Int64Value(0),
 					),
-					int64planmodifiers.RequiresReplace(),
+					int64planmodifier.RequiresReplace(),
 				},
 			},
 
@@ -490,7 +491,7 @@ func stringSchemaV3() schema.Schema {
 					int64planmodifiers.DefaultValue(
 						types.Int64Value(0),
 					),
-					int64planmodifiers.RequiresReplace(),
+					int64planmodifier.RequiresReplace(),
 				},
 			},
 
