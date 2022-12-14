@@ -9,13 +9,15 @@ import (
 	"math/big"
 	"strings"
 
-	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
-	"github.com/hashicorp/terraform-plugin-framework/tfsdk"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/int64planmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 
 	"github.com/terraform-providers/terraform-provider-random/internal/diagnostics"
-	"github.com/terraform-providers/terraform-provider-random/internal/planmodifiers"
+	mapplanmodifiers "github.com/terraform-providers/terraform-provider-random/internal/planmodifiers/map"
 )
 
 var (
@@ -33,8 +35,8 @@ func (r *idResource) Metadata(_ context.Context, req resource.MetadataRequest, r
 	resp.TypeName = req.ProviderTypeName + "_id"
 }
 
-func (r *idResource) GetSchema(context.Context) (tfsdk.Schema, diag.Diagnostics) {
-	return tfsdk.Schema{
+func (r *idResource) Schema(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
+	resp.Schema = schema.Schema{
 		Description: `
 The resource ` + "`random_id`" + ` generates random numbers that are intended to be
 used as unique identifiers for other resources.
@@ -49,80 +51,71 @@ the ` + "`create_before_destroy`" + ` lifecycle flag set to avoid conflicts with
 unique names during the brief period where both the old and new resources
 exist concurrently.
 `,
-		Attributes: map[string]tfsdk.Attribute{
-			"keepers": {
+		Attributes: map[string]schema.Attribute{
+			"keepers": schema.MapAttribute{
 				Description: "Arbitrary map of values that, when changed, will trigger recreation of " +
 					"resource. See [the main provider documentation](../index.html) for more information.",
-				Type: types.MapType{
-					ElemType: types.StringType,
-				},
-				Optional: true,
-				PlanModifiers: []tfsdk.AttributePlanModifier{
-					planmodifiers.RequiresReplaceIfValuesNotNull(),
+				ElementType: types.StringType,
+				Optional:    true,
+				PlanModifiers: []planmodifier.Map{
+					mapplanmodifiers.RequiresReplaceIfValuesNotNull(),
 				},
 			},
-			"byte_length": {
+			"byte_length": schema.Int64Attribute{
 				Description: "The number of random bytes to produce. The minimum value is 1, which produces " +
 					"eight bits of randomness.",
-				Type:     types.Int64Type,
 				Required: true,
-				PlanModifiers: []tfsdk.AttributePlanModifier{
-					resource.RequiresReplace(),
+				PlanModifiers: []planmodifier.Int64{
+					int64planmodifier.RequiresReplace(),
 				},
 			},
-			"prefix": {
+			"prefix": schema.StringAttribute{
 				Description: "Arbitrary string to prefix the output value with. This string is supplied as-is, " +
 					"meaning it is not guaranteed to be URL-safe or base64 encoded.",
-				Type:     types.StringType,
 				Optional: true,
-				PlanModifiers: []tfsdk.AttributePlanModifier{
-					resource.RequiresReplace(),
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.RequiresReplace(),
 				},
 			},
-			"b64_url": {
+			"b64_url": schema.StringAttribute{
 				Description: "The generated id presented in base64, using the URL-friendly character set: " +
 					"case-sensitive letters, digits and the characters `_` and `-`.",
-				Type:     types.StringType,
 				Computed: true,
-				PlanModifiers: []tfsdk.AttributePlanModifier{
-					resource.UseStateForUnknown(),
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.UseStateForUnknown(),
 				},
 			},
-			"b64_std": {
+			"b64_std": schema.StringAttribute{
 				Description: "The generated id presented in base64 without additional transformations.",
-				Type:        types.StringType,
 				Computed:    true,
-				PlanModifiers: []tfsdk.AttributePlanModifier{
-					resource.UseStateForUnknown(),
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.UseStateForUnknown(),
 				},
 			},
-			"hex": {
+			"hex": schema.StringAttribute{
 				Description: "The generated id presented in padded hexadecimal digits. This result will " +
 					"always be twice as long as the requested byte length.",
-				Type:     types.StringType,
 				Computed: true,
-				PlanModifiers: []tfsdk.AttributePlanModifier{
-					resource.UseStateForUnknown(),
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.UseStateForUnknown(),
 				},
 			},
-			"dec": {
+			"dec": schema.StringAttribute{
 				Description: "The generated id presented in non-padded decimal digits.",
-				Type:        types.StringType,
 				Computed:    true,
-				PlanModifiers: []tfsdk.AttributePlanModifier{
-					resource.UseStateForUnknown(),
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.UseStateForUnknown(),
 				},
 			},
-			"id": {
+			"id": schema.StringAttribute{
 				Description: "The generated id presented in base64 without additional transformations or prefix.",
-				Type:        types.StringType,
 				Computed:    true,
-				PlanModifiers: []tfsdk.AttributePlanModifier{
-					resource.UseStateForUnknown(),
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.UseStateForUnknown(),
 				},
 			},
 		},
-	}, nil
+	}
 }
 
 func (r *idResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {

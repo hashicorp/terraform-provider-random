@@ -4,12 +4,15 @@ import (
 	"context"
 
 	"github.com/hashicorp/terraform-plugin-framework/attr"
-	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
-	"github.com/hashicorp/terraform-plugin-framework/tfsdk"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/int64planmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/listplanmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 
-	"github.com/terraform-providers/terraform-provider-random/internal/planmodifiers"
+	mapplanmodifiers "github.com/terraform-providers/terraform-provider-random/internal/planmodifiers/map"
 	"github.com/terraform-providers/terraform-provider-random/internal/random"
 )
 
@@ -25,76 +28,67 @@ func (r *shuffleResource) Metadata(_ context.Context, req resource.MetadataReque
 	resp.TypeName = req.ProviderTypeName + "_shuffle"
 }
 
-func (r *shuffleResource) GetSchema(context.Context) (tfsdk.Schema, diag.Diagnostics) {
-	return tfsdk.Schema{
+func (r *shuffleResource) Schema(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
+	resp.Schema = schema.Schema{
 		Description: "The resource `random_shuffle` generates a random permutation of a list of strings " +
 			"given as an argument.",
-		Attributes: map[string]tfsdk.Attribute{
-			"keepers": {
+		Attributes: map[string]schema.Attribute{
+			"keepers": schema.MapAttribute{
 				Description: "Arbitrary map of values that, when changed, will trigger recreation of " +
 					"resource. See [the main provider documentation](../index.html) for more information.",
-				Type: types.MapType{
-					ElemType: types.StringType,
-				},
-				Optional: true,
-				PlanModifiers: []tfsdk.AttributePlanModifier{
-					planmodifiers.RequiresReplaceIfValuesNotNull(),
+				ElementType: types.StringType,
+				Optional:    true,
+				PlanModifiers: []planmodifier.Map{
+					mapplanmodifiers.RequiresReplaceIfValuesNotNull(),
 				},
 			},
-			"seed": {
+			"seed": schema.StringAttribute{
 				Description: "Arbitrary string with which to seed the random number generator, in order to " +
 					"produce less-volatile permutations of the list.\n" +
 					"\n" +
 					"**Important:** Even with an identical seed, it is not guaranteed that the same permutation " +
 					"will be produced across different versions of Terraform. This argument causes the " +
 					"result to be *less volatile*, but not fixed for all time.",
-				Type:     types.StringType,
 				Optional: true,
-				PlanModifiers: []tfsdk.AttributePlanModifier{
-					resource.RequiresReplace(),
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.RequiresReplace(),
 				},
 			},
-			"input": {
+			"input": schema.ListAttribute{
 				Description: "The list of strings to shuffle.",
-				Type: types.ListType{
-					ElemType: types.StringType,
-				},
-				Required: true,
-				PlanModifiers: []tfsdk.AttributePlanModifier{
-					resource.RequiresReplace(),
+				ElementType: types.StringType,
+				Required:    true,
+				PlanModifiers: []planmodifier.List{
+					listplanmodifier.RequiresReplace(),
 				},
 			},
-			"result_count": {
+			"result_count": schema.Int64Attribute{
 				Description: "The number of results to return. Defaults to the number of items in the " +
 					"`input` list. If fewer items are requested, some elements will be excluded from the " +
 					"result. If more items are requested, items will be repeated in the result but not more " +
 					"frequently than the number of items in the input list.",
-				Type:     types.Int64Type,
 				Optional: true,
-				PlanModifiers: []tfsdk.AttributePlanModifier{
-					resource.RequiresReplace(),
+				PlanModifiers: []planmodifier.Int64{
+					int64planmodifier.RequiresReplace(),
 				},
 			},
-			"result": {
+			"result": schema.ListAttribute{
 				Description: "Random permutation of the list of strings given in `input`.",
-				Type: types.ListType{
-					ElemType: types.StringType,
-				},
-				Computed: true,
-				PlanModifiers: []tfsdk.AttributePlanModifier{
-					resource.UseStateForUnknown(),
+				ElementType: types.StringType,
+				Computed:    true,
+				PlanModifiers: []planmodifier.List{
+					listplanmodifier.UseStateForUnknown(),
 				},
 			},
-			"id": {
+			"id": schema.StringAttribute{
 				Description: "A static value used internally by Terraform, this should not be referenced in configurations.",
-				Type:        types.StringType,
 				Computed:    true,
-				PlanModifiers: []tfsdk.AttributePlanModifier{
-					resource.UseStateForUnknown(),
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.UseStateForUnknown(),
 				},
 			},
 		},
-	}, nil
+	}
 }
 
 func (r *shuffleResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {

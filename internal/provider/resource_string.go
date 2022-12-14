@@ -4,14 +4,22 @@ import (
 	"context"
 
 	"github.com/hashicorp/terraform-plugin-framework-validators/int64validator"
-	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/boolplanmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/int64planmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/tfsdk"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 
 	"github.com/terraform-providers/terraform-provider-random/internal/diagnostics"
-	"github.com/terraform-providers/terraform-provider-random/internal/planmodifiers"
+	boolplanmodifiers "github.com/terraform-providers/terraform-provider-random/internal/planmodifiers/bool"
+	int64planmodifiers "github.com/terraform-providers/terraform-provider-random/internal/planmodifiers/int64"
+	mapplanmodifiers "github.com/terraform-providers/terraform-provider-random/internal/planmodifiers/map"
+	stringplanmodifiers "github.com/terraform-providers/terraform-provider-random/internal/planmodifiers/string"
 	"github.com/terraform-providers/terraform-provider-random/internal/random"
 )
 
@@ -31,8 +39,8 @@ func (r *stringResource) Metadata(_ context.Context, req resource.MetadataReques
 	resp.TypeName = req.ProviderTypeName + "_string"
 }
 
-func (r *stringResource) GetSchema(context.Context) (tfsdk.Schema, diag.Diagnostics) {
-	return stringSchemaV3(), nil
+func (r *stringResource) Schema(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
+	resp.Schema = stringSchemaV3()
 }
 
 func (r *stringResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
@@ -341,8 +349,8 @@ func upgradeStringStateV2toV3(ctx context.Context, req resource.UpgradeStateRequ
 	resp.Diagnostics.Append(diags...)
 }
 
-func stringSchemaV3() tfsdk.Schema {
-	return tfsdk.Schema{
+func stringSchemaV3() schema.Schema {
+	return schema.Schema{
 		Version: 2,
 		Description: "The resource `random_string` generates a random permutation of alphanumeric " +
 			"characters and optionally special characters.\n" +
@@ -352,26 +360,25 @@ func stringSchemaV3() tfsdk.Schema {
 			"Historically this resource's intended usage has been ambiguous as the original example used " +
 			"it in a password. For backwards compatibility it will continue to exist. For unique ids please " +
 			"use [random_id](id.html), for sensitive random values please use [random_password](password.html).",
-		Attributes: map[string]tfsdk.Attribute{
-			"keepers": {
+		Attributes: map[string]schema.Attribute{
+			"keepers": schema.MapAttribute{
 				Description: "Arbitrary map of values that, when changed, will trigger recreation of " +
 					"resource. See [the main provider documentation](../index.html) for more information.",
-				Type: types.MapType{
-					ElemType: types.StringType,
-				},
-				Optional: true,
-				PlanModifiers: []tfsdk.AttributePlanModifier{
-					planmodifiers.RequiresReplaceIfValuesNotNull(),
+				ElementType: types.StringType,
+				Optional:    true,
+				PlanModifiers: []planmodifier.Map{
+					mapplanmodifiers.RequiresReplaceIfValuesNotNull(),
 				},
 			},
 
-			"length": {
+			"length": schema.Int64Attribute{
 				Description: "The length of the string desired. The minimum value for length is 1 and, length " +
 					"must also be >= (`min_upper` + `min_lower` + `min_numeric` + `min_special`).",
-				Type:          types.Int64Type,
-				Required:      true,
-				PlanModifiers: []tfsdk.AttributePlanModifier{resource.RequiresReplace()},
-				Validators: []tfsdk.AttributeValidator{
+				Required: true,
+				PlanModifiers: []planmodifier.Int64{
+					int64planmodifier.RequiresReplace(),
+				},
+				Validators: []validator.Int64{
 					int64validator.AtLeast(1),
 					int64validator.AtLeastSumOf(
 						path.MatchRoot("min_upper"),
@@ -382,143 +389,149 @@ func stringSchemaV3() tfsdk.Schema {
 				},
 			},
 
-			"special": {
+			"special": schema.BoolAttribute{
 				Description: "Include special characters in the result. These are `!@#$%&*()-_=+[]{}<>:?`. Default value is `true`.",
-				Type:        types.BoolType,
 				Optional:    true,
 				Computed:    true,
-				PlanModifiers: []tfsdk.AttributePlanModifier{
-					planmodifiers.DefaultValue(types.BoolValue(true)),
-					planmodifiers.RequiresReplace(),
+				PlanModifiers: []planmodifier.Bool{
+					boolplanmodifiers.DefaultValue(
+						types.BoolValue(true),
+					),
+					boolplanmodifier.RequiresReplace(),
 				},
 			},
 
-			"upper": {
+			"upper": schema.BoolAttribute{
 				Description: "Include uppercase alphabet characters in the result. Default value is `true`.",
-				Type:        types.BoolType,
 				Optional:    true,
 				Computed:    true,
-				PlanModifiers: []tfsdk.AttributePlanModifier{
-					planmodifiers.DefaultValue(types.BoolValue(true)),
-					planmodifiers.RequiresReplace(),
+				PlanModifiers: []planmodifier.Bool{
+					boolplanmodifiers.DefaultValue(
+						types.BoolValue(true),
+					),
+					boolplanmodifier.RequiresReplace(),
 				},
 			},
 
-			"lower": {
+			"lower": schema.BoolAttribute{
 				Description: "Include lowercase alphabet characters in the result. Default value is `true`.",
-				Type:        types.BoolType,
 				Optional:    true,
 				Computed:    true,
-				PlanModifiers: []tfsdk.AttributePlanModifier{
-					planmodifiers.DefaultValue(types.BoolValue(true)),
-					planmodifiers.RequiresReplace(),
+				PlanModifiers: []planmodifier.Bool{
+					boolplanmodifiers.DefaultValue(
+						types.BoolValue(true),
+					),
+					boolplanmodifier.RequiresReplace(),
 				},
 			},
 
-			"number": {
+			"number": schema.BoolAttribute{
 				Description: "Include numeric characters in the result. Default value is `true`. " +
 					"**NOTE**: This is deprecated, use `numeric` instead.",
-				Type:     types.BoolType,
 				Optional: true,
 				Computed: true,
-				PlanModifiers: []tfsdk.AttributePlanModifier{
-					planmodifiers.NumberNumericAttributePlanModifier(),
-					planmodifiers.RequiresReplace(),
+				PlanModifiers: []planmodifier.Bool{
+					boolplanmodifiers.NumberNumericAttributePlanModifier(),
+					boolplanmodifier.RequiresReplace(),
 				},
 				DeprecationMessage: "**NOTE**: This is deprecated, use `numeric` instead.",
 			},
 
-			"numeric": {
+			"numeric": schema.BoolAttribute{
 				Description: "Include numeric characters in the result. Default value is `true`.",
-				Type:        types.BoolType,
 				Optional:    true,
 				Computed:    true,
-				PlanModifiers: []tfsdk.AttributePlanModifier{
-					planmodifiers.NumberNumericAttributePlanModifier(),
-					planmodifiers.RequiresReplace(),
+				PlanModifiers: []planmodifier.Bool{
+					boolplanmodifiers.NumberNumericAttributePlanModifier(),
+					boolplanmodifier.RequiresReplace(),
 				},
 			},
 
-			"min_numeric": {
+			"min_numeric": schema.Int64Attribute{
 				Description: "Minimum number of numeric characters in the result. Default value is `0`.",
-				Type:        types.Int64Type,
 				Optional:    true,
 				Computed:    true,
-				PlanModifiers: []tfsdk.AttributePlanModifier{
-					planmodifiers.DefaultValue(types.Int64Value(0)),
-					planmodifiers.RequiresReplace(),
+				PlanModifiers: []planmodifier.Int64{
+					int64planmodifiers.DefaultValue(
+						types.Int64Value(0),
+					),
+					int64planmodifier.RequiresReplace(),
 				},
 			},
 
-			"min_upper": {
+			"min_upper": schema.Int64Attribute{
 				Description: "Minimum number of uppercase alphabet characters in the result. Default value is `0`.",
-				Type:        types.Int64Type,
 				Optional:    true,
 				Computed:    true,
-				PlanModifiers: []tfsdk.AttributePlanModifier{
-					planmodifiers.DefaultValue(types.Int64Value(0)),
-					planmodifiers.RequiresReplace(),
+				PlanModifiers: []planmodifier.Int64{
+					int64planmodifiers.DefaultValue(
+						types.Int64Value(0),
+					),
+					int64planmodifier.RequiresReplace(),
 				},
 			},
 
-			"min_lower": {
+			"min_lower": schema.Int64Attribute{
 				Description: "Minimum number of lowercase alphabet characters in the result. Default value is `0`.",
-				Type:        types.Int64Type,
 				Optional:    true,
 				Computed:    true,
-				PlanModifiers: []tfsdk.AttributePlanModifier{
-					planmodifiers.DefaultValue(types.Int64Value(0)),
-					planmodifiers.RequiresReplace(),
+				PlanModifiers: []planmodifier.Int64{
+					int64planmodifiers.DefaultValue(
+						types.Int64Value(0),
+					),
+					int64planmodifier.RequiresReplace(),
 				},
 			},
 
-			"min_special": {
+			"min_special": schema.Int64Attribute{
 				Description: "Minimum number of special characters in the result. Default value is `0`.",
-				Type:        types.Int64Type,
 				Optional:    true,
 				Computed:    true,
-				PlanModifiers: []tfsdk.AttributePlanModifier{
-					planmodifiers.DefaultValue(types.Int64Value(0)),
-					planmodifiers.RequiresReplace(),
+				PlanModifiers: []planmodifier.Int64{
+					int64planmodifiers.DefaultValue(
+						types.Int64Value(0),
+					),
+					int64planmodifier.RequiresReplace(),
 				},
 			},
 
-			"override_special": {
+			"override_special": schema.StringAttribute{
 				Description: "Supply your own list of special characters to use for string generation.  This " +
 					"overrides the default character list in the special argument.  The `special` argument must " +
 					"still be set to true for any overwritten characters to be used in generation.",
-				Type:     types.StringType,
 				Optional: true,
-				PlanModifiers: []tfsdk.AttributePlanModifier{
-					resource.RequiresReplaceIf(
-						planmodifiers.RequiresReplaceUnlessEmptyStringToNull(),
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.RequiresReplaceIf(
+						stringplanmodifiers.RequiresReplaceUnlessEmptyStringToNull(),
 						"Replace on modification unless updating from empty string (\"\") to null.",
 						"Replace on modification unless updating from empty string (`\"\"`) to `null`.",
 					),
 				},
 			},
 
-			"result": {
+			"result": schema.StringAttribute{
 				Description: "The generated random string.",
-				Type:        types.StringType,
 				Computed:    true,
-				PlanModifiers: []tfsdk.AttributePlanModifier{
-					resource.UseStateForUnknown(),
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.UseStateForUnknown(),
 				},
 			},
 
-			"id": {
+			"id": schema.StringAttribute{
 				Description: "The generated random string.",
 				Computed:    true,
-				Type:        types.StringType,
-				PlanModifiers: []tfsdk.AttributePlanModifier{
-					resource.UseStateForUnknown(),
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.UseStateForUnknown(),
 				},
 			},
 		},
 	}
 }
 
+// TODO: stringSchemaV2 needs to be updated to use schema.Schema once resource.StateUpgrader has been
+// updated to use schema.Schema for PriorSchema.
+//
+//nolint:staticcheck
 func stringSchemaV2() tfsdk.Schema {
 	return tfsdk.Schema{
 		Version: 2,
@@ -538,26 +551,13 @@ func stringSchemaV2() tfsdk.Schema {
 					ElemType: types.StringType,
 				},
 				Optional: true,
-				PlanModifiers: []tfsdk.AttributePlanModifier{
-					planmodifiers.RequiresReplaceIfValuesNotNull(),
-				},
 			},
 
 			"length": {
 				Description: "The length of the string desired. The minimum value for length is 1 and, length " +
 					"must also be >= (`min_upper` + `min_lower` + `min_numeric` + `min_special`).",
-				Type:          types.Int64Type,
-				Required:      true,
-				PlanModifiers: []tfsdk.AttributePlanModifier{resource.RequiresReplace()},
-				Validators: []tfsdk.AttributeValidator{
-					int64validator.AtLeast(1),
-					int64validator.AtLeastSumOf(
-						path.MatchRoot("min_upper"),
-						path.MatchRoot("min_lower"),
-						path.MatchRoot("min_numeric"),
-						path.MatchRoot("min_special"),
-					),
-				},
+				Type:     types.Int64Type,
+				Required: true,
 			},
 
 			"special": {
@@ -565,10 +565,6 @@ func stringSchemaV2() tfsdk.Schema {
 				Type:        types.BoolType,
 				Optional:    true,
 				Computed:    true,
-				PlanModifiers: []tfsdk.AttributePlanModifier{
-					planmodifiers.DefaultValue(types.BoolValue(true)),
-					planmodifiers.RequiresReplace(),
-				},
 			},
 
 			"upper": {
@@ -576,10 +572,6 @@ func stringSchemaV2() tfsdk.Schema {
 				Type:        types.BoolType,
 				Optional:    true,
 				Computed:    true,
-				PlanModifiers: []tfsdk.AttributePlanModifier{
-					planmodifiers.DefaultValue(types.BoolValue(true)),
-					planmodifiers.RequiresReplace(),
-				},
 			},
 
 			"lower": {
@@ -587,22 +579,14 @@ func stringSchemaV2() tfsdk.Schema {
 				Type:        types.BoolType,
 				Optional:    true,
 				Computed:    true,
-				PlanModifiers: []tfsdk.AttributePlanModifier{
-					planmodifiers.DefaultValue(types.BoolValue(true)),
-					planmodifiers.RequiresReplace(),
-				},
 			},
 
 			"number": {
 				Description: "Include numeric characters in the result. Default value is `true`. " +
 					"**NOTE**: This is deprecated, use `numeric` instead.",
-				Type:     types.BoolType,
-				Optional: true,
-				Computed: true,
-				PlanModifiers: []tfsdk.AttributePlanModifier{
-					planmodifiers.NumberNumericAttributePlanModifier(),
-					planmodifiers.RequiresReplace(),
-				},
+				Type:               types.BoolType,
+				Optional:           true,
+				Computed:           true,
 				DeprecationMessage: "**NOTE**: This is deprecated, use `numeric` instead.",
 			},
 
@@ -611,10 +595,6 @@ func stringSchemaV2() tfsdk.Schema {
 				Type:        types.BoolType,
 				Optional:    true,
 				Computed:    true,
-				PlanModifiers: []tfsdk.AttributePlanModifier{
-					planmodifiers.NumberNumericAttributePlanModifier(),
-					planmodifiers.RequiresReplace(),
-				},
 			},
 
 			"min_numeric": {
@@ -622,10 +602,6 @@ func stringSchemaV2() tfsdk.Schema {
 				Type:        types.Int64Type,
 				Optional:    true,
 				Computed:    true,
-				PlanModifiers: []tfsdk.AttributePlanModifier{
-					planmodifiers.DefaultValue(types.Int64Value(0)),
-					planmodifiers.RequiresReplace(),
-				},
 			},
 
 			"min_upper": {
@@ -633,10 +609,6 @@ func stringSchemaV2() tfsdk.Schema {
 				Type:        types.Int64Type,
 				Optional:    true,
 				Computed:    true,
-				PlanModifiers: []tfsdk.AttributePlanModifier{
-					planmodifiers.DefaultValue(types.Int64Value(0)),
-					planmodifiers.RequiresReplace(),
-				},
 			},
 
 			"min_lower": {
@@ -644,10 +616,6 @@ func stringSchemaV2() tfsdk.Schema {
 				Type:        types.Int64Type,
 				Optional:    true,
 				Computed:    true,
-				PlanModifiers: []tfsdk.AttributePlanModifier{
-					planmodifiers.DefaultValue(types.Int64Value(0)),
-					planmodifiers.RequiresReplace(),
-				},
 			},
 
 			"min_special": {
@@ -655,10 +623,6 @@ func stringSchemaV2() tfsdk.Schema {
 				Type:        types.Int64Type,
 				Optional:    true,
 				Computed:    true,
-				PlanModifiers: []tfsdk.AttributePlanModifier{
-					planmodifiers.DefaultValue(types.Int64Value(0)),
-					planmodifiers.RequiresReplace(),
-				},
 			},
 
 			"override_special": {
@@ -667,36 +631,27 @@ func stringSchemaV2() tfsdk.Schema {
 					"still be set to true for any overwritten characters to be used in generation.",
 				Type:     types.StringType,
 				Optional: true,
-				PlanModifiers: []tfsdk.AttributePlanModifier{
-					resource.RequiresReplaceIf(
-						planmodifiers.RequiresReplaceUnlessEmptyStringToNull(),
-						"Replace on modification unless updating from empty string (\"\") to null.",
-						"Replace on modification unless updating from empty string (`\"\"`) to `null`.",
-					),
-				},
 			},
 
 			"result": {
 				Description: "The generated random string.",
 				Type:        types.StringType,
 				Computed:    true,
-				PlanModifiers: []tfsdk.AttributePlanModifier{
-					resource.UseStateForUnknown(),
-				},
 			},
 
 			"id": {
 				Description: "The generated random string.",
 				Computed:    true,
 				Type:        types.StringType,
-				PlanModifiers: []tfsdk.AttributePlanModifier{
-					resource.UseStateForUnknown(),
-				},
 			},
 		},
 	}
 }
 
+// TODO: stringSchemaV1 needs to be updated to use schema.Schema once resource.StateUpgrader has been
+// updated to use schema.Schema for PriorSchema.
+//
+//nolint:staticcheck
 func stringSchemaV1() tfsdk.Schema {
 	return tfsdk.Schema{
 		Version: 1,
@@ -716,26 +671,13 @@ func stringSchemaV1() tfsdk.Schema {
 					ElemType: types.StringType,
 				},
 				Optional: true,
-				PlanModifiers: []tfsdk.AttributePlanModifier{
-					resource.RequiresReplace(),
-				},
 			},
 
 			"length": {
 				Description: "The length of the string desired. The minimum value for length is 1 and, length " +
 					"must also be >= (`min_upper` + `min_lower` + `min_numeric` + `min_special`).",
-				Type:          types.Int64Type,
-				Required:      true,
-				PlanModifiers: []tfsdk.AttributePlanModifier{resource.RequiresReplace()},
-				Validators: []tfsdk.AttributeValidator{
-					int64validator.AtLeast(1),
-					int64validator.AtLeastSumOf(
-						path.MatchRoot("min_upper"),
-						path.MatchRoot("min_lower"),
-						path.MatchRoot("min_numeric"),
-						path.MatchRoot("min_special"),
-					),
-				},
+				Type:     types.Int64Type,
+				Required: true,
 			},
 
 			"special": {
@@ -743,10 +685,6 @@ func stringSchemaV1() tfsdk.Schema {
 				Type:        types.BoolType,
 				Optional:    true,
 				Computed:    true,
-				PlanModifiers: []tfsdk.AttributePlanModifier{
-					planmodifiers.DefaultValue(types.BoolValue(true)),
-					planmodifiers.RequiresReplace(),
-				},
 			},
 
 			"upper": {
@@ -754,10 +692,6 @@ func stringSchemaV1() tfsdk.Schema {
 				Type:        types.BoolType,
 				Optional:    true,
 				Computed:    true,
-				PlanModifiers: []tfsdk.AttributePlanModifier{
-					planmodifiers.DefaultValue(types.BoolValue(true)),
-					planmodifiers.RequiresReplace(),
-				},
 			},
 
 			"lower": {
@@ -765,10 +699,6 @@ func stringSchemaV1() tfsdk.Schema {
 				Type:        types.BoolType,
 				Optional:    true,
 				Computed:    true,
-				PlanModifiers: []tfsdk.AttributePlanModifier{
-					planmodifiers.DefaultValue(types.BoolValue(true)),
-					planmodifiers.RequiresReplace(),
-				},
 			},
 
 			"number": {
@@ -776,10 +706,6 @@ func stringSchemaV1() tfsdk.Schema {
 				Type:        types.BoolType,
 				Optional:    true,
 				Computed:    true,
-				PlanModifiers: []tfsdk.AttributePlanModifier{
-					planmodifiers.DefaultValue(types.BoolValue(true)),
-					planmodifiers.RequiresReplace(),
-				},
 			},
 
 			"min_numeric": {
@@ -787,10 +713,6 @@ func stringSchemaV1() tfsdk.Schema {
 				Type:        types.Int64Type,
 				Optional:    true,
 				Computed:    true,
-				PlanModifiers: []tfsdk.AttributePlanModifier{
-					planmodifiers.DefaultValue(types.Int64Value(0)),
-					planmodifiers.RequiresReplace(),
-				},
 			},
 
 			"min_upper": {
@@ -798,10 +720,6 @@ func stringSchemaV1() tfsdk.Schema {
 				Type:        types.Int64Type,
 				Optional:    true,
 				Computed:    true,
-				PlanModifiers: []tfsdk.AttributePlanModifier{
-					planmodifiers.DefaultValue(types.Int64Value(0)),
-					planmodifiers.RequiresReplace(),
-				},
 			},
 
 			"min_lower": {
@@ -809,10 +727,6 @@ func stringSchemaV1() tfsdk.Schema {
 				Type:        types.Int64Type,
 				Optional:    true,
 				Computed:    true,
-				PlanModifiers: []tfsdk.AttributePlanModifier{
-					planmodifiers.DefaultValue(types.Int64Value(0)),
-					planmodifiers.RequiresReplace(),
-				},
 			},
 
 			"min_special": {
@@ -820,10 +734,6 @@ func stringSchemaV1() tfsdk.Schema {
 				Type:        types.Int64Type,
 				Optional:    true,
 				Computed:    true,
-				PlanModifiers: []tfsdk.AttributePlanModifier{
-					planmodifiers.DefaultValue(types.Int64Value(0)),
-					planmodifiers.RequiresReplace(),
-				},
 			},
 
 			"override_special": {
@@ -833,9 +743,6 @@ func stringSchemaV1() tfsdk.Schema {
 				Type:     types.StringType,
 				Optional: true,
 				Computed: true,
-				PlanModifiers: []tfsdk.AttributePlanModifier{
-					resource.RequiresReplace(),
-				},
 			},
 
 			"result": {
