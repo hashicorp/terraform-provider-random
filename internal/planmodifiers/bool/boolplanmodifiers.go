@@ -39,49 +39,6 @@ func (d *defaultValueAttributePlanModifier) PlanModifyBool(ctx context.Context, 
 	resp.PlanValue = d.val
 }
 
-// RequiresReplace returns an attribute plan modifier that is identical to resource.RequiresReplace() with
-// the exception that there is no check for `configRaw.IsNull && attrSchema.Computed` as a replacement
-// needs to be triggered when the attribute has been removed from the config.
-func RequiresReplace() planmodifier.Bool {
-	return RequiresReplaceModifier{}
-}
-
-type RequiresReplaceModifier struct{}
-
-// Description returns a human-readable description of the plan modifier.
-func (r RequiresReplaceModifier) Description(ctx context.Context) string {
-	return "If the value of this attribute changes, Terraform will destroy and recreate the resource."
-}
-
-// MarkdownDescription returns a markdown description of the plan modifier.
-func (r RequiresReplaceModifier) MarkdownDescription(ctx context.Context) string {
-	return r.Description(ctx)
-}
-
-// PlanModifyBool will trigger replacement (i.e., destroy-create) when `configRaw.IsNull && attrSchema.Computed`,
-// which differs from the behaviour of `resource.RequiresReplace()`.
-func (r RequiresReplaceModifier) PlanModifyBool(ctx context.Context, req planmodifier.BoolRequest, resp *planmodifier.BoolResponse) {
-	if req.State.Raw.IsNull() {
-		// if we're creating the resource, no need to delete and
-		// recreate it
-		return
-	}
-
-	if req.Plan.Raw.IsNull() {
-		// if we're deleting the resource, no need to delete and
-		// recreate it
-		return
-	}
-
-	if req.PlanValue.Equal(req.StateValue) {
-		// if the plan and the state are in agreement, this attribute
-		// isn't changing, don't require replace
-		return
-	}
-
-	resp.RequiresReplace = true
-}
-
 // NumberNumericAttributePlanModifier returns a plan modifier that keep the values
 // held in number and numeric attributes synchronised.
 func NumberNumericAttributePlanModifier() planmodifier.Bool {
