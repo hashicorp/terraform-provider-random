@@ -571,7 +571,8 @@ func stringSchemaV2() schema.Schema {
 			},
 
 			"number": schema.BoolAttribute{
-				Description:        "Include numeric characters in the result. Default value is `true`.",
+				Description: "Include numeric characters in the result. Default value is `true`. " +
+					"**NOTE**: This is deprecated, use `numeric` instead.",
 				Optional:           true,
 				Computed:           true,
 				DeprecationMessage: "**NOTE**: This is deprecated, use `numeric` instead.",

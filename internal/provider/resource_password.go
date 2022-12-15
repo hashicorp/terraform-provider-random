@@ -929,10 +929,6 @@ func passwordSchemaV1() schema.Schema {
 	}
 }
 
-// TODO: passwordSchemaV0 needs to be updated to use schema.Schema once resource.StateUpgrader has been
-// updated to use schema.Schema for PriorSchema.
-//
-//nolint:staticcheck
 func passwordSchemaV0() schema.Schema {
 	return schema.Schema{
 		Description: "Identical to [random_string](string.html) with the exception that the result is " +
