@@ -618,11 +618,10 @@ func stringSchemaV2() schema.Schema {
 			"result": schema.StringAttribute{
 				Description: "The generated random string.",
 				Computed:    true,
-				Sensitive:   true,
 			},
 
 			"id": schema.StringAttribute{
-				Description: "A static value used internally by Terraform, this should not be referenced in configurations.",
+				Description: "The generated random string.",
 				Computed:    true,
 			},
 		},
@@ -712,11 +711,10 @@ func stringSchemaV1() schema.Schema {
 			"result": schema.StringAttribute{
 				Description: "The generated random string.",
 				Computed:    true,
-				Sensitive:   true,
 			},
 
 			"id": schema.StringAttribute{
-				Description: "A static value used internally by Terraform, this should not be referenced in configurations.",
+				Description: "The generated random string.",
 				Computed:    true,
 			},
 		},

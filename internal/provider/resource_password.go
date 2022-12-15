@@ -872,10 +872,9 @@ func passwordSchemaV1() schema.Schema {
 			},
 
 			"number": schema.BoolAttribute{
-				Description:        "Include numeric characters in the result. Default value is `true`.",
-				Optional:           true,
-				Computed:           true,
-				DeprecationMessage: "**NOTE**: This is deprecated, use `numeric` instead.",
+				Description: "Include numeric characters in the result. Default value is `true`.",
+				Optional:    true,
+				Computed:    true,
 			},
 
 			"min_numeric": schema.Int64Attribute{
@@ -974,10 +973,9 @@ func passwordSchemaV0() schema.Schema {
 			},
 
 			"number": schema.BoolAttribute{
-				Description:        "Include numeric characters in the result. Default value is `true`.",
-				Optional:           true,
-				Computed:           true,
-				DeprecationMessage: "**NOTE**: This is deprecated, use `numeric` instead.",
+				Description: "Include numeric characters in the result. Default value is `true`.",
+				Optional:    true,
+				Computed:    true,
 			},
 
 			"min_numeric": schema.Int64Attribute{
