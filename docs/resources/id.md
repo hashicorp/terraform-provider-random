@@ -73,7 +73,8 @@ resource "aws_instance" "server" {
 ### Read-Only
 
 - `b64_std` (String) The generated id presented in base64 without additional transformations.
-- `b64_url` (String) The generated id presented in base64, using the URL-friendly character set: case-sensitive letters, digits and the characters `_` and `-`.
+- `b64_url` (String) The generated id presented in non-padded base64, using the URL-friendly character set: case-sensitive letters, digits and the characters `_` and `-`.
+- `b64_url_pad` (String) The generated id presented in padded base64, using the URL-friendly character set: case-sensitive letters, digits, padding with `=` and the characters `_` and `-`.
 - `dec` (String) The generated id presented in non-padded decimal digits.
 - `hex` (String) The generated id presented in padded hexadecimal digits. This result will always be twice as long as the requested byte length.
 - `id` (String) The generated id presented in base64 without additional transformations or prefix.

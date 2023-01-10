@@ -85,6 +85,14 @@ exist concurrently.
 					stringplanmodifier.UseStateForUnknown(),
 				},
 			},
+			"b64_url_pad": schema.StringAttribute{
+				Description: "The generated id presented in padded base64, using the URL-friendly character set: " +
+					"case-sensitive letters, digits, padding with `=` and the characters `_` and `-`.",
+				Computed: true,
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.UseStateForUnknown(),
+				},
+			},
 			"b64_std": schema.StringAttribute{
 				Description: "The generated id presented in base64 without additional transformations.",
 				Computed:    true,
@@ -141,6 +149,7 @@ func (r *idResource) Create(ctx context.Context, req resource.CreateRequest, res
 	}
 
 	id := base64.RawURLEncoding.EncodeToString(bytes)
+	b64urlWithPading := base64.URLEncoding.EncodeToString(bytes)
 	prefix := plan.Prefix.ValueString()
 	b64Std := base64.StdEncoding.EncodeToString(bytes)
 	hexStr := hex.EncodeToString(bytes)
@@ -155,6 +164,7 @@ func (r *idResource) Create(ctx context.Context, req resource.CreateRequest, res
 		ByteLength: types.Int64Value(plan.ByteLength.ValueInt64()),
 		Prefix:     plan.Prefix,
 		B64URL:     types.StringValue(prefix + id),
+		B64URLPad:  types.StringValue(prefix + b64urlWithPading),
 		B64Std:     types.StringValue(prefix + b64Std),
 		Hex:        types.StringValue(prefix + hexStr),
 		Dec:        types.StringValue(prefix + dec),
@@ -210,6 +220,7 @@ func (r *idResource) ImportState(ctx context.Context, req resource.ImportStateRe
 		return
 	}
 
+	b64urlWithPading := base64.URLEncoding.EncodeToString(bytes)
 	b64Std := base64.StdEncoding.EncodeToString(bytes)
 	hexStr := hex.EncodeToString(bytes)
 
@@ -225,6 +236,7 @@ func (r *idResource) ImportState(ctx context.Context, req resource.ImportStateRe
 	state.Keepers = types.MapValueMust(types.StringType, nil)
 	state.B64Std = types.StringValue(prefix + b64Std)
 	state.B64URL = types.StringValue(prefix + id)
+	state.B64URLPad = types.StringValue(prefix + b64urlWithPading)
 	state.Hex = types.StringValue(prefix + hexStr)
 	state.Dec = types.StringValue(prefix + dec)
 
@@ -247,6 +259,7 @@ type idModelV0 struct {
 	ByteLength types.Int64  `tfsdk:"byte_length"`
 	Prefix     types.String `tfsdk:"prefix"`
 	B64URL     types.String `tfsdk:"b64_url"`
+	B64URLPad  types.String `tfsdk:"b64_url_pad"`
 	B64Std     types.String `tfsdk:"b64_std"`
 	Hex        types.String `tfsdk:"hex"`
 	Dec        types.String `tfsdk:"dec"`
