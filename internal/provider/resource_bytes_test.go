@@ -45,3 +45,17 @@ func TestAccResourceBytes(t *testing.T) {
 		},
 	})
 }
+
+func TestAccResourceBytes_LengthErrors(t *testing.T) {
+	resource.UnitTest(t, resource.TestCase{
+		ProtoV5ProviderFactories: protoV5ProviderFactories(),
+		Steps: []resource.TestStep{
+			{
+				Config: `resource "random_bytes" "invalid_length" {
+							length = 0
+						}`,
+				ExpectError: regexp.MustCompile(`.*Attribute length value must be at least 1, got: 0`),
+			},
+		},
+	})
+}
