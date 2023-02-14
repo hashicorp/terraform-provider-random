@@ -5,7 +5,7 @@ description: |-
   The resource random_bytes generates an array of bytes that is intended to be used as key or secret.
 ---
 
-# random_password (Resource)
+# random_bytes (Resource)
 
 The resource `random_bytes` generates an array of bytes that is intended to be used as key or secret.
 
@@ -44,7 +44,7 @@ resource "azurerm_key_vault_secret" "jwt_secret" {
 
 ## Import
 
-Import is supported using the following syntax:
+Import is supported using the following syntax with the bytes encoded in base64:
 
 ```shell
 terraform import random_bytes.secret 8/fu3q+2DcgSJ19i0jZ5Cw==

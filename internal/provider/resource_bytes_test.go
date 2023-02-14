@@ -25,10 +25,9 @@ func TestAccResourceBytes(t *testing.T) {
 			},
 			{
 				// Usage of ImportStateIdFunc is required as the value passed to the `terraform import` command needs
-				// to be the password itself, as the password resource sets ID to "none" and "result" to the password
-				// supplied during import.
+				// to be the bytes encoded with base64, as the bytes resource sets ID to "none"
 				ImportStateIdFunc: func(s *terraform.State) (string, error) {
-					id := "random_password.basic"
+					id := "random_bytes.basic"
 					rs, ok := s.RootModule().Resources[id]
 					if !ok {
 						return "", fmt.Errorf("not found: %s", id)
@@ -37,7 +36,7 @@ func TestAccResourceBytes(t *testing.T) {
 						return "", fmt.Errorf("no ID is set")
 					}
 
-					return rs.Primary.Attributes["result"], nil
+					return rs.Primary.Attributes["result_base64"], nil
 				},
 				ResourceName:      "random_bytes.basic",
 				ImportState:       true,
