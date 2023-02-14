@@ -59,3 +59,35 @@ func TestAccResourceBytes_LengthErrors(t *testing.T) {
 		},
 	})
 }
+
+func TestAccResourceBytes_Length_ForceReplacement(t *testing.T) {
+	var bytes1, bytes2 string
+
+	resource.ParallelTest(t, resource.TestCase{
+		Steps: []resource.TestStep{
+			{
+				ProtoV5ProviderFactories: protoV5ProviderFactories(),
+				Config: `resource "random_bytes" "test" {
+					length = 1
+				}`,
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("random_bytes.test", "length", "1"),
+					testExtractResourceAttr("random_bytes.test", "result_base64", &bytes1),
+					resource.TestCheckResourceAttrWith("random_bytes.test", "result_hex", testCheckLen(2)),
+				),
+			},
+			{
+				ProtoV5ProviderFactories: protoV5ProviderFactories(),
+				Config: `resource "random_bytes" "test" {
+					length = 2
+				}`,
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("random_bytes.test", "length", "2"),
+					testExtractResourceAttr("random_bytes.test", "result_base64", &bytes2),
+					resource.TestCheckResourceAttrWith("random_bytes.test", "result_hex", testCheckLen(4)),
+					testCheckAttributeValuesDiffer(&bytes1, &bytes2),
+				),
+			},
+		},
+	})
+}
