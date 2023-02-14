@@ -1,0 +1,6 @@
+kind: FEATURES
+body: 'resource/random_bytes: New resource that generates an array of random bytes
+  intended to be used as key or secret ([#63](https://github.com/hashicorp/terraform-provider-random/issues/63)).'
+time: 2023-02-13T21:34:54.806043106-05:00
+custom:
+  Issue: "272"
