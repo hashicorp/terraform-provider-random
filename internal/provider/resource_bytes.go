@@ -142,6 +142,10 @@ func bytesSchemaV0() schema.Schema {
 				ElementType: types.StringType,
 				Optional:    true,
 				PlanModifiers: []planmodifier.Map{
+					// mapplanmodifiers.RequiresReplaceIfValuesNotNull() has been used for consistency with other
+					// resources but mapplanmodifier.RequiresReplace() could have been used as there shouldn't be any
+					// prior state storage from a terraform-plugin-sdk based resource which would've collapsed a map
+					// of null values into a null map.
 					mapplanmodifiers.RequiresReplaceIfValuesNotNull(),
 				},
 			},
