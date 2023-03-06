@@ -46,6 +46,37 @@ func TestAccResourceBytes(t *testing.T) {
 	})
 }
 
+func TestAccResourceBytes_ImportWithoutKeepersThenUpdateShouldNotTriggerChange(t *testing.T) {
+	resource.UnitTest(t, resource.TestCase{
+		ProtoV5ProviderFactories: protoV5ProviderFactories(),
+		Steps: []resource.TestStep{
+			{
+				ImportState:        true,
+				ImportStateId:      "hkvbcU5f8qGysTFhkI4gzf3yRWC1jXW3aRLCNQFOtNw=",
+				ImportStatePersist: true,
+				ResourceName:       "random_bytes.basic",
+				Config: `resource "random_bytes" "basic" {
+							length = 32
+						}`,
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("random_bytes.basic", "result_base64", "hkvbcU5f8qGysTFhkI4gzf3yRWC1jXW3aRLCNQFOtNw="),
+					resource.TestCheckResourceAttr("random_bytes.basic", "result_hex", "864bdb714e5ff2a1b2b13161908e20cdfdf24560b58d75b76912c235014eb4dc"),
+					resource.TestCheckResourceAttr("random_bytes.basic", "length", "32"),
+				),
+			},
+			{
+				ResourceName: "random_bytes.basic",
+				Config: `resource "random_bytes" "basic" {
+							length = 32
+						}`,
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("random_bytes.basic", "result_base64", "hkvbcU5f8qGysTFhkI4gzf3yRWC1jXW3aRLCNQFOtNw="),
+				),
+			},
+		},
+	})
+}
+
 func TestAccResourceBytes_LengthErrors(t *testing.T) {
 	resource.UnitTest(t, resource.TestCase{
 		ProtoV5ProviderFactories: protoV5ProviderFactories(),

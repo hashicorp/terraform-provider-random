@@ -111,7 +111,7 @@ func (r *bytesResource) ImportState(ctx context.Context, req resource.ImportStat
 	state.Length = types.Int64Value(int64(len(bytes)))
 	state.ResultBase64 = types.StringValue(req.ID)
 	state.ResultHex = types.StringValue(hex.EncodeToString(bytes))
-	state.Keepers = types.MapValueMust(types.StringType, nil)
+	state.Keepers = types.MapNull(types.StringType)
 
 	diags := resp.State.Set(ctx, &state)
 	resp.Diagnostics.Append(diags...)
