@@ -78,8 +78,6 @@ func (r *bytesResource) Create(ctx context.Context, req resource.CreateRequest, 
 func (r *bytesResource) Read(context.Context, resource.ReadRequest, *resource.ReadResponse) {
 }
 
-// Update is intentionally left blank as all required and optional attributes force replacement of the resource
-// through the RequiresReplace AttributePlanModifier.
 func (r *bytesResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
 	var model bytesModelV0
 
