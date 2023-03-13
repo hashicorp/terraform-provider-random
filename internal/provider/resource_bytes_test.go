@@ -65,13 +65,10 @@ func TestAccResourceBytes_ImportWithoutKeepersThenUpdateShouldNotTriggerChange(t
 				),
 			},
 			{
-				ResourceName: "random_bytes.basic",
 				Config: `resource "random_bytes" "basic" {
 							length = 32
 						}`,
-				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttr("random_bytes.basic", "result_base64", "hkvbcU5f8qGysTFhkI4gzf3yRWC1jXW3aRLCNQFOtNw="),
-				),
+				PlanOnly: true,
 			},
 		},
 	})
