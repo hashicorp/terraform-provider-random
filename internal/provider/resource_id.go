@@ -221,8 +221,7 @@ func (r *idResource) ImportState(ctx context.Context, req resource.ImportStateRe
 
 	state.ID = types.StringValue(id)
 	state.ByteLength = types.Int64Value(int64(len(bytes)))
-	// Using types.MapValueMust to ensure map is known.
-	state.Keepers = types.MapValueMust(types.StringType, nil)
+	state.Keepers = types.MapNull(types.StringType)
 	state.B64Std = types.StringValue(prefix + b64Std)
 	state.B64URL = types.StringValue(prefix + id)
 	state.Hex = types.StringValue(prefix + hexStr)

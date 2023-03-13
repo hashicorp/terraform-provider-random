@@ -27,6 +27,27 @@ func TestAccResourceUUID(t *testing.T) {
 	})
 }
 
+func TestAccResourceUUID_ImportWithoutKeepersProducesNoPlannedChanges(t *testing.T) {
+	resource.UnitTest(t, resource.TestCase{
+		ProtoV5ProviderFactories: protoV5ProviderFactories(),
+		Steps: []resource.TestStep{
+			{
+				Config: `resource "random_uuid" "basic" { 
+						}`,
+				ResourceName:       "random_uuid.basic",
+				ImportStateId:      "6b0f8e7c-3ea6-4523-88a2-5a70419ee954",
+				ImportState:        true,
+				ImportStatePersist: true,
+			},
+			{
+				Config: `resource "random_uuid" "basic" { 
+						}`,
+				PlanOnly: true,
+			},
+		},
+	})
+}
+
 func TestAccResourceUUID_Keepers_Keep_EmptyMap(t *testing.T) {
 	var id1, id2 string
 

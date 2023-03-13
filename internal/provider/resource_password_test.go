@@ -280,6 +280,29 @@ func TestAccResourcePassword_OverrideSpecial_FromVersion3_4_2(t *testing.T) {
 	})
 }
 
+func TestAccResourcePassword_ImportWithoutKeepersProducesNoPlannedChanges(t *testing.T) {
+	resource.UnitTest(t, resource.TestCase{
+		ProtoV5ProviderFactories: protoV5ProviderFactories(),
+		Steps: []resource.TestStep{
+			{
+				Config: `resource "random_password" "test" {
+							length = 12
+						}`,
+				ResourceName:       "random_password.test",
+				ImportStateId:      "Z=:cbrJE?Ltg",
+				ImportState:        true,
+				ImportStatePersist: true,
+			},
+			{
+				Config: `resource "random_password" "test" {
+							length = 12
+						}`,
+				PlanOnly: true,
+			},
+		},
+	})
+}
+
 // TestAccResourcePassword_Import_FromVersion3_1_3 verifies behaviour when resource has been imported and stores
 // null for length, lower, number, special, upper, min_lower, min_numeric, min_special, min_upper attributes in state.
 // v3.1.3 was selected as this is the last provider version using schema version 0.

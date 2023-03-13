@@ -34,6 +34,29 @@ func TestAccResourceString_Import(t *testing.T) {
 	})
 }
 
+func TestAccResourceString_ImportWithoutKeepersProducesNoPlannedChanges(t *testing.T) {
+	resource.UnitTest(t, resource.TestCase{
+		ProtoV5ProviderFactories: protoV5ProviderFactories(),
+		Steps: []resource.TestStep{
+			{
+				Config: `resource "random_string" "basic" {
+							length = 12
+						}`,
+				ResourceName:       "random_string.basic",
+				ImportStateId:      "Z=:cbrJE?Ltg",
+				ImportState:        true,
+				ImportStatePersist: true,
+			},
+			{
+				Config: `resource "random_string" "basic" {
+							length = 12
+						}`,
+				PlanOnly: true,
+			},
+		},
+	})
+}
+
 func TestAccResourceString_Keepers_Keep_EmptyMap(t *testing.T) {
 	var id1, id2 string
 
