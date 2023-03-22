@@ -8,7 +8,9 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/booldefault"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/boolplanmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/int64default"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/int64planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
@@ -18,7 +20,6 @@ import (
 
 	"github.com/terraform-providers/terraform-provider-random/internal/diagnostics"
 	boolplanmodifiers "github.com/terraform-providers/terraform-provider-random/internal/planmodifiers/bool"
-	int64planmodifiers "github.com/terraform-providers/terraform-provider-random/internal/planmodifiers/int64"
 	mapplanmodifiers "github.com/terraform-providers/terraform-provider-random/internal/planmodifiers/map"
 	stringplanmodifiers "github.com/terraform-providers/terraform-provider-random/internal/planmodifiers/string"
 	"github.com/terraform-providers/terraform-provider-random/internal/random"
@@ -581,10 +582,8 @@ func passwordSchemaV3() schema.Schema {
 				Description: "Include special characters in the result. These are `!@#$%&*()-_=+[]{}<>:?`. Default value is `true`.",
 				Optional:    true,
 				Computed:    true,
+				Default:     booldefault.StaticBool(true),
 				PlanModifiers: []planmodifier.Bool{
-					boolplanmodifiers.DefaultValue(
-						types.BoolValue(true),
-					),
 					boolplanmodifier.RequiresReplace(),
 				},
 			},
@@ -593,10 +592,8 @@ func passwordSchemaV3() schema.Schema {
 				Description: "Include uppercase alphabet characters in the result. Default value is `true`.",
 				Optional:    true,
 				Computed:    true,
+				Default:     booldefault.StaticBool(true),
 				PlanModifiers: []planmodifier.Bool{
-					boolplanmodifiers.DefaultValue(
-						types.BoolValue(true),
-					),
 					boolplanmodifier.RequiresReplace(),
 				}},
 
@@ -604,10 +601,8 @@ func passwordSchemaV3() schema.Schema {
 				Description: "Include lowercase alphabet characters in the result. Default value is `true`.",
 				Optional:    true,
 				Computed:    true,
+				Default:     booldefault.StaticBool(true),
 				PlanModifiers: []planmodifier.Bool{
-					boolplanmodifiers.DefaultValue(
-						types.BoolValue(true),
-					),
 					boolplanmodifier.RequiresReplace(),
 				},
 			},
@@ -638,10 +633,8 @@ func passwordSchemaV3() schema.Schema {
 				Description: "Minimum number of numeric characters in the result. Default value is `0`.",
 				Optional:    true,
 				Computed:    true,
+				Default:     int64default.StaticInt64(0),
 				PlanModifiers: []planmodifier.Int64{
-					int64planmodifiers.DefaultValue(
-						types.Int64Value(0),
-					),
 					int64planmodifier.RequiresReplace(),
 				},
 			},
@@ -650,10 +643,8 @@ func passwordSchemaV3() schema.Schema {
 				Description: "Minimum number of uppercase alphabet characters in the result. Default value is `0`.",
 				Optional:    true,
 				Computed:    true,
+				Default:     int64default.StaticInt64(0),
 				PlanModifiers: []planmodifier.Int64{
-					int64planmodifiers.DefaultValue(
-						types.Int64Value(0),
-					),
 					int64planmodifier.RequiresReplace(),
 				},
 			},
@@ -662,10 +653,8 @@ func passwordSchemaV3() schema.Schema {
 				Description: "Minimum number of lowercase alphabet characters in the result. Default value is `0`.",
 				Optional:    true,
 				Computed:    true,
+				Default:     int64default.StaticInt64(0),
 				PlanModifiers: []planmodifier.Int64{
-					int64planmodifiers.DefaultValue(
-						types.Int64Value(0),
-					),
 					int64planmodifier.RequiresReplace(),
 				},
 			},
@@ -674,10 +663,8 @@ func passwordSchemaV3() schema.Schema {
 				Description: "Minimum number of special characters in the result. Default value is `0`.",
 				Optional:    true,
 				Computed:    true,
+				Default:     int64default.StaticInt64(0),
 				PlanModifiers: []planmodifier.Int64{
-					int64planmodifiers.DefaultValue(
-						types.Int64Value(0),
-					),
 					int64planmodifier.RequiresReplace(),
 				},
 			},
