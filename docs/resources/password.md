@@ -53,7 +53,7 @@ resource "aws_db_instance" "example" {
 
 ### Read-Only
 
-- `bcrypt_hash` (String, Sensitive) A bcrypt hash of the generated random string.
+- `bcrypt_hash` (String, Sensitive) A bcrypt hash of the generated random string. **NOTE**: If the generated random string is greater than 72 bytes in length, `bcrypt_hash` will contain a hash of the first 72 bytes.
 - `id` (String) A static value used internally by Terraform, this should not be referenced in configurations.
 - `result` (String, Sensitive) The generated random string.
 
