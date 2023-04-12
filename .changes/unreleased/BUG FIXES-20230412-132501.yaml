@@ -1,5 +1,5 @@
 kind: BUG FIXES
-body: 'resource/random_password: The `generateHash()` functions has been modified
+body: 'resource/random_password: The `generateHash()` function has been modified
   to truncate strings to 72 bytes'
 time: 2023-04-12T13:25:01.113462+01:00
 custom:
