@@ -537,10 +537,7 @@ func upgradePasswordStateV2toV3(ctx context.Context, req resource.UpgradeStateRe
 
 // generateHash truncates strings that are longer than 72 bytes in
 // order to avoid the error returned from bcrypt.GenerateFromPassword
-// in versions v0.5.0 and above (refer to
-// https://pkg.go.dev/golang.org/x/crypto/bcrypt?tab=versions).
-// This is to preserve backwards compatibility and will be removed in
-// a subsequent version of the provider.
+// in versions v0.5.0 and above: https://pkg.go.dev/golang.org/x/crypto@v0.8.0/bcrypt#GenerateFromPassword
 func generateHash(toHash string) (string, error) {
 	bytesHash := []byte(toHash)
 	bytesToHash := bytesHash
