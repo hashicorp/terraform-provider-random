@@ -28,7 +28,7 @@ func TestGenerateHash(t *testing.T) {
 	}{
 		"defaults": {
 			input: random.StringParams{
-				Length:  32, // Required
+				Length:  73, // Required
 				Lower:   true,
 				Numeric: true,
 				Special: true,
@@ -111,7 +111,7 @@ func TestAccResourcePassword_BcryptHash(t *testing.T) {
 		Steps: []resource.TestStep{
 			{
 				Config: `resource "random_password" "test" {
-							length = 12
+							length = 73
 						}`,
 				Check: resource.ComposeTestCheckFunc(
 					testExtractResourceAttr("random_password.test", "bcrypt_hash", &bcryptHash),

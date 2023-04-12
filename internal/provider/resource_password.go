@@ -535,8 +535,18 @@ func upgradePasswordStateV2toV3(ctx context.Context, req resource.UpgradeStateRe
 	resp.Diagnostics.Append(resp.State.Set(ctx, passwordDataV3)...)
 }
 
+// generateHash truncates strings that are longer than 72 bytes in
+// order to avoid the error returned from bcrypt.GenerateFromPassword
+// in versions v0.5.0 and above: https://pkg.go.dev/golang.org/x/crypto@v0.8.0/bcrypt#GenerateFromPassword
 func generateHash(toHash string) (string, error) {
-	hash, err := bcrypt.GenerateFromPassword([]byte(toHash), bcrypt.DefaultCost)
+	bytesHash := []byte(toHash)
+	bytesToHash := bytesHash
+
+	if len(bytesHash) > 72 {
+		bytesToHash = bytesHash[:72]
+	}
+
+	hash, err := bcrypt.GenerateFromPassword(bytesToHash, bcrypt.DefaultCost)
 
 	return string(hash), err
 }
@@ -693,9 +703,11 @@ func passwordSchemaV3() schema.Schema {
 			},
 
 			"bcrypt_hash": schema.StringAttribute{
-				Description: "A bcrypt hash of the generated random string.",
-				Computed:    true,
-				Sensitive:   true,
+				Description: "A bcrypt hash of the generated random string. " +
+					"**NOTE**: If the generated random string is greater than 72 bytes in length, " +
+					"`bcrypt_hash` will contain a hash of the first 72 bytes.",
+				Computed:  true,
+				Sensitive: true,
 				PlanModifiers: []planmodifier.String{
 					stringplanmodifier.UseStateForUnknown(),
 				},
@@ -805,9 +817,11 @@ func passwordSchemaV2() schema.Schema {
 			},
 
 			"bcrypt_hash": schema.StringAttribute{
-				Description: "A bcrypt hash of the generated random string.",
-				Computed:    true,
-				Sensitive:   true,
+				Description: "A bcrypt hash of the generated random string. " +
+					"**NOTE**: If the generated random string is greater than 72 bytes in length, " +
+					"`bcrypt_hash` will contain a hash of the first 72 bytes.",
+				Computed:  true,
+				Sensitive: true,
 			},
 
 			"id": schema.StringAttribute{
@@ -903,9 +917,11 @@ func passwordSchemaV1() schema.Schema {
 			},
 
 			"bcrypt_hash": schema.StringAttribute{
-				Description: "A bcrypt hash of the generated random string.",
-				Computed:    true,
-				Sensitive:   true,
+				Description: "A bcrypt hash of the generated random string. " +
+					"**NOTE**: If the generated random string is greater than 72 bytes in length, " +
+					"`bcrypt_hash` will contain a hash of the first 72 bytes.",
+				Computed:  true,
+				Sensitive: true,
 			},
 
 			"id": schema.StringAttribute{
