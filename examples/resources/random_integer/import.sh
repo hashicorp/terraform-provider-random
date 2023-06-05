@@ -1,3 +1,6 @@
+# Copyright (c) HashiCorp, Inc.
+# SPDX-License-Identifier: MPL-2.0
+
 # Random integers can be imported using the result, min, and max, with an
 # optional seed. This can be used to replace a config value with a value
 # interpolated from the random provider without experiencing diffs.

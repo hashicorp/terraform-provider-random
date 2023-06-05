@@ -1,3 +1,6 @@
+# Copyright (c) HashiCorp, Inc.
+# SPDX-License-Identifier: MPL-2.0
+
 resource "random_shuffle" "az" {
   input        = ["us-west-1a", "us-west-1c", "us-west-1d", "us-west-1e"]
   result_count = 2

@@ -1,3 +1,6 @@
+# Copyright (c) HashiCorp, Inc.
+# SPDX-License-Identifier: MPL-2.0
+
 # The following example shows how to generate a unique pet name
 # for an AWS EC2 instance that changes each time a new AMI id is
 # selected.

@@ -1,3 +1,6 @@
+# Copyright (c) HashiCorp, Inc.
+# SPDX-License-Identifier: MPL-2.0
+
 resource "random_id" "server" {
   keepers = {
     # Generate a new id each time we switch to a new AMI id
