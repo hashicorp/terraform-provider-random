@@ -46,5 +46,3 @@ resource "aws_elb" "example" {
 
 - `id` (String) A static value used internally by Terraform, this should not be referenced in configurations.
 - `result` (List of String) Random permutation of the list of strings given in `input`.
-
-

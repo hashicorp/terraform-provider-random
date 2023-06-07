@@ -53,5 +53,3 @@ resource "aws_instance" "server" {
 ### Read-Only
 
 - `id` (String) The random pet name.
-
-
