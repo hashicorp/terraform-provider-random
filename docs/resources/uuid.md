@@ -3,15 +3,15 @@
 page_title: "random_uuid Resource - terraform-provider-random"
 subcategory: ""
 description: |-
-  The resource random_uuid generates random uuid string that is intended to be used as unique identifiers for other resources.
-  This resource uses hashicorp/go-uuid https://github.com/hashicorp/go-uuid to generate a UUID-formatted string for use with services needed a unique string identifier.
+  The resource random_uuid generates a random uuid string that is intended to be used as a unique identifier for other resources.
+  This resource uses hashicorp/go-uuid https://github.com/hashicorp/go-uuid to generate a UUID-formatted string for use with services needing a unique string identifier.
 ---
 
 # random_uuid (Resource)
 
-The resource `random_uuid` generates random uuid string that is intended to be used as unique identifiers for other resources.
+The resource `random_uuid` generates a random uuid string that is intended to be used as a unique identifier for other resources.
 
-This resource uses [hashicorp/go-uuid](https://github.com/hashicorp/go-uuid) to generate a UUID-formatted string for use with services needed a unique string identifier.
+This resource uses [hashicorp/go-uuid](https://github.com/hashicorp/go-uuid) to generate a UUID-formatted string for use with services needing a unique string identifier.
 
 ## Example Usage
 
