@@ -1,0 +1,131 @@
+⬤  debug     Preparing to convert provider docs {
+  path: '.',
+  provider: { type: 'registry', requirement: 'hashicorp/random' },
+  failOnTranslationError: false,
+  languages: [ 'typescript', 'python' ],
+  files: [],
+  additionalProviderRequirements: [],
+  parallelConversionsPerDocument: 3,
+  parallelFileConversions: 1
+}
+⬤  debug     Initializing cdktf project in /tmp/cdktf-registry-docs83mWgT
+[91m[2023-08-17T14:38:02.858] [ERROR] default - [39mThere are some problems with the CLI configuration:
+╷
+│ Error: The specified plugin cache dir /terraform-plugins cannot be opened: stat /terraform-plugins: no such file or directory
+│
+╵
+
+As a result of the above problems, Terraform may not behave as intended.
+
+
+
+
+[0m[1mInitializing the backend...[0m
+
+[0m[1mInitializing provider plugins...[0m
+- Finding latest version of hashicorp/random...
+- Installing hashicorp/random v3.5.1...
+- Installed hashicorp/random v3.5.1 (signed by HashiCorp)
+
+Terraform has created a lock file [1m.terraform.lock.hcl[0m to record the provider
+selections it made above. Include this file in your version control repository
+so that Terraform can guarantee to make the same selections by default when
+you run "terraform init" in the future.[0m
+
+[0m[1m[32mTerraform has been successfully initialized![0m[32m[0m
+[0m[32m
+You may now begin working with Terraform. Try running "terraform plan" to see
+any changes that are required for your infrastructure. All Terraform commands
+should now work.
+
+If you ever set or change modules or backend configuration for Terraform,
+rerun this command to reinitialize your working directory. If you forget, other
+commands will detect it and remind you to do so if necessary.[0m
+
+added 2 packages, and audited 57 packages in 1s
+
+7 packages are looking for funding
+  run `npm fund` for details
+
+2 moderate severity vulnerabilities
+
+To address all issues, run:
+  npm audit fix
+
+Run `npm audit` for details.
+
+added 309 packages, and audited 366 packages in 5s
+
+37 packages are looking for funding
+  run `npm fund` for details
+
+2 moderate severity vulnerabilities
+
+To address all issues, run:
+  npm audit fix
+
+Run `npm audit` for details.
+========================================================================================================
+
+  Your cdktf typescript project is ready!
+
+  cat help                Print this message
+
+  Compile:
+    npm run get           Import/update Terraform providers and modules (you should check-in this directory)
+    npm run compile       Compile typescript code to javascript (or "npm run watch")
+    npm run watch         Watch for changes and compile typescript in the background
+    npm run build         Compile typescript
+
+  Synthesize:
+    cdktf synth [stack]   Synthesize Terraform resources from stacks to cdktf.out/ (ready for 'terraform apply')
+
+  Diff:
+    cdktf diff [stack]    Perform a diff (terraform plan) for the given stack
+
+  Deploy:
+    cdktf deploy [stack]  Deploy the given stack
+
+  Destroy:
+    cdktf destroy [stack] Destroy the stack
+
+  Test:
+    npm run test        Runs unit tests (edit __tests__/main-test.ts to add your own tests)
+    npm run test:watch  Watches the tests and reruns them on change
+
+  Upgrades:
+    npm run upgrade        Upgrade cdktf modules to latest version
+    npm run upgrade:next   Upgrade cdktf modules to latest "@next" version (last commit)
+
+ Use Providers:
+
+  You can add prebuilt providers (if available) or locally generated ones using the add command:
+  
+  cdktf provider add "aws@~>3.0" null kreuzwerker/docker
+
+  You can find all prebuilt providers on npm: https://www.npmjs.com/search?q=keywords:cdktf
+  You can also install these providers directly through npm:
+
+  npm install @cdktf/provider-aws
+  npm install @cdktf/provider-google
+  npm install @cdktf/provider-azurerm
+  npm install @cdktf/provider-docker
+  npm install @cdktf/provider-github
+  npm install @cdktf/provider-null
+
+  You can also build any module or provider locally. Learn more https://cdk.tf/modules-and-providers
+
+========================================================================================================
+
+⬤  debug     Preparation done, executing in /tmp/cdktf-registry-docs83mWgT
+⬤  debug     Files to convert: []
+ℹ  info      Converting 0 files to 2 languages
+ℹ  info      Filtered 0 files that already exist and are up to date
+📋  report    {
+  "files": [],
+  "snippets": [],
+  "invalidSnippets": [],
+  "validSnippets": [],
+  "failedConverts": [],
+  "skippedFiles": []
+}
