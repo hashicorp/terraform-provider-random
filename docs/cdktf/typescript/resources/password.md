@@ -29,17 +29,15 @@ import { Password } from "./.gen/providers/random/password";
 class MyConvertedCode extends TerraformStack {
   constructor(scope: Construct, name: string) {
     super(scope, name);
-    /*The following providers are missing schema information and might need manual adjustments to synthesize correctly: aws.
-    For a more precise conversion please use the --provider flag in convert.*/
     const password = new Password(this, "password", {
       length: 16,
       overrideSpecial: "!#$%&*()-_=+[]{}<>:?",
       special: true,
     });
     new DbInstance(this, "example", {
-      allocated_storage: 64,
+      allocatedStorage: 64,
       engine: "mysql",
-      instance_class: "db.t3.micro",
+      instanceClass: "db.t3.micro",
       password: password.result,
       username: "someone",
     });
@@ -196,4 +194,4 @@ class MyConvertedCode extends TerraformStack {
     **NOTE** `ignoreChanges` is only required until the resource is recreated after import,
     after which it will use the configuration values specified.
 
-<!-- cache-key: cdktf-0.18.0 input-679f2842bdae2deada09d08030e614f09c42f4d6c2a4a7861ed1b7a84f1ceeea -->
+<!-- cache-key: cdktf-0.18.0 input-679f2842bdae2deada09d08030e614f09c42f4d6c2a4a7861ed1b7a84f1ceeea 556251879b8ed0dc4c87a76b568667e0ab5e2c46efdd14a05c556daf05678783-->
