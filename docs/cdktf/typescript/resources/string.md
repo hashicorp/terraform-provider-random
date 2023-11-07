@@ -46,7 +46,7 @@ class MyConvertedCode extends TerraformStack {
 
 ### Required
 
-- `length` (Number) The length of the string desired. The minimum value for length is 1 and, length must also be >= (`minUpper` + `minLower` + `minNumeric` + `minSpecial`).
+- `length` (Number) The length of the string desired. The minimum value for length is 1 and, length must also be >= (`min_upper` + `min_lower` + `min_numeric` + `min_special`).
 
 ### Optional
 
@@ -59,7 +59,7 @@ class MyConvertedCode extends TerraformStack {
 - `number` (Boolean, Deprecated) Include numeric characters in the result. Default value is `true`. **NOTE**: This is deprecated, use `numeric` instead.
 - `numeric` (Boolean) Include numeric characters in the result. Default value is `true`.
 - `overrideSpecial` (String) Supply your own list of special characters to use for string generation.  This overrides the default character list in the special argument.  The `special` argument must still be set to true for any overwritten characters to be used in generation.
-- `special` (Boolean) Include special characters in the result. These are `!@#$%&*()_=+[]{}<>:?`. Default value is `true`.
+- `special` (Boolean) Include special characters in the result. These are `!@#$%&*()-_=+[]{}<>:?`. Default value is `true`.
 - `upper` (Boolean) Include uppercase alphabet characters in the result. Default value is `true`.
 
 ### Read-Only
@@ -180,6 +180,6 @@ class MyConvertedCode extends TerraformStack {
 
 ```
 
-    **NOTE** `ignoreChanges` is only required until the resource is recreated after import,
+    **NOTE** `ignore_changes` is only required until the resource is recreated after import,
     after which it will use the configuration values specified.
-<!-- cache-key: cdktf-0.18.0 input-54afc295b1f13e4a8837c027e2fd4b275761a58e02a58fa325f8460acce4ca8f 556251879b8ed0dc4c87a76b568667e0ab5e2c46efdd14a05c556daf05678783-->
+<!-- cache-key: cdktf-0.19.0 input-54afc295b1f13e4a8837c027e2fd4b275761a58e02a58fa325f8460acce4ca8f 556251879b8ed0dc4c87a76b568667e0ab5e2c46efdd14a05c556daf05678783-->
