@@ -7,6 +7,7 @@ import (
 	"crypto/rand"
 	"math/big"
 	"sort"
+	"strings"
 )
 
 type StringParams struct {
@@ -20,6 +21,7 @@ type StringParams struct {
 	Special         bool
 	MinSpecial      int64
 	OverrideSpecial string
+	Exclude         string
 }
 
 func CreateString(input StringParams) ([]byte, error) {
@@ -45,6 +47,9 @@ func CreateString(input StringParams) ([]byte, error) {
 	}
 	if input.Special {
 		chars += specialChars
+	}
+	if len(input.Exclude) > 0 {
+		chars = excludeLettersFromString(chars, input.Exclude)
 	}
 
 	minMapping := map[string]int64{
@@ -94,4 +99,21 @@ func generateRandomBytes(charSet *string, length int64) ([]byte, error) {
 		bytes[i] = (*charSet)[idx.Int64()]
 	}
 	return bytes, nil
+}
+
+func excludeLettersFromString(s, lettersToExclude string) string {
+	lettersToExcludeSet := make(map[rune]struct{})
+	for _, char := range lettersToExclude {
+		lettersToExcludeSet[char] = struct{}{}
+	}
+
+	var result strings.Builder
+
+	for _, char := range s {
+		if _, found := lettersToExcludeSet[char]; !found {
+			result.WriteRune(char)
+		}
+	}
+
+	return result.String()
 }

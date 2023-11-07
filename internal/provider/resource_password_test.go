@@ -1189,6 +1189,7 @@ func TestUpgradePasswordStateV0toV3(t *testing.T) {
 					"result":           tftypes.String,
 					"special":          tftypes.Bool,
 					"upper":            tftypes.Bool,
+					"exclude":          tftypes.String,
 				},
 			}, map[string]tftypes.Value{
 				"bcrypt_hash":      tftypes.NewValue(tftypes.String, "hash"),
@@ -1206,6 +1207,7 @@ func TestUpgradePasswordStateV0toV3(t *testing.T) {
 				"result":           tftypes.NewValue(tftypes.String, "DZy_3*tnonj%Q%Yx"),
 				"special":          tftypes.NewValue(tftypes.Bool, true),
 				"upper":            tftypes.NewValue(tftypes.Bool, true),
+				"exclude":          tftypes.NewValue(tftypes.String, ""),
 			}),
 			Schema: passwordSchemaV3(),
 		},
@@ -1314,6 +1316,7 @@ func TestUpgradePasswordStateV0toV3_NullValues(t *testing.T) {
 					"result":           tftypes.String,
 					"special":          tftypes.Bool,
 					"upper":            tftypes.Bool,
+					"exclude":          tftypes.String,
 				},
 			}, map[string]tftypes.Value{
 				"bcrypt_hash":      tftypes.NewValue(tftypes.String, "hash"),
@@ -1331,6 +1334,7 @@ func TestUpgradePasswordStateV0toV3_NullValues(t *testing.T) {
 				"result":           tftypes.NewValue(tftypes.String, "DZy_3*tnonj%Q%Yx"),
 				"special":          tftypes.NewValue(tftypes.Bool, true),
 				"upper":            tftypes.NewValue(tftypes.Bool, true),
+				"exclude":          tftypes.NewValue(tftypes.String, ""),
 			}),
 			Schema: passwordSchemaV3(),
 		},
@@ -1442,6 +1446,7 @@ func TestUpgradePasswordStateV1toV3(t *testing.T) {
 					"special":          tftypes.Bool,
 					"upper":            tftypes.Bool,
 					"bcrypt_hash":      tftypes.String,
+					"exclude":          tftypes.String,
 				},
 			}, map[string]tftypes.Value{
 				"id":               tftypes.NewValue(tftypes.String, "none"),
@@ -1459,6 +1464,7 @@ func TestUpgradePasswordStateV1toV3(t *testing.T) {
 				"special":          tftypes.NewValue(tftypes.Bool, true),
 				"upper":            tftypes.NewValue(tftypes.Bool, true),
 				"bcrypt_hash":      tftypes.NewValue(tftypes.String, "bcrypt_hash"),
+				"exclude":          tftypes.NewValue(tftypes.String, ""),
 			}),
 			Schema: passwordSchemaV3(),
 		},
@@ -1538,6 +1544,7 @@ func TestUpgradePasswordStateV1toV3_NullValues(t *testing.T) {
 					"special":          tftypes.Bool,
 					"upper":            tftypes.Bool,
 					"bcrypt_hash":      tftypes.String,
+					"exclude":          tftypes.String,
 				},
 			}, map[string]tftypes.Value{
 				"id":               tftypes.NewValue(tftypes.String, "none"),
@@ -1555,6 +1562,7 @@ func TestUpgradePasswordStateV1toV3_NullValues(t *testing.T) {
 				"special":          tftypes.NewValue(tftypes.Bool, true),
 				"upper":            tftypes.NewValue(tftypes.Bool, true),
 				"bcrypt_hash":      tftypes.NewValue(tftypes.String, "bcrypt_hash"),
+				"exclude":          tftypes.NewValue(tftypes.String, ""),
 			}),
 			Schema: passwordSchemaV3(),
 		},
@@ -1632,6 +1640,7 @@ func TestUpgradePasswordStateV2toV3(t *testing.T) {
 							"result":           tftypes.String,
 							"special":          tftypes.Bool,
 							"upper":            tftypes.Bool,
+							"exclude":          tftypes.String,
 						},
 					}, map[string]tftypes.Value{
 						// The difference checking should compare this actual
@@ -1651,6 +1660,7 @@ func TestUpgradePasswordStateV2toV3(t *testing.T) {
 						"result":           tftypes.NewValue(tftypes.String, "n:um[a9kO&x!L=9og[EM"),
 						"special":          tftypes.NewValue(tftypes.Bool, true),
 						"upper":            tftypes.NewValue(tftypes.Bool, true),
+						"exclude":          tftypes.NewValue(tftypes.String, ""),
 					}),
 					Schema: passwordSchemaV3(),
 				},
@@ -1716,6 +1726,7 @@ func TestUpgradePasswordStateV2toV3(t *testing.T) {
 							"result":           tftypes.String,
 							"special":          tftypes.Bool,
 							"upper":            tftypes.Bool,
+							"exclude":          tftypes.String,
 						},
 					}, map[string]tftypes.Value{
 						// bcrypt_hash is randomly generated, so the difference checking
@@ -1735,6 +1746,7 @@ func TestUpgradePasswordStateV2toV3(t *testing.T) {
 						"result":           tftypes.NewValue(tftypes.String, "$7r>NiN4Z%uAxpU]:DuB"),
 						"special":          tftypes.NewValue(tftypes.Bool, true),
 						"upper":            tftypes.NewValue(tftypes.Bool, true),
+						"exclude":          tftypes.NewValue(tftypes.String, ""),
 					}),
 					Schema: passwordSchemaV3(),
 				},
@@ -1800,6 +1812,7 @@ func TestUpgradePasswordStateV2toV3(t *testing.T) {
 							"result":           tftypes.String,
 							"special":          tftypes.Bool,
 							"upper":            tftypes.Bool,
+							"exclude":          tftypes.String,
 						},
 					}, map[string]tftypes.Value{
 						// The difference checking should compare this actual
@@ -1819,6 +1832,7 @@ func TestUpgradePasswordStateV2toV3(t *testing.T) {
 						"result":           tftypes.NewValue(tftypes.String, "n:um[a9kO&x!L=9og[EM"),
 						"special":          tftypes.NewValue(tftypes.Bool, true),
 						"upper":            tftypes.NewValue(tftypes.Bool, true),
+						"exclude":          tftypes.NewValue(tftypes.String, ""),
 					}),
 					Schema: passwordSchemaV3(),
 				},

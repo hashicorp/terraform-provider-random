@@ -68,6 +68,7 @@ func (r *passwordResource) Create(ctx context.Context, req resource.CreateReques
 		Special:         plan.Special.ValueBool(),
 		MinSpecial:      plan.MinSpecial.ValueInt64(),
 		OverrideSpecial: plan.OverrideSpecial.ValueString(),
+		Exclude:         plan.Exclude.ValueString(),
 	}
 
 	result, err := random.CreateString(params)
@@ -128,6 +129,7 @@ func (r *passwordResource) ImportState(ctx context.Context, req resource.ImportS
 		MinNumeric:      types.Int64Value(0),
 		Keepers:         types.MapNull(types.StringType),
 		OverrideSpecial: types.StringNull(),
+		Exclude:         types.StringNull(),
 	}
 
 	hash, err := generateHash(id)
@@ -247,6 +249,8 @@ func upgradePasswordStateV0toV3(ctx context.Context, req resource.UpgradeStateRe
 		number = types.BoolValue(true)
 	}
 
+	exclude := types.StringValue("")
+
 	passwordDataV3 := passwordModelV3{
 		Keepers:         passwordDataV0.Keepers,
 		Length:          length,
@@ -262,6 +266,7 @@ func upgradePasswordStateV0toV3(ctx context.Context, req resource.UpgradeStateRe
 		OverrideSpecial: passwordDataV0.OverrideSpecial,
 		Result:          passwordDataV0.Result,
 		ID:              passwordDataV0.ID,
+		Exclude:         exclude,
 	}
 
 	hash, err := generateHash(passwordDataV3.Result.ValueString())
@@ -359,6 +364,8 @@ func upgradePasswordStateV1toV3(ctx context.Context, req resource.UpgradeStateRe
 		number = types.BoolValue(true)
 	}
 
+	exclude := types.StringValue("")
+
 	passwordDataV3 := passwordModelV3{
 		Keepers:         passwordDataV1.Keepers,
 		Length:          length,
@@ -375,6 +382,7 @@ func upgradePasswordStateV1toV3(ctx context.Context, req resource.UpgradeStateRe
 		BcryptHash:      passwordDataV1.BcryptHash,
 		Result:          passwordDataV1.Result,
 		ID:              passwordDataV1.ID,
+		Exclude:         exclude,
 	}
 
 	diags := resp.State.Set(ctx, passwordDataV3)
@@ -472,9 +480,12 @@ func upgradePasswordStateV2toV3(ctx context.Context, req resource.UpgradeStateRe
 		numeric = types.BoolValue(true)
 	}
 
+	exclude := types.StringValue("")
+
 	// Schema version 2 to schema version 3 is a duplicate of the data,
 	// however the BcryptHash value may have been incorrectly generated.
 	//nolint:gosimple // V3 model will expand over time so all fields are written out to help future code changes.
+
 	passwordDataV3 := passwordModelV3{
 		BcryptHash:      passwordDataV2.BcryptHash,
 		ID:              passwordDataV2.ID,
@@ -491,6 +502,7 @@ func upgradePasswordStateV2toV3(ctx context.Context, req resource.UpgradeStateRe
 		Result:          passwordDataV2.Result,
 		Special:         special,
 		Upper:           upper,
+		Exclude:         exclude,
 	}
 
 	// Set the duplicated data now so we can easily return early below.
@@ -687,6 +699,18 @@ func passwordSchemaV3() schema.Schema {
 					"overrides the default character list in the special argument.  The `special` argument must " +
 					"still be set to true for any overwritten characters to be used in generation.",
 				Optional: true,
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.RequiresReplaceIf(
+						stringplanmodifiers.RequiresReplaceUnlessEmptyStringToNull(),
+						"Replace on modification unless updating from empty string (\"\") to null.",
+						"Replace on modification unless updating from empty string (`\"\"`) to `null`.",
+					),
+				},
+			},
+
+			"exclude": schema.StringAttribute{
+				Description: "Supply your own list of special characters to exclude from string generation.",
+				Optional:    true,
 				PlanModifiers: []planmodifier.String{
 					stringplanmodifier.RequiresReplaceIf(
 						stringplanmodifiers.RequiresReplaceUnlessEmptyStringToNull(),
@@ -1042,4 +1066,5 @@ type passwordModelV3 struct {
 	OverrideSpecial types.String `tfsdk:"override_special"`
 	Result          types.String `tfsdk:"result"`
 	BcryptHash      types.String `tfsdk:"bcrypt_hash"`
+	Exclude         types.String `tfsdk:"exclude"`
 }
