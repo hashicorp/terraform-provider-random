@@ -51,7 +51,7 @@ class MyConvertedCode extends TerraformStack {
 
 ### Required
 
-- `length` (Number) The length of the string desired. The minimum value for length is 1 and, length must also be >= (`minUpper` + `minLower` + `minNumeric` + `minSpecial`).
+- `length` (Number) The length of the string desired. The minimum value for length is 1 and, length must also be >= (`min_upper` + `min_lower` + `min_numeric` + `min_special`).
 
 ### Optional
 
@@ -64,12 +64,12 @@ class MyConvertedCode extends TerraformStack {
 - `number` (Boolean, Deprecated) Include numeric characters in the result. Default value is `true`. **NOTE**: This is deprecated, use `numeric` instead.
 - `numeric` (Boolean) Include numeric characters in the result. Default value is `true`.
 - `overrideSpecial` (String) Supply your own list of special characters to use for string generation.  This overrides the default character list in the special argument.  The `special` argument must still be set to true for any overwritten characters to be used in generation.
-- `special` (Boolean) Include special characters in the result. These are `!@#$%&*()_=+[]{}<>:?`. Default value is `true`.
+- `special` (Boolean) Include special characters in the result. These are `!@#$%&*()-_=+[]{}<>:?`. Default value is `true`.
 - `upper` (Boolean) Include uppercase alphabet characters in the result. Default value is `true`.
 
 ### Read-Only
 
-- `bcryptHash` (String, Sensitive) A bcrypt hash of the generated random string. **NOTE**: If the generated random string is greater than 72 bytes in length, `bcryptHash` will contain a hash of the first 72 bytes.
+- `bcryptHash` (String, Sensitive) A bcrypt hash of the generated random string. **NOTE**: If the generated random string is greater than 72 bytes in length, `bcrypt_hash` will contain a hash of the first 72 bytes.
 - `id` (String) A static value used internally by Terraform, this should not be referenced in configurations.
 - `result` (String, Sensitive) The generated random string.
 
@@ -191,7 +191,7 @@ class MyConvertedCode extends TerraformStack {
 
 ```
 
-    **NOTE** `ignoreChanges` is only required until the resource is recreated after import,
+    **NOTE** `ignore_changes` is only required until the resource is recreated after import,
     after which it will use the configuration values specified.
 
-<!-- cache-key: cdktf-0.18.0 input-679f2842bdae2deada09d08030e614f09c42f4d6c2a4a7861ed1b7a84f1ceeea 556251879b8ed0dc4c87a76b568667e0ab5e2c46efdd14a05c556daf05678783-->
+<!-- cache-key: cdktf-0.19.0 input-679f2842bdae2deada09d08030e614f09c42f4d6c2a4a7861ed1b7a84f1ceeea 556251879b8ed0dc4c87a76b568667e0ab5e2c46efdd14a05c556daf05678783-->
