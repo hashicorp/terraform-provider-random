@@ -80,7 +80,7 @@ func (r *petResource) Schema(ctx context.Context, req resource.SchemaRequest, re
 				Description: "The random pet name.",
 				Computed:    true,
 				PlanModifiers: []planmodifier.String{
-					stringplanmodifier.UseStateForUnknown(),
+					SetPetOnPlan(),
 				},
 			},
 		},
@@ -157,4 +157,77 @@ type petModelV0 struct {
 	Length    types.Int64  `tfsdk:"length"`
 	Prefix    types.String `tfsdk:"prefix"`
 	Separator types.String `tfsdk:"separator"`
+}
+
+func SetPetOnPlan() planmodifier.String {
+	return SetPetOnPlanModifier{}
+}
+
+// SetPetOnPlanModifier implements the plan modifier.
+type SetPetOnPlanModifier struct{}
+
+// Description returns a human-readable description of the plan modifier.
+func (m SetPetOnPlanModifier) Description(_ context.Context) string {
+	return "Sets the value of the random pet during resource planning."
+}
+
+// MarkdownDescription returns a markdown description of the plan modifier.
+func (m SetPetOnPlanModifier) MarkdownDescription(_ context.Context) string {
+	return "Sets the value of the random pet during resource planning."
+}
+
+// PlanModifyString implements the plan modification logic.
+func (m SetPetOnPlanModifier) PlanModifyString(ctx context.Context, req planmodifier.StringRequest, resp *planmodifier.StringResponse) {
+	// Do nothing if there is no state value.
+	if req.StateValue.IsNull() {
+		return
+	}
+
+	// Create Pet ID if value is is unknown
+	if req.PlanValue.IsUnknown() {
+		petname.NonDeterministicMode()
+		var plan petModelV0
+
+		diags := req.Plan.Get(ctx, &plan)
+		resp.Diagnostics.Append(diags...)
+		if resp.Diagnostics.HasError() {
+			return
+		}
+
+		length := plan.Length.ValueInt64()
+		separator := plan.Separator.ValueString()
+		prefix := plan.Prefix.ValueString()
+
+		pet := strings.ToLower(petname.Generate(int(length), separator))
+
+		pn := petModelV0{
+			Keepers:   plan.Keepers,
+			Length:    types.Int64Value(length),
+			Separator: types.StringValue(separator),
+		}
+
+		if prefix != "" {
+			pet = fmt.Sprintf("%s%s%s", prefix, separator, pet)
+			pn.Prefix = types.StringValue(prefix)
+		} else {
+			pn.Prefix = types.StringNull()
+		}
+
+		resp.PlanValue = types.StringValue(pet)
+
+		resp.Diagnostics.Append(diags...)
+		if resp.Diagnostics.HasError() {
+			return
+		}
+
+		return
+	}
+
+	// Do nothing if there is an unknown configuration value, otherwise interpolation gets messed up.
+	if req.ConfigValue.IsUnknown() {
+		return
+	}
+
+	// finally, use value if already in state.
+	resp.PlanValue = req.StateValue
 }
