@@ -42,7 +42,9 @@ func (r *idResource) Schema(ctx context.Context, req resource.SchemaRequest, res
 	resp.Schema = schema.Schema{
 		Description: `
 The resource ` + "`random_id`" + ` generates random numbers that are intended to be
-used as unique identifiers for other resources.
+used as unique identifiers for other resources. If the output is considered 
+sensitive, and should not be displayed in the CLI, use ` + "`random_bytes`" + `
+instead.
 
 This resource *does* use a cryptographic random number generator in order
 to minimize the chance of collisions, making the results of this resource
