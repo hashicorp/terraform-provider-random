@@ -29,22 +29,23 @@ func TestAccResourceBytes(t *testing.T) {
 			},
 			{
 				// Usage of ImportStateIdFunc is required as the value passed to the `terraform import` command needs
-				// to be the bytes encoded with base64, as the bytes resource sets ID to "none"
+				// to be the bytes encoded with base64.
 				ImportStateIdFunc: func(s *terraform.State) (string, error) {
-					id := "random_bytes.basic"
-					rs, ok := s.RootModule().Resources[id]
+					resource := "random_bytes.basic"
+					rs, ok := s.RootModule().Resources[resource]
 					if !ok {
-						return "", fmt.Errorf("not found: %s", id)
+						return "", fmt.Errorf("not found: %s", resource)
 					}
-					if rs.Primary.ID == "" {
-						return "", fmt.Errorf("no ID is set")
+					if rs.Primary.Attributes["base64"] == "" {
+						return "", fmt.Errorf("no base64 attribute is set")
 					}
 
 					return rs.Primary.Attributes["base64"], nil
 				},
-				ResourceName:      "random_bytes.basic",
-				ImportState:       true,
-				ImportStateVerify: true,
+				ResourceName:                         "random_bytes.basic",
+				ImportState:                          true,
+				ImportStateVerify:                    true,
+				ImportStateVerifyIdentifierAttribute: "base64",
 			},
 		},
 	})
