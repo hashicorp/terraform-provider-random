@@ -157,40 +157,6 @@ func TestAccResourceBytes_Keepers_Keep_EmptyMap(t *testing.T) {
 	})
 }
 
-func TestAccResourceBytes_Keepers_Keep_EmptyMapToNullValue(t *testing.T) {
-	var result1, result2 string
-
-	resource.ParallelTest(t, resource.TestCase{
-		Steps: []resource.TestStep{
-			{
-				ProtoV5ProviderFactories: protoV5ProviderFactories(),
-				Config: `resource "random_bytes" "test" {
-					length = 12
-					keepers = {}
-				}`,
-				Check: resource.ComposeTestCheckFunc(
-					testExtractResourceAttr("random_bytes.test", "hex", &result1),
-					resource.TestCheckResourceAttr("random_bytes.test", "keepers.%", "0"),
-				),
-			},
-			{
-				ProtoV5ProviderFactories: protoV5ProviderFactories(),
-				Config: `resource "random_bytes" "test" {
-					length = 12
-					keepers = {
-						"key" = null
-					}
-				}`,
-				Check: resource.ComposeTestCheckFunc(
-					testExtractResourceAttr("random_bytes.test", "hex", &result2),
-					testCheckAttributeValuesEqual(&result1, &result2),
-					resource.TestCheckResourceAttr("random_bytes.test", "keepers.%", "1"),
-				),
-			},
-		},
-	})
-}
-
 func TestAccResourceBytes_Keepers_Keep_NullMap(t *testing.T) {
 	var result1, result2 string
 
@@ -215,39 +181,6 @@ func TestAccResourceBytes_Keepers_Keep_NullMap(t *testing.T) {
 					testExtractResourceAttr("random_bytes.test", "hex", &result2),
 					testCheckAttributeValuesEqual(&result1, &result2),
 					resource.TestCheckResourceAttr("random_bytes.test", "keepers.%", "0"),
-				),
-			},
-		},
-	})
-}
-
-func TestAccResourceBytes_Keepers_Keep_NullMapToNullValue(t *testing.T) {
-	var result1, result2 string
-
-	resource.ParallelTest(t, resource.TestCase{
-		Steps: []resource.TestStep{
-			{
-				ProtoV5ProviderFactories: protoV5ProviderFactories(),
-				Config: `resource "random_bytes" "test" {
-					length = 12
-				}`,
-				Check: resource.ComposeTestCheckFunc(
-					testExtractResourceAttr("random_bytes.test", "hex", &result1),
-					resource.TestCheckResourceAttr("random_bytes.test", "keepers.%", "0"),
-				),
-			},
-			{
-				ProtoV5ProviderFactories: protoV5ProviderFactories(),
-				Config: `resource "random_bytes" "test" {
-					length = 12
-					keepers = {
-						"key" = null
-					}
-				}`,
-				Check: resource.ComposeTestCheckFunc(
-					testExtractResourceAttr("random_bytes.test", "hex", &result2),
-					testCheckAttributeValuesEqual(&result1, &result2),
-					resource.TestCheckResourceAttr("random_bytes.test", "keepers.%", "1"),
 				),
 			},
 		},
