@@ -1,3 +1,9 @@
+## 3.6.0 (December 04, 2023)
+
+FEATURES:
+
+* resource/random_bytes: New resource that generates an array of random bytes intended to be used as key or secret ([#272](https://github.com/hashicorp/terraform-provider-random/issues/272))
+
 ## 3.5.1 (April 12, 2023)
 
 BUG FIXES:
