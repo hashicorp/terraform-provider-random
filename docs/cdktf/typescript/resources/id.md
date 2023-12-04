@@ -6,7 +6,9 @@ page_title: "random_id Resource - terraform-provider-random"
 subcategory: ""
 description: |-
   The resource random_id generates random numbers that are intended to be
-  used as unique identifiers for other resources.
+  used as unique identifiers for other resources. If the output is considered
+  sensitive, and should not be displayed in the CLI, use random_bytes
+  instead.
   This resource does use a cryptographic random number generator in order
   to minimize the chance of collisions, making the results of this resource
   when a 16-byte identifier is requested of equivalent uniqueness to a
@@ -20,7 +22,9 @@ description: |-
 # random_id (Resource)
 
 The resource `randomId` generates random numbers that are intended to be
-used as unique identifiers for other resources.
+used as unique identifiers for other resources. If the output is considered 
+sensitive, and should not be displayed in the CLI, use `randomBytes`
+instead.
 
 This resource *does* use a cryptographic random number generator in order
 to minimize the chance of collisions, making the results of this resource
@@ -102,4 +106,4 @@ terraform import random_id.server p-9hUg
 $ terraform import random_id.server my-prefix-,p-9hUg
 ```
 
-<!-- cache-key: cdktf-0.19.0 input-0fb181c93bbdaa572d25c9a75fb79bf8bbc7e3d3f03383b3e56860208d55a253 556251879b8ed0dc4c87a76b568667e0ab5e2c46efdd14a05c556daf05678783-->
+<!-- cache-key: cdktf-0.19.0 input-5f91020093f3912bfcdaccf929f7d6b4f81c78dec85ef60164d34297667dd198 556251879b8ed0dc4c87a76b568667e0ab5e2c46efdd14a05c556daf05678783-->
