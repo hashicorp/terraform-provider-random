@@ -10,7 +10,7 @@ description: |-
 
 # random_shuffle (Resource)
 
-The resource `randomShuffle` generates a random permutation of a list of strings given as an argument.
+The resource `random_shuffle` generates a random permutation of a list of strings given as an argument.
 
 ## Example Usage
 
@@ -63,4 +63,4 @@ class MyConvertedCode extends TerraformStack {
 - `id` (String) A static value used internally by Terraform, this should not be referenced in configurations.
 - `result` (List of String) Random permutation of the list of strings given in `input`.
 
-<!-- cache-key: cdktf-0.19.0 input-86b1815d80e8e409f9aa5cc558980861275f4603260f1c637f82069bba22d88b 556251879b8ed0dc4c87a76b568667e0ab5e2c46efdd14a05c556daf05678783-->
+<!-- cache-key: cdktf-0.20.0 input-86b1815d80e8e409f9aa5cc558980861275f4603260f1c637f82069bba22d88b -->

@@ -11,9 +11,9 @@ description: |-
 
 # random_integer (Resource)
 
-The resource `randomInteger` generates random values from a given range, described by the `min` and `max` attributes of a given resource.
+The resource `random_integer` generates random values from a given range, described by the `min` and `max` attributes of a given resource.
 
-This resource can be used in conjunction with resources that have the `createBeforeDestroy` lifecycle flag set, to avoid conflicts with unique names during the brief period where both the old and new resources exist concurrently.
+This resource can be used in conjunction with resources that have the `create_before_destroy` lifecycle flag set, to avoid conflicts with unique names during the brief period where both the old and new resources exist concurrently.
 
 ## Example Usage
 
@@ -89,4 +89,4 @@ Import is supported using the following syntax:
 terraform import random_integer.priority 15390,1,50000
 ```
 
-<!-- cache-key: cdktf-0.19.0 input-14468c71f20ebc7d2a161542108e1cc214b9ae4d6f2c5008aa55d67bf9354ebf 556251879b8ed0dc4c87a76b568667e0ab5e2c46efdd14a05c556daf05678783-->
+<!-- cache-key: cdktf-0.20.0 input-14468c71f20ebc7d2a161542108e1cc214b9ae4d6f2c5008aa55d67bf9354ebf -->

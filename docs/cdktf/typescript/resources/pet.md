@@ -11,9 +11,9 @@ description: |-
 
 # random_pet (Resource)
 
-The resource `randomPet` generates random pet names that are intended to be used as unique identifiers for other resources.
+The resource `random_pet` generates random pet names that are intended to be used as unique identifiers for other resources.
 
-This resource can be used in conjunction with resources that have the `createBeforeDestroy` lifecycle flag set, to avoid conflicts with unique names during the brief period where both the old and new resources exist concurrently.
+This resource can be used in conjunction with resources that have the `create_before_destroy` lifecycle flag set, to avoid conflicts with unique names during the brief period where both the old and new resources exist concurrently.
 
 ## Example Usage
 
@@ -62,4 +62,4 @@ class MyConvertedCode extends TerraformStack {
 
 - `id` (String) The random pet name.
 
-<!-- cache-key: cdktf-0.19.0 input-6817a99fd74086b883ff0596b3649d0f6a3dcaab94e9dea42308adc5fa0fada5 556251879b8ed0dc4c87a76b568667e0ab5e2c46efdd14a05c556daf05678783-->
+<!-- cache-key: cdktf-0.20.0 input-6817a99fd74086b883ff0596b3649d0f6a3dcaab94e9dea42308adc5fa0fada5 -->

@@ -21,9 +21,9 @@ description: |-
 
 # random_id (Resource)
 
-The resource `randomId` generates random numbers that are intended to be
+The resource `random_id` generates random numbers that are intended to be
 used as unique identifiers for other resources. If the output is considered 
-sensitive, and should not be displayed in the CLI, use `randomBytes`
+sensitive, and should not be displayed in the CLI, use `random_bytes`
 instead.
 
 This resource *does* use a cryptographic random number generator in order
@@ -32,7 +32,7 @@ when a 16-byte identifier is requested of equivalent uniqueness to a
 type-4 UUID.
 
 This resource can be used in conjunction with resources that have
-the `createBeforeDestroy` lifecycle flag set to avoid conflicts with
+the `create_before_destroy` lifecycle flag set to avoid conflicts with
 unique names during the brief period where both the old and new resources
 exist concurrently.
 
@@ -106,4 +106,4 @@ terraform import random_id.server p-9hUg
 $ terraform import random_id.server my-prefix-,p-9hUg
 ```
 
-<!-- cache-key: cdktf-0.19.0 input-5f91020093f3912bfcdaccf929f7d6b4f81c78dec85ef60164d34297667dd198 556251879b8ed0dc4c87a76b568667e0ab5e2c46efdd14a05c556daf05678783-->
+<!-- cache-key: cdktf-0.20.0 input-5f91020093f3912bfcdaccf929f7d6b4f81c78dec85ef60164d34297667dd198 -->
