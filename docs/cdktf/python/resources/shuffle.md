@@ -57,4 +57,4 @@ class MyConvertedCode(TerraformStack):
 - `id` (String) A static value used internally by Terraform, this should not be referenced in configurations.
 - `result` (List of String) Random permutation of the list of strings given in `input`.
 
-<!-- cache-key: cdktf-0.20.0 input-86b1815d80e8e409f9aa5cc558980861275f4603260f1c637f82069bba22d88b -->
+<!-- cache-key: cdktf-0.20.1 input-86b1815d80e8e409f9aa5cc558980861275f4603260f1c637f82069bba22d88b -->
