@@ -5,6 +5,7 @@ package provider
 
 import (
 	"context"
+	"net"
 
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
@@ -14,6 +15,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 
+	"github.com/terraform-providers/terraform-provider-random/internal/diagnostics"
 	mapplanmodifiers "github.com/terraform-providers/terraform-provider-random/internal/planmodifiers/map"
 )
 
@@ -92,6 +94,16 @@ func (r *ipResource) Create(ctx context.Context, req resource.CreateRequest, res
 	addressType := plan.AddressType.ValueString()
 	cidrRange := plan.CIDRRange.ValueString()
 
+	if valid, err := isValidCIDRRange(cidrRange); !valid {
+		resp.Diagnostics.AddError(
+			"Create Random IP error",
+			"There was an error when validating the CIDR range.\n\n"+
+				diagnostics.RetryMsg+
+				"Original Error: "+err.Error(),
+		)
+		return
+	}
+
 	u := &ipModelV0{
 		ID:          types.StringValue("-"),
 		Keepers:     plan.Keepers,
@@ -134,4 +146,9 @@ type ipModelV0 struct {
 	AddressType types.String `tfsdk:"address_type"`
 	CIDRRange   types.String `tfsdk:"cidr_range"`
 	Result      types.String `tfsdk:"result"`
+}
+
+func isValidCIDRRange(cidrRange string) (bool, error) {
+	_, _, err := net.ParseCIDR(cidrRange)
+	return err == nil, err
 }
