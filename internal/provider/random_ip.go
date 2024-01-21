@@ -32,7 +32,7 @@ func NewIPResource() resource.Resource {
 type ipResource struct{}
 
 func (r *ipResource) Metadata(_ context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
-	resp.TypeName = req.ProviderTypeName + "ip"
+	resp.TypeName = req.ProviderTypeName + "_ip"
 }
 
 func (r *ipResource) Schema(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
