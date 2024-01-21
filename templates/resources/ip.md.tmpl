@@ -21,14 +21,14 @@ description: |-
 
 ### Using a count
 
-It could be useful to randomly generate a number of addresses. This can be done using a [count](https://developer.hashicorp.com/terraform/language/meta-arguments/count).
+It could be useful to randomly generate a number of IP addresses. This can be done using a [count](https://developer.hashicorp.com/terraform/language/meta-arguments/count).
 
 {{ tffile (printf "examples/resources/%s/count.tf" .Name)}}
 
 ### Using a count followed by a distinct
 
-Keep in mind that using a [count](https://developer.hashicorp.com/terraform/language/meta-arguments/count) you could end up with duplicate addresses. 
-If you want to avoid this, perform a [distinct](https://developer.hashicorp.com/terraform/language/functions/distinct) on the list of addresses.
+Keep in mind that using a [count](https://developer.hashicorp.com/terraform/language/meta-arguments/count) you could end up with duplicate IP addresses. 
+If you want to avoid this, perform a [distinct](https://developer.hashicorp.com/terraform/language/functions/distinct) on the list of IP addresses.
 
 {{ tffile (printf "examples/resources/%s/count_distinct.tf" .Name)}}
 
