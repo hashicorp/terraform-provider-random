@@ -53,7 +53,7 @@ func (r *ipResource) Schema(ctx context.Context, req resource.SchemaRequest, res
 				Description: "A string indicating the type of IP address to generate. Valid values are `ipv4` and `ipv6`.",
 				Required:    true,
 				PlanModifiers: []planmodifier.String{
-					stringplanmodifier.UseStateForUnknown(),
+					stringplanmodifier.RequiresReplace(),
 				},
 				Validators: []validator.String{
 					stringvalidator.OneOf([]string{"ipv4", "ipv6"}...),
@@ -63,7 +63,7 @@ func (r *ipResource) Schema(ctx context.Context, req resource.SchemaRequest, res
 				Description: "A CIDR range from which to allocate the IP address.",
 				Required:    true,
 				PlanModifiers: []planmodifier.String{
-					stringplanmodifier.UseStateForUnknown(),
+					stringplanmodifier.RequiresReplace(),
 				},
 			},
 			"result": schema.StringAttribute{
