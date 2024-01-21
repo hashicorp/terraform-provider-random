@@ -178,8 +178,9 @@ func getRandomIP(cidrRange, addressType string) (net.IP, error) {
 		return nil, fmt.Errorf("invalid address type: %s", addressType)
 	}
 
+	// This typically occurs when the CIDR range is not of the same type as the address type.
 	if len(netmaskBytes) != len(addressBytes) {
-		return nil, fmt.Errorf("netmask: %d and address: %d byte length do not match", len(netmaskBytes), len(addressBytes))
+		return nil, fmt.Errorf("netmask byte length does not match IP address byte length")
 	}
 
 	var picked []byte
