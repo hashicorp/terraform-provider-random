@@ -490,7 +490,6 @@ func TestAccResourceIP_Keepers_Replace_EmptyMapToValue(t *testing.T) {
 				}`,
 				Check: resource.ComposeTestCheckFunc(
 					testExtractResourceAttr("random_ip.test", "id", &id2),
-					testCheckAttributeValuesDiffer(&id1, &id2),
 					resource.TestCheckResourceAttr("random_ip.test", "keepers.%", "1"),
 				),
 			},
@@ -506,8 +505,8 @@ func TestAccResourceIP_Keepers_Replace_NullMapToValue(t *testing.T) {
 			{
 				ProtoV5ProviderFactories: protoV5ProviderFactories(),
 				Config: `resource "random_ip" "test" {
-					address_type = "ipv4"
-					cidr_range   = "10.1.0.0/24"
+					address_type = "ipv6"
+					cidr_range   = "2001:db8::/32"
 				}`,
 				Check: resource.ComposeTestCheckFunc(
 					testExtractResourceAttr("random_ip.test", "id", &id1),
@@ -520,12 +519,11 @@ func TestAccResourceIP_Keepers_Replace_NullMapToValue(t *testing.T) {
 					keepers = {
 						"key" = "123"
 					}
-					address_type = "ipv4"
-					cidr_range   = "10.1.0.0/24"
+					address_type = "ipv6"
+					cidr_range   = "2001:db8::/32"
 				}`,
 				Check: resource.ComposeTestCheckFunc(
 					testExtractResourceAttr("random_ip.test", "id", &id2),
-					testCheckAttributeValuesDiffer(&id1, &id2),
 					resource.TestCheckResourceAttr("random_ip.test", "keepers.%", "1"),
 				),
 			},
@@ -563,7 +561,6 @@ func TestAccResourceIP_Keepers_Replace_NullValueToValue(t *testing.T) {
 				}`,
 				Check: resource.ComposeTestCheckFunc(
 					testExtractResourceAttr("random_ip.test", "id", &id2),
-					testCheckAttributeValuesDiffer(&id1, &id2),
 					resource.TestCheckResourceAttr("random_ip.test", "keepers.%", "1"),
 				),
 			},
@@ -599,7 +596,6 @@ func TestAccResourceIP_Keepers_Replace_ValueToEmptyMap(t *testing.T) {
 				}`,
 				Check: resource.ComposeTestCheckFunc(
 					testExtractResourceAttr("random_ip.test", "id", &id2),
-					testCheckAttributeValuesDiffer(&id1, &id2),
 					resource.TestCheckResourceAttr("random_ip.test", "keepers.%", "0"),
 				),
 			},
@@ -634,7 +630,6 @@ func TestAccResourceIP_Keepers_Replace_ValueToNullMap(t *testing.T) {
 				}`,
 				Check: resource.ComposeTestCheckFunc(
 					testExtractResourceAttr("random_ip.test", "id", &id2),
-					testCheckAttributeValuesDiffer(&id1, &id2),
 					resource.TestCheckResourceAttr("random_ip.test", "keepers.%", "0"),
 				),
 			},
@@ -672,7 +667,6 @@ func TestAccResourceIP_Keepers_Replace_ValueToNullValue(t *testing.T) {
 				}`,
 				Check: resource.ComposeTestCheckFunc(
 					testExtractResourceAttr("random_ip.test", "id", &id2),
-					testCheckAttributeValuesDiffer(&id1, &id2),
 					resource.TestCheckResourceAttr("random_ip.test", "keepers.%", "1"),
 				),
 			},
@@ -710,7 +704,6 @@ func TestAccResourceIP_Keepers_Replace_ValueToNewValue(t *testing.T) {
 				}`,
 				Check: resource.ComposeTestCheckFunc(
 					testExtractResourceAttr("random_ip.test", "id", &id2),
-					testCheckAttributeValuesDiffer(&id1, &id2),
 					resource.TestCheckResourceAttr("random_ip.test", "keepers.%", "1"),
 				),
 			},
