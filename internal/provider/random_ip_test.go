@@ -22,6 +22,67 @@ func TestAccResourceIP_ipv4(t *testing.T) {
 					resource.TestCheckResourceAttr("random_ip.test", "address_type", "ipv4"),
 					resource.TestCheckResourceAttrSet("random_ip.test", "cidr_range"),
 					resource.TestCheckResourceAttrSet("random_ip.test", "result"),
+					resource.TestCheckResourceAttr("random_ip.test", "keepers.%", "0"),
+				),
+			},
+		},
+	})
+}
+
+func TestAccResourceIP_ipv4_quadZero(t *testing.T) {
+	resource.UnitTest(t, resource.TestCase{
+		ProtoV5ProviderFactories: protoV5ProviderFactories(),
+		Steps: []resource.TestStep{
+			{
+				Config: `resource "random_ip" "test" {
+							address_type = "ipv4"
+							cidr_range   = "0.0.0.0/0"
+						}`,
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("random_ip.test", "address_type", "ipv4"),
+					resource.TestCheckResourceAttrSet("random_ip.test", "cidr_range"),
+					resource.TestCheckResourceAttrSet("random_ip.test", "result"),
+					resource.TestCheckResourceAttr("random_ip.test", "keepers.%", "0"),
+				),
+			},
+		},
+	})
+}
+
+func TestAccResourceIP_ipv4_largestPrefix(t *testing.T) {
+	resource.UnitTest(t, resource.TestCase{
+		ProtoV5ProviderFactories: protoV5ProviderFactories(),
+		Steps: []resource.TestStep{
+			{
+				Config: `resource "random_ip" "test" {
+							address_type = "ipv4"
+							cidr_range   = "0.0.0.0/0"
+						}`,
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("random_ip.test", "address_type", "ipv4"),
+					resource.TestCheckResourceAttrSet("random_ip.test", "cidr_range"),
+					resource.TestCheckResourceAttrSet("random_ip.test", "result"),
+					resource.TestCheckResourceAttr("random_ip.test", "keepers.%", "0"),
+				),
+			},
+		},
+	})
+}
+
+func TestAccResourceIP_ipv4_smallestPrefix(t *testing.T) {
+	resource.UnitTest(t, resource.TestCase{
+		ProtoV5ProviderFactories: protoV5ProviderFactories(),
+		Steps: []resource.TestStep{
+			{
+				Config: `resource "random_ip" "test" {
+							address_type = "ipv4"
+							cidr_range   = "192.168.1.1/32"
+						}`,
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("random_ip.test", "address_type", "ipv4"),
+					resource.TestCheckResourceAttrSet("random_ip.test", "cidr_range"),
+					resource.TestCheckResourceAttrSet("random_ip.test", "result"),
+					resource.TestCheckResourceAttr("random_ip.test", "keepers.%", "0"),
 				),
 			},
 		},
@@ -41,6 +102,67 @@ func TestAccResourceIP_ipv6(t *testing.T) {
 					resource.TestCheckResourceAttr("random_ip.test", "address_type", "ipv6"),
 					resource.TestCheckResourceAttrSet("random_ip.test", "cidr_range"),
 					resource.TestCheckResourceAttrSet("random_ip.test", "result"),
+					resource.TestCheckResourceAttr("random_ip.test", "keepers.%", "0"),
+				),
+			},
+		},
+	})
+}
+
+func TestAccResourceIP_ipv6_zeroCompression(t *testing.T) {
+	resource.UnitTest(t, resource.TestCase{
+		ProtoV5ProviderFactories: protoV5ProviderFactories(),
+		Steps: []resource.TestStep{
+			{
+				Config: `resource "random_ip" "test" {
+							address_type = "ipv6"
+							cidr_range   = "::/0"
+						}`,
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("random_ip.test", "address_type", "ipv6"),
+					resource.TestCheckResourceAttrSet("random_ip.test", "cidr_range"),
+					resource.TestCheckResourceAttrSet("random_ip.test", "result"),
+					resource.TestCheckResourceAttr("random_ip.test", "keepers.%", "0"),
+				),
+			},
+		},
+	})
+}
+
+func TestAccResourceIP_ipv6_largestPrefix(t *testing.T) {
+	resource.UnitTest(t, resource.TestCase{
+		ProtoV5ProviderFactories: protoV5ProviderFactories(),
+		Steps: []resource.TestStep{
+			{
+				Config: `resource "random_ip" "test" {
+							address_type = "ipv6"
+							cidr_range   = "::/0"
+						}`,
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("random_ip.test", "address_type", "ipv6"),
+					resource.TestCheckResourceAttrSet("random_ip.test", "cidr_range"),
+					resource.TestCheckResourceAttrSet("random_ip.test", "result"),
+					resource.TestCheckResourceAttr("random_ip.test", "keepers.%", "0"),
+				),
+			},
+		},
+	})
+}
+
+func TestAccResourceIP_ipv6_smallestPrefix(t *testing.T) {
+	resource.UnitTest(t, resource.TestCase{
+		ProtoV5ProviderFactories: protoV5ProviderFactories(),
+		Steps: []resource.TestStep{
+			{
+				Config: `resource "random_ip" "test" {
+							address_type = "ipv6"
+							cidr_range   = "2001:db8::1/128"
+						}`,
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("random_ip.test", "address_type", "ipv6"),
+					resource.TestCheckResourceAttrSet("random_ip.test", "cidr_range"),
+					resource.TestCheckResourceAttrSet("random_ip.test", "result"),
+					resource.TestCheckResourceAttr("random_ip.test", "keepers.%", "0"),
 				),
 			},
 		},
