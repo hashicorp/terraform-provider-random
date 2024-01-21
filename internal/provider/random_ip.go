@@ -163,7 +163,7 @@ func getRandomIP(cidrRange, addressType string) (net.IP, error) {
 
 	// We then check the length of the netmask to see if it is valid.
 	netmask := network.Mask
-	if len(netmask) != net.IPv4len || len(netmask) != net.IPv6len {
+	if len(netmask) != net.IPv4len && len(netmask) != net.IPv6len {
 		return nil, fmt.Errorf("invalid netmask length: %d", len(netmask))
 	}
 
