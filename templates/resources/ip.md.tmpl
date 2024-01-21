@@ -1,0 +1,32 @@
+---
+page_title: "{{.Name}} {{.Type}} - {{.ProviderName}}"
+subcategory: ""
+description: |-
+{{ .Description | plainmarkdown | trimspace | prefixlines "  " }}
+---
+
+# {{.Name}} ({{.Type}})
+
+{{ .Description | trimspace }}
+
+## Example Usage
+
+### ipv4
+
+{{ tffile (printf "examples/resources/%s/ipv4.tf" .Name)}}
+
+### IPv6
+
+{{ tffile (printf "examples/resources/%s/ipv4.tf" .Name)}}
+
+### Using a count
+
+{{ tffile (printf "examples/resources/%s/count.tf" .Name)}}
+
+{{ .SchemaMarkdown | trimspace }}
+
+### Using a count followed by a distinct
+
+{{ tffile (printf "examples/resources/%s/count_distinct.tf" .Name)}}
+
+{{ .SchemaMarkdown | trimspace }}
