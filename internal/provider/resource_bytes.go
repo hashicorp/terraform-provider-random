@@ -135,7 +135,9 @@ func bytesSchemaV0() schema.Schema {
 		Version: 0,
 		Description: "The resource `random_bytes` generates random bytes that are intended to be " +
 			"used as a secret, or key. Use this in preference to `random_id` when the output is " +
-			"considered sensitive, and should not be displayed in the CLI.",
+			"considered sensitive, and should not be displayed in the CLI.\n" +
+			"\n" +
+			"This resource *does* use a cryptographic random number generator.",
 		Attributes: map[string]schema.Attribute{
 			"keepers": schema.MapAttribute{
 				Description: "Arbitrary map of values that, when changed, will trigger recreation of " +
