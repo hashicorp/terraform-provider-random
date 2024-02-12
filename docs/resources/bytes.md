@@ -4,11 +4,14 @@ page_title: "random_bytes Resource - terraform-provider-random"
 subcategory: ""
 description: |-
   The resource random_bytes generates random bytes that are intended to be used as a secret, or key. Use this in preference to random_id when the output is considered sensitive, and should not be displayed in the CLI.
+  This resource does use a cryptographic random number generator.
 ---
 
 # random_bytes (Resource)
 
 The resource `random_bytes` generates random bytes that are intended to be used as a secret, or key. Use this in preference to `random_id` when the output is considered sensitive, and should not be displayed in the CLI.
+
+This resource *does* use a cryptographic random number generator.
 
 ## Example Usage
 
