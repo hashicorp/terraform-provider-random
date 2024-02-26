@@ -76,7 +76,7 @@ func (r *shuffleResource) Schema(ctx context.Context, req resource.SchemaRequest
 				},
 			},
 			"result": schema.ListAttribute{
-				Description: "Random permutation of the list of strings given in `input`.",
+				Description: "Random permutation of the list of strings given in `input`. The number of elements is determined by `result_count` if set, or the number of elements in `input`.",
 				ElementType: types.StringType,
 				Computed:    true,
 				PlanModifiers: []planmodifier.List{
@@ -95,71 +95,67 @@ func (r *shuffleResource) Schema(ctx context.Context, req resource.SchemaRequest
 }
 
 func (r *shuffleResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
-	var plan shuffleModelV0
-	diags := req.Plan.Get(ctx, &plan)
-	resp.Diagnostics.Append(diags...)
+	var data shuffleModelV0
+
+	resp.Diagnostics.Append(req.Plan.Get(ctx, &data)...)
+
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
-	input := plan.Input
-	seed := plan.Seed.ValueString()
-	resultCount := plan.ResultCount.ValueInt64()
+	// Legacy identifier attribute that is hardcoded. This is not necessary
+	// after Terraform 0.12, but left for compatibility reasons. The attribute
+	// could be removed in a future major version of the provider.
+	data.ID = types.StringValue("-")
 
-	if resultCount == 0 {
-		resultCount = int64(len(input.Elements()))
+	inputElements := data.Input.Elements()
+
+	var resultCount int64
+
+	if !data.ResultCount.IsNull() {
+		resultCount = data.ResultCount.ValueInt64()
+	} else {
+		resultCount = int64(len(inputElements))
 	}
 
-	result := make([]attr.Value, 0, resultCount)
+	// If the practitioner explicitly chose a result count of zero or the input
+	// had no elements, immediately return with an empty list for the result.
+	if resultCount == 0 || len(inputElements) == 0 {
+		data.Result = types.ListValueMust(types.StringType, []attr.Value{})
 
-	if len(input.Elements()) > 0 {
-		rand := random.NewRand(seed)
+		resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 
-		// Keep producing permutations until we fill our result
-	Batches:
-		for {
-			perm := rand.Perm(len(input.Elements()))
+		return
+	}
 
-			for _, i := range perm {
-				result = append(result, input.Elements()[i])
+	rand := random.NewRand(data.Seed.ValueString())
+	resultElements := make([]attr.Value, 0, resultCount)
 
-				if int64(len(result)) >= resultCount {
-					break Batches
-				}
+	// Keep producing permutations until we fill our result
+Batches:
+	for {
+		perm := rand.Perm(len(inputElements))
+
+		for _, i := range perm {
+			resultElements = append(resultElements, inputElements[i])
+
+			if int64(len(resultElements)) >= resultCount {
+				break Batches
 			}
 		}
 	}
 
-	res, diags := types.ListValue(types.StringType, result)
+	result, diags := types.ListValue(types.StringType, resultElements)
+
 	resp.Diagnostics.Append(diags...)
+
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
-	s := shuffleModelV0{
-		ID:      types.StringValue("-"),
-		Keepers: plan.Keepers,
-		Input:   plan.Input,
-		Result:  res,
-	}
+	data.Result = result
 
-	if plan.Seed.IsNull() {
-		s.Seed = types.StringNull()
-	} else {
-		s.Seed = types.StringValue(seed)
-	}
-
-	if plan.ResultCount.IsNull() {
-		s.ResultCount = types.Int64Null()
-	} else {
-		s.ResultCount = types.Int64Value(resultCount)
-	}
-
-	diags = resp.State.Set(ctx, s)
-	resp.Diagnostics.Append(diags...)
-	if resp.Diagnostics.HasError() {
-		return
-	}
+	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
 // Read does not need to perform any operations as the state in ReadResourceResponse is already populated.
