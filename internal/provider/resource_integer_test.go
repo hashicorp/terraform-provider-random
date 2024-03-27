@@ -36,6 +36,33 @@ func TestAccResourceInteger(t *testing.T) {
 	})
 }
 
+func TestAccResourceInteger_ImportWithoutKeepersProducesNoPlannedChanges(t *testing.T) {
+	resource.UnitTest(t, resource.TestCase{
+		ProtoV5ProviderFactories: protoV5ProviderFactories(),
+		Steps: []resource.TestStep{
+			{
+				Config: `resource "random_integer" "integer_1" {
+   							min  = 1
+							max  = 3
+   							seed = "12345"
+						}`,
+				ResourceName:       "random_integer.integer_1",
+				ImportStateId:      "3,1,3,12345",
+				ImportState:        true,
+				ImportStatePersist: true,
+			},
+			{
+				Config: `resource "random_integer" "integer_1" {
+   							min  = 1
+							max  = 3
+   							seed = "12345"
+						}`,
+				PlanOnly: true,
+			},
+		},
+	})
+}
+
 func TestAccResourceInteger_ChangeSeed(t *testing.T) {
 	t.Parallel()
 	resource.UnitTest(t, resource.TestCase{

@@ -150,7 +150,7 @@ func (r *uuidResource) ImportState(ctx context.Context, req resource.ImportState
 
 	state.ID = types.StringValue(result)
 	state.Result = types.StringValue(result)
-	state.Keepers = types.MapValueMust(types.StringType, nil)
+	state.Keepers = types.MapNull(types.StringType)
 
 	diags := resp.State.Set(ctx, &state)
 	resp.Diagnostics.Append(diags...)

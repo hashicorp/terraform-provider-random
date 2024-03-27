@@ -1,0 +1,5 @@
+kind: BUG FIXES
+body: 'all: Prevent `keepers` from triggering an in-place update following import'
+time: 2023-03-13T11:45:26.616828Z
+custom:
+  Issue: "385"
