@@ -5,6 +5,7 @@ package random
 
 import (
 	"crypto/rand"
+	"errors"
 	"math/big"
 	"sort"
 )
@@ -86,6 +87,9 @@ func CreateString(input StringParams) ([]byte, error) {
 func generateRandomBytes(charSet *string, length int64) ([]byte, error) {
 	bytes := make([]byte, length)
 	setLen := big.NewInt(int64(len(*charSet)))
+	if setLen.Sign() <= 0 {
+		return bytes, errors.New("no char set to generate from: cannot set all char sets to false")
+	}
 	for i := range bytes {
 		idx, err := rand.Int(rand.Reader, setLen)
 		if err != nil {

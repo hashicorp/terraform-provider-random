@@ -894,6 +894,24 @@ func TestAccResourceString_Min(t *testing.T) {
 	})
 }
 
+func TestAccResourceString_ErrorsOnNoCharset(t *testing.T) {
+	resource.UnitTest(t, resource.TestCase{
+		ProtoV5ProviderFactories: protoV5ProviderFactories(),
+		Steps: []resource.TestStep{
+			{
+				Config: `resource "random_string" "nochars" {
+							length = 16
+							lower = false
+							upper = false
+							special = false
+							numeric = false
+						}`,
+				ExpectError: regexp.MustCompile(`.*Random Read Error`),
+			},
+		},
+	})
+}
+
 // TestAccResourceString_StateUpgradeV1toV2 covers the state upgrade from V1 to V2.
 // This includes the deprecation of `number` and the addition of `numeric` attributes.
 // v3.2.0 was used as this is the last version before `number` was deprecated and `numeric` attribute
