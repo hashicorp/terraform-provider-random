@@ -26,6 +26,7 @@ import (
 	mapplanmodifiers "github.com/terraform-providers/terraform-provider-random/internal/planmodifiers/map"
 	stringplanmodifiers "github.com/terraform-providers/terraform-provider-random/internal/planmodifiers/string"
 	"github.com/terraform-providers/terraform-provider-random/internal/random"
+	"github.com/terraform-providers/terraform-provider-random/internal/validators"
 )
 
 var (
@@ -630,6 +631,13 @@ func passwordSchemaV3() schema.Schema {
 					boolplanmodifier.RequiresReplace(),
 				},
 				DeprecationMessage: "**NOTE**: This is deprecated, use `numeric` instead.",
+				Validators: []validator.Bool{
+					validators.AtLeastOneOfTrue(
+						path.MatchRoot("special"),
+						path.MatchRoot("upper"),
+						path.MatchRoot("lower"),
+					),
+				},
 			},
 
 			"numeric": schema.BoolAttribute{
@@ -639,6 +647,13 @@ func passwordSchemaV3() schema.Schema {
 				PlanModifiers: []planmodifier.Bool{
 					boolplanmodifiers.NumberNumericAttributePlanModifier(),
 					boolplanmodifier.RequiresReplace(),
+				},
+				Validators: []validator.Bool{
+					validators.AtLeastOneOfTrue(
+						path.MatchRoot("special"),
+						path.MatchRoot("upper"),
+						path.MatchRoot("lower"),
+					),
 				},
 			},
 

@@ -5,6 +5,7 @@ package random
 
 import (
 	"crypto/rand"
+	"errors"
 	"math/big"
 	"sort"
 )
@@ -47,6 +48,10 @@ func CreateString(input StringParams) ([]byte, error) {
 		chars += specialChars
 	}
 
+	if chars == "" {
+		return nil, errors.New("the character set specified is empty")
+	}
+
 	minMapping := map[string]int64{
 		numChars:     input.MinNumeric,
 		lowerChars:   input.MinLower,
@@ -84,6 +89,14 @@ func CreateString(input StringParams) ([]byte, error) {
 }
 
 func generateRandomBytes(charSet *string, length int64) ([]byte, error) {
+	if charSet == nil {
+		return nil, errors.New("charSet is nil")
+	}
+
+	if *charSet == "" && length > 0 {
+		return nil, errors.New("charSet is empty")
+	}
+
 	bytes := make([]byte, length)
 	setLen := big.NewInt(int64(len(*charSet)))
 	for i := range bytes {
