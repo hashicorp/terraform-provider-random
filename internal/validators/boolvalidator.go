@@ -45,7 +45,7 @@ func (av AtLeastOneOfTrueValidator) Validate(ctx context.Context, req AtLeastOne
 	}
 
 	// At least one value is not false
-	if !req.ConfigValue.IsNull() && req.ConfigValue.ValueBool() != false {
+	if !req.ConfigValue.IsNull() && req.ConfigValue.ValueBool() {
 		return
 	}
 
@@ -81,7 +81,7 @@ func (av AtLeastOneOfTrueValidator) Validate(ctx context.Context, req AtLeastOne
 			}
 
 			// At least one value is not false
-			if !mpVal.IsNull() && mpVal.ValueBool() != false {
+			if !mpVal.IsNull() && mpVal.ValueBool() {
 				return
 			}
 		}
