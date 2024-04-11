@@ -623,6 +623,8 @@ func passwordSchemaV3() schema.Schema {
 
 			"number": schema.BoolAttribute{
 				Description: "Include numeric characters in the result. Default value is `true`. " +
+					"If `number`, `upper`, `lower`, and `special` are all configured, at least one " +
+					"of them must be set to `true`. " +
 					"**NOTE**: This is deprecated, use `numeric` instead.",
 				Optional: true,
 				Computed: true,
@@ -641,9 +643,11 @@ func passwordSchemaV3() schema.Schema {
 			},
 
 			"numeric": schema.BoolAttribute{
-				Description: "Include numeric characters in the result. Default value is `true`.",
-				Optional:    true,
-				Computed:    true,
+				Description: "Include numeric characters in the result. Default value is `true`. " +
+					"If `numeric`, `upper`, `lower`, and `special` are all configured, at least one " +
+					"of them must be set to `true`.",
+				Optional: true,
+				Computed: true,
 				PlanModifiers: []planmodifier.Bool{
 					boolplanmodifiers.NumberNumericAttributePlanModifier(),
 					boolplanmodifier.RequiresReplace(),
