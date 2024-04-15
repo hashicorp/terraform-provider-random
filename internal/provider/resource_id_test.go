@@ -59,6 +59,29 @@ func TestAccResourceID_ImportWithPrefix(t *testing.T) {
 	})
 }
 
+func TestAccResourceID_ImportWithoutKeepersProducesNoPlannedChanges(t *testing.T) {
+	resource.UnitTest(t, resource.TestCase{
+		ProtoV5ProviderFactories: protoV5ProviderFactories(),
+		Steps: []resource.TestStep{
+			{
+				Config: `resource "random_id" "foo" {
+  							byte_length = 4
+						}`,
+				ResourceName:       "random_id.foo",
+				ImportStateId:      "p-9hUg",
+				ImportState:        true,
+				ImportStatePersist: true,
+			},
+			{
+				Config: `resource "random_id" "foo" {
+  							byte_length = 4
+						}`,
+				PlanOnly: true,
+			},
+		},
+	})
+}
+
 func TestAccResourceID_UpgradeFromVersion3_3_2(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		Steps: []resource.TestStep{
