@@ -1,43 +1,14 @@
+// Copyright (c) HashiCorp, Inc.
+// SPDX-License-Identifier: MPL-2.0
+
 package stringplanmodifiers
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
-	"github.com/hashicorp/terraform-plugin-framework/types"
 )
-
-// DefaultValue accepts a types.String value and uses the supplied value to set a default
-// if the config for the attribute is null.
-func DefaultValue(val types.String) planmodifier.String {
-	return &defaultValueAttributePlanModifier{val}
-}
-
-type defaultValueAttributePlanModifier struct {
-	val types.String
-}
-
-func (d *defaultValueAttributePlanModifier) Description(ctx context.Context) string {
-	return fmt.Sprintf("If not configured, defaults to %s", d.val.ValueString())
-}
-
-func (d *defaultValueAttributePlanModifier) MarkdownDescription(ctx context.Context) string {
-	return d.Description(ctx)
-}
-
-// PlanModifyString checks that the value of the attribute in the configuration and assigns the default value if
-// the value in the config is null. This is a destructive operation in that it will overwrite any value
-// present in the plan.
-func (d *defaultValueAttributePlanModifier) PlanModifyString(ctx context.Context, req planmodifier.StringRequest, resp *planmodifier.StringResponse) {
-	// Do not set default if the attribute configuration has been set.
-	if !req.ConfigValue.IsNull() {
-		return
-	}
-
-	resp.PlanValue = d.val
-}
 
 // RequiresReplaceUnlessEmptyStringToNull returns a
 // resource.RequiresReplaceIfFunc that returns true unless the change is from

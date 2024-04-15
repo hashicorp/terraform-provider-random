@@ -1,3 +1,21 @@
+## 3.6.0 (December 04, 2023)
+
+FEATURES:
+
+* resource/random_bytes: New resource that generates an array of random bytes intended to be used as key or secret ([#272](https://github.com/hashicorp/terraform-provider-random/issues/272))
+
+## 3.5.1 (April 12, 2023)
+
+BUG FIXES:
+
+* resource/random_password: Prevent error with `bcrypt` by truncating the bytes that are hashed to a maximum length of 72 ([#397](https://github.com/hashicorp/terraform-provider-random/issues/397))
+
+## 3.5.0 (April 11, 2023)
+
+NOTES:
+
+* This Go module has been updated to Go 1.19 per the [Go support policy](https://golang.org/doc/devel/release.html#policy). Any consumers building on earlier Go versions may experience errors. ([#378](https://github.com/hashicorp/terraform-provider-random/issues/378))
+
 ## 3.4.3 (September 08, 2022)
 
 NOTES:

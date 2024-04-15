@@ -1,43 +1,15 @@
+// Copyright (c) HashiCorp, Inc.
+// SPDX-License-Identifier: MPL-2.0
+
 package boolplanmodifiers
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 )
-
-// DefaultValue accepts a types.Bool value and uses the supplied value to set a default
-// if the config for the attribute is null.
-func DefaultValue(val types.Bool) planmodifier.Bool {
-	return &defaultValueAttributePlanModifier{val}
-}
-
-type defaultValueAttributePlanModifier struct {
-	val types.Bool
-}
-
-func (d *defaultValueAttributePlanModifier) Description(ctx context.Context) string {
-	return fmt.Sprintf("If not configured, defaults to %t", d.val.ValueBool())
-}
-
-func (d *defaultValueAttributePlanModifier) MarkdownDescription(ctx context.Context) string {
-	return d.Description(ctx)
-}
-
-// PlanModifyBool checks that the value of the attribute in the configuration and assigns the default value if
-// the value in the config is null. This is a destructive operation in that it will overwrite any value
-// present in the plan.
-func (d *defaultValueAttributePlanModifier) PlanModifyBool(ctx context.Context, req planmodifier.BoolRequest, resp *planmodifier.BoolResponse) {
-	// Do not set default if the attribute configuration has been set.
-	if !req.ConfigValue.IsNull() {
-		return
-	}
-
-	resp.PlanValue = d.val
-}
 
 // NumberNumericAttributePlanModifier returns a plan modifier that keep the values
 // held in number and numeric attributes synchronised.

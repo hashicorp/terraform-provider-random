@@ -11,10 +11,6 @@ on:
 permissions:
   contents: read # Changelog commit operations use service account PAT
 
-env:
-  CI_COMMIT_AUTHOR: hc-github-team-tf-provider-devex
-  CI_COMMIT_EMAIL: github-team-tf-provider-devex@hashicorp.com
-
 jobs:
   changelog-version:
     runs-on: ubuntu-latest
@@ -29,7 +25,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@ac593985615ec2ede58e132d2e21d2b1cbd6127c # v3.3.0
+        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
         with:
           fetch-depth: 0
           # Avoid persisting GITHUB_TOKEN credentials as they take priority over our service account PAT for `git push` operations
@@ -37,31 +33,31 @@ jobs:
           persist-credentials: false
 
       - name: Batch changes
-        uses: miniscruff/changie-action@b6d52c80deb236a5b548f8774cd5a18b87da9e9a # v1.0.1
+        uses: miniscruff/changie-action@6dcc2533cac0495148ed4046c438487e4dceaa23 # v2.0.0
         with:
           version: latest
           args: batch ${{ needs.changelog-version.outputs.version }}
 
       - name: Merge changes
-        uses: miniscruff/changie-action@b6d52c80deb236a5b548f8774cd5a18b87da9e9a # v1.0.1
+        uses: miniscruff/changie-action@6dcc2533cac0495148ed4046c438487e4dceaa23 # v2.0.0
         with:
           version: latest
           args: merge
 
       - name: Git push changelog
         run: |
-          git config --global user.name "${{ env.CI_COMMIT_AUTHOR }}"
-          git config --global user.email "${{ env.CI_COMMIT_EMAIL }}"
+          git config --global user.name "${{ vars.TF_DEVEX_CI_COMMIT_AUTHOR }}"
+          git config --global user.email "${{ vars.TF_DEVEX_CI_COMMIT_EMAIL }}"
           git add .
           git commit -a -m "Update changelog"
-          git push "https://${{ env.CI_COMMIT_AUTHOR }}:${{ secrets.TF_DEVEX_COMMIT_GITHUB_TOKEN }}@github.com/${{ github.repository }}.git"
+          git push "https://${{ vars.TF_DEVEX_CI_COMMIT_AUTHOR }}:${{ secrets.TF_DEVEX_COMMIT_GITHUB_TOKEN }}@github.com/${{ github.repository }}.git"
 
   release-tag:
     needs: changelog
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@ac593985615ec2ede58e132d2e21d2b1cbd6127c # v3.3.0
+        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
         with:
           fetch-depth: 0
           # Default input is the SHA that initially triggered the workflow. As we created a new commit in the previous job,
@@ -73,17 +69,17 @@ jobs:
 
       - name: Git push release tag
         run: |
-          git config --global user.name "${{ env.CI_COMMIT_AUTHOR }}"
-          git config --global user.email "${{ env.CI_COMMIT_EMAIL }}"
+          git config --global user.name "${{ vars.TF_DEVEX_CI_COMMIT_AUTHOR }}"
+          git config --global user.email "${{ vars.TF_DEVEX_CI_COMMIT_EMAIL }}"
           
           git tag "${{ inputs.versionNumber }}"
-          git push "https://${{ env.CI_COMMIT_AUTHOR }}:${{ secrets.TF_DEVEX_COMMIT_GITHUB_TOKEN }}@github.com/${{ github.repository }}.git" "${{ inputs.versionNumber }}"
+          git push "https://${{ vars.TF_DEVEX_CI_COMMIT_AUTHOR }}:${{ secrets.TF_DEVEX_COMMIT_GITHUB_TOKEN }}@github.com/${{ github.repository }}.git" "${{ inputs.versionNumber }}"
 
   release-notes:
     needs: [ changelog-version, changelog, release-tag ]
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@ac593985615ec2ede58e132d2e21d2b1cbd6127c # v3.3.0
+      - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
         with:
           ref: ${{ inputs.versionNumber }}
           fetch-depth: 0
@@ -93,7 +89,7 @@ jobs:
           cd .changes
           sed -e "1{/# /d;}" -e "2{/^$/d;}" ${{ needs.changelog-version.outputs.version }}.md > release-notes.txt
 
-      - uses: actions/upload-artifact@0b7f8abb1508181956e8e162db84b466c27e18ce # v3.1.2
+      - uses: actions/upload-artifact@5d5d22a31266ced268874388b861e4b58bb5c2f3 # v4.3.1
         with:
           name: release-notes
           path: ./.changes/release-notes.txt
@@ -104,7 +100,8 @@ jobs:
     needs: [ release-notes ]
     permissions:
       contents: write # Needed for goreleaser to create GitHub release
-    uses: hashicorp/ghaction-terraform-provider-release/.github/workflows/hashicorp.yml@01981baad5d35ce2342924e60ae91cf69fe31fd0 # v2.3.0
+      issues: write # Needed for goreleaser to close associated milestone
+    uses: hashicorp/ghaction-terraform-provider-release/.github/workflows/hashicorp.yml@9b5d2ca4b85f3a54d5c4d12e7690ddad1526ff6c # v3.0.1
     secrets:
       hc-releases-key-prod: '${{ secrets.HC_RELEASES_KEY_PROD }}'
       hc-releases-key-staging: '${{ secrets.HC_RELEASES_KEY_STAGING }}'

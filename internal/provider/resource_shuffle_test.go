@@ -1,3 +1,6 @@
+// Copyright (c) HashiCorp, Inc.
+// SPDX-License-Identifier: MPL-2.0
+
 package provider
 
 import (
@@ -6,8 +9,8 @@ import (
 	"strconv"
 	"testing"
 
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
+	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
+	"github.com/hashicorp/terraform-plugin-testing/terraform"
 )
 
 // These results are current as of Go 1.6. The Go
@@ -784,7 +787,27 @@ func TestAccResourceShuffle_Keepers_FrameworkMigration_NullMapValueToValue(t *te
 	})
 }
 
-func TestAccResourceShuffle_Shorter(t *testing.T) {
+// Reference: https://github.com/hashicorp/terraform-provider-random/issues/409
+func TestAccResourceShuffle_ResultCount_Zero(t *testing.T) {
+	t.Parallel()
+
+	resource.UnitTest(t, resource.TestCase{
+		ProtoV5ProviderFactories: protoV5ProviderFactories(),
+		Steps: []resource.TestStep{
+			{
+				Config: `resource "random_shuffle" "test" {
+    						input        = ["a", "b", "c", "d", "e"]
+    						result_count = 0
+						}`,
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("random_shuffle.test", "result.#", "0"),
+				),
+			},
+		},
+	})
+}
+
+func TestAccResourceShuffle_ResultCount_Shorter(t *testing.T) {
 	resource.UnitTest(t, resource.TestCase{
 		ProtoV5ProviderFactories: protoV5ProviderFactories(),
 		Steps: []resource.TestStep{
@@ -805,7 +828,7 @@ func TestAccResourceShuffle_Shorter(t *testing.T) {
 	})
 }
 
-func TestAccResourceShuffle_Longer(t *testing.T) {
+func TestAccResourceShuffle_ResultCount_Longer(t *testing.T) {
 	resource.UnitTest(t, resource.TestCase{
 		ProtoV5ProviderFactories: protoV5ProviderFactories(),
 		Steps: []resource.TestStep{
@@ -835,7 +858,7 @@ func TestAccResourceShuffle_Longer(t *testing.T) {
 	})
 }
 
-func TestAccResourceShuffle_Empty(t *testing.T) {
+func TestAccResourceShuffle_Input_Empty(t *testing.T) {
 	resource.UnitTest(t, resource.TestCase{
 		ProtoV5ProviderFactories: protoV5ProviderFactories(),
 		Steps: []resource.TestStep{
@@ -853,7 +876,7 @@ func TestAccResourceShuffle_Empty(t *testing.T) {
 	})
 }
 
-func TestAccResourceShuffle_One(t *testing.T) {
+func TestAccResourceShuffle_Input_One(t *testing.T) {
 	resource.UnitTest(t, resource.TestCase{
 		ProtoV5ProviderFactories: protoV5ProviderFactories(),
 		Steps: []resource.TestStep{

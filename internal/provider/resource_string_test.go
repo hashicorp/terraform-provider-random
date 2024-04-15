@@ -1,3 +1,6 @@
+// Copyright (c) HashiCorp, Inc.
+// SPDX-License-Identifier: MPL-2.0
+
 package provider
 
 import (
@@ -10,7 +13,7 @@ import (
 	res "github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/tfsdk"
 	"github.com/hashicorp/terraform-plugin-go/tftypes"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 )
 
 func TestAccResourceString_Import(t *testing.T) {
@@ -1773,6 +1776,61 @@ func TestAccResourceString_Import_FromVersion3_4_2(t *testing.T) {
 					testExtractResourceAttr("random_string.test", "result", &result2),
 					testCheckAttributeValuesEqual(&result1, &result2),
 				),
+			},
+		},
+	})
+}
+
+func TestAccResourceString_NumericFalse(t *testing.T) {
+	resource.ParallelTest(t, resource.TestCase{
+		Steps: []resource.TestStep{
+			{
+				ProtoV5ProviderFactories: protoV5ProviderFactories(),
+				Config: `resource "random_string" "test" {
+					length = 12
+					special = false
+					upper = false
+					lower = false
+					numeric = false
+				}`,
+				ExpectError: regexp.MustCompile(`At least one attribute out of \[special,upper,lower,numeric\] must be specified`),
+			},
+		},
+	})
+}
+
+func TestAccResourceString_NumberFalse(t *testing.T) {
+	resource.ParallelTest(t, resource.TestCase{
+		Steps: []resource.TestStep{
+			{
+				ProtoV5ProviderFactories: protoV5ProviderFactories(),
+				Config: `resource "random_string" "test" {
+					length = 12
+					special = false
+					upper = false
+					lower = false
+					number = false
+				}`,
+				ExpectError: regexp.MustCompile(`At least one attribute out of \[special,upper,lower,number\] must be specified`),
+			},
+		},
+	})
+}
+
+func TestAccResourceString_NumericNumberFalse(t *testing.T) {
+	resource.ParallelTest(t, resource.TestCase{
+		Steps: []resource.TestStep{
+			{
+				ProtoV5ProviderFactories: protoV5ProviderFactories(),
+				Config: `resource "random_string" "test" {
+					length = 12
+					special = false
+					upper = false
+					lower = false
+					numeric = false
+					number = false
+				}`,
+				ExpectError: regexp.MustCompile(`At least one attribute out of \[special,upper,lower,numeric\] must be specified((.|\n)*)At least one attribute out of \[special,upper,lower,number\] must be specified`),
 			},
 		},
 	})

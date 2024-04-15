@@ -45,15 +45,15 @@ resource "aws_db_instance" "example" {
 - `min_numeric` (Number) Minimum number of numeric characters in the result. Default value is `0`.
 - `min_special` (Number) Minimum number of special characters in the result. Default value is `0`.
 - `min_upper` (Number) Minimum number of uppercase alphabet characters in the result. Default value is `0`.
-- `number` (Boolean, Deprecated) Include numeric characters in the result. Default value is `true`. **NOTE**: This is deprecated, use `numeric` instead.
-- `numeric` (Boolean) Include numeric characters in the result. Default value is `true`.
+- `number` (Boolean, Deprecated) Include numeric characters in the result. Default value is `true`. If `number`, `upper`, `lower`, and `special` are all configured, at least one of them must be set to `true`. **NOTE**: This is deprecated, use `numeric` instead.
+- `numeric` (Boolean) Include numeric characters in the result. Default value is `true`. If `numeric`, `upper`, `lower`, and `special` are all configured, at least one of them must be set to `true`.
 - `override_special` (String) Supply your own list of special characters to use for string generation.  This overrides the default character list in the special argument.  The `special` argument must still be set to true for any overwritten characters to be used in generation.
 - `special` (Boolean) Include special characters in the result. These are `!@#$%&*()-_=+[]{}<>:?`. Default value is `true`.
 - `upper` (Boolean) Include uppercase alphabet characters in the result. Default value is `true`.
 
 ### Read-Only
 
-- `bcrypt_hash` (String, Sensitive) A bcrypt hash of the generated random string.
+- `bcrypt_hash` (String, Sensitive) A bcrypt hash of the generated random string. **NOTE**: If the generated random string is greater than 72 bytes in length, `bcrypt_hash` will contain a hash of the first 72 bytes.
 - `id` (String) A static value used internally by Terraform, this should not be referenced in configurations.
 - `result` (String, Sensitive) The generated random string.
 

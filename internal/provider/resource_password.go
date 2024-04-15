@@ -1,3 +1,6 @@
+// Copyright (c) HashiCorp, Inc.
+// SPDX-License-Identifier: MPL-2.0
+
 package provider
 
 import (
@@ -8,7 +11,9 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/booldefault"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/boolplanmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/int64default"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/int64planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
@@ -18,10 +23,10 @@ import (
 
 	"github.com/terraform-providers/terraform-provider-random/internal/diagnostics"
 	boolplanmodifiers "github.com/terraform-providers/terraform-provider-random/internal/planmodifiers/bool"
-	int64planmodifiers "github.com/terraform-providers/terraform-provider-random/internal/planmodifiers/int64"
 	mapplanmodifiers "github.com/terraform-providers/terraform-provider-random/internal/planmodifiers/map"
 	stringplanmodifiers "github.com/terraform-providers/terraform-provider-random/internal/planmodifiers/string"
 	"github.com/terraform-providers/terraform-provider-random/internal/random"
+	"github.com/terraform-providers/terraform-provider-random/internal/validators"
 )
 
 var (
@@ -534,8 +539,18 @@ func upgradePasswordStateV2toV3(ctx context.Context, req resource.UpgradeStateRe
 	resp.Diagnostics.Append(resp.State.Set(ctx, passwordDataV3)...)
 }
 
+// generateHash truncates strings that are longer than 72 bytes in
+// order to avoid the error returned from bcrypt.GenerateFromPassword
+// in versions v0.5.0 and above: https://pkg.go.dev/golang.org/x/crypto@v0.8.0/bcrypt#GenerateFromPassword
 func generateHash(toHash string) (string, error) {
-	hash, err := bcrypt.GenerateFromPassword([]byte(toHash), bcrypt.DefaultCost)
+	bytesHash := []byte(toHash)
+	bytesToHash := bytesHash
+
+	if len(bytesHash) > 72 {
+		bytesToHash = bytesHash[:72]
+	}
+
+	hash, err := bcrypt.GenerateFromPassword(bytesToHash, bcrypt.DefaultCost)
 
 	return string(hash), err
 }
@@ -581,10 +596,8 @@ func passwordSchemaV3() schema.Schema {
 				Description: "Include special characters in the result. These are `!@#$%&*()-_=+[]{}<>:?`. Default value is `true`.",
 				Optional:    true,
 				Computed:    true,
+				Default:     booldefault.StaticBool(true),
 				PlanModifiers: []planmodifier.Bool{
-					boolplanmodifiers.DefaultValue(
-						types.BoolValue(true),
-					),
 					boolplanmodifier.RequiresReplace(),
 				},
 			},
@@ -593,10 +606,8 @@ func passwordSchemaV3() schema.Schema {
 				Description: "Include uppercase alphabet characters in the result. Default value is `true`.",
 				Optional:    true,
 				Computed:    true,
+				Default:     booldefault.StaticBool(true),
 				PlanModifiers: []planmodifier.Bool{
-					boolplanmodifiers.DefaultValue(
-						types.BoolValue(true),
-					),
 					boolplanmodifier.RequiresReplace(),
 				}},
 
@@ -604,16 +615,16 @@ func passwordSchemaV3() schema.Schema {
 				Description: "Include lowercase alphabet characters in the result. Default value is `true`.",
 				Optional:    true,
 				Computed:    true,
+				Default:     booldefault.StaticBool(true),
 				PlanModifiers: []planmodifier.Bool{
-					boolplanmodifiers.DefaultValue(
-						types.BoolValue(true),
-					),
 					boolplanmodifier.RequiresReplace(),
 				},
 			},
 
 			"number": schema.BoolAttribute{
 				Description: "Include numeric characters in the result. Default value is `true`. " +
+					"If `number`, `upper`, `lower`, and `special` are all configured, at least one " +
+					"of them must be set to `true`. " +
 					"**NOTE**: This is deprecated, use `numeric` instead.",
 				Optional: true,
 				Computed: true,
@@ -622,15 +633,31 @@ func passwordSchemaV3() schema.Schema {
 					boolplanmodifier.RequiresReplace(),
 				},
 				DeprecationMessage: "**NOTE**: This is deprecated, use `numeric` instead.",
+				Validators: []validator.Bool{
+					validators.AtLeastOneOfTrue(
+						path.MatchRoot("special"),
+						path.MatchRoot("upper"),
+						path.MatchRoot("lower"),
+					),
+				},
 			},
 
 			"numeric": schema.BoolAttribute{
-				Description: "Include numeric characters in the result. Default value is `true`.",
-				Optional:    true,
-				Computed:    true,
+				Description: "Include numeric characters in the result. Default value is `true`. " +
+					"If `numeric`, `upper`, `lower`, and `special` are all configured, at least one " +
+					"of them must be set to `true`.",
+				Optional: true,
+				Computed: true,
 				PlanModifiers: []planmodifier.Bool{
 					boolplanmodifiers.NumberNumericAttributePlanModifier(),
 					boolplanmodifier.RequiresReplace(),
+				},
+				Validators: []validator.Bool{
+					validators.AtLeastOneOfTrue(
+						path.MatchRoot("special"),
+						path.MatchRoot("upper"),
+						path.MatchRoot("lower"),
+					),
 				},
 			},
 
@@ -638,10 +665,8 @@ func passwordSchemaV3() schema.Schema {
 				Description: "Minimum number of numeric characters in the result. Default value is `0`.",
 				Optional:    true,
 				Computed:    true,
+				Default:     int64default.StaticInt64(0),
 				PlanModifiers: []planmodifier.Int64{
-					int64planmodifiers.DefaultValue(
-						types.Int64Value(0),
-					),
 					int64planmodifier.RequiresReplace(),
 				},
 			},
@@ -650,10 +675,8 @@ func passwordSchemaV3() schema.Schema {
 				Description: "Minimum number of uppercase alphabet characters in the result. Default value is `0`.",
 				Optional:    true,
 				Computed:    true,
+				Default:     int64default.StaticInt64(0),
 				PlanModifiers: []planmodifier.Int64{
-					int64planmodifiers.DefaultValue(
-						types.Int64Value(0),
-					),
 					int64planmodifier.RequiresReplace(),
 				},
 			},
@@ -662,10 +685,8 @@ func passwordSchemaV3() schema.Schema {
 				Description: "Minimum number of lowercase alphabet characters in the result. Default value is `0`.",
 				Optional:    true,
 				Computed:    true,
+				Default:     int64default.StaticInt64(0),
 				PlanModifiers: []planmodifier.Int64{
-					int64planmodifiers.DefaultValue(
-						types.Int64Value(0),
-					),
 					int64planmodifier.RequiresReplace(),
 				},
 			},
@@ -674,10 +695,8 @@ func passwordSchemaV3() schema.Schema {
 				Description: "Minimum number of special characters in the result. Default value is `0`.",
 				Optional:    true,
 				Computed:    true,
+				Default:     int64default.StaticInt64(0),
 				PlanModifiers: []planmodifier.Int64{
-					int64planmodifiers.DefaultValue(
-						types.Int64Value(0),
-					),
 					int64planmodifier.RequiresReplace(),
 				},
 			},
@@ -706,9 +725,11 @@ func passwordSchemaV3() schema.Schema {
 			},
 
 			"bcrypt_hash": schema.StringAttribute{
-				Description: "A bcrypt hash of the generated random string.",
-				Computed:    true,
-				Sensitive:   true,
+				Description: "A bcrypt hash of the generated random string. " +
+					"**NOTE**: If the generated random string is greater than 72 bytes in length, " +
+					"`bcrypt_hash` will contain a hash of the first 72 bytes.",
+				Computed:  true,
+				Sensitive: true,
 				PlanModifiers: []planmodifier.String{
 					stringplanmodifier.UseStateForUnknown(),
 				},
@@ -818,9 +839,11 @@ func passwordSchemaV2() schema.Schema {
 			},
 
 			"bcrypt_hash": schema.StringAttribute{
-				Description: "A bcrypt hash of the generated random string.",
-				Computed:    true,
-				Sensitive:   true,
+				Description: "A bcrypt hash of the generated random string. " +
+					"**NOTE**: If the generated random string is greater than 72 bytes in length, " +
+					"`bcrypt_hash` will contain a hash of the first 72 bytes.",
+				Computed:  true,
+				Sensitive: true,
 			},
 
 			"id": schema.StringAttribute{
@@ -916,9 +939,11 @@ func passwordSchemaV1() schema.Schema {
 			},
 
 			"bcrypt_hash": schema.StringAttribute{
-				Description: "A bcrypt hash of the generated random string.",
-				Computed:    true,
-				Sensitive:   true,
+				Description: "A bcrypt hash of the generated random string. " +
+					"**NOTE**: If the generated random string is greater than 72 bytes in length, " +
+					"`bcrypt_hash` will contain a hash of the first 72 bytes.",
+				Computed:  true,
+				Sensitive: true,
 			},
 
 			"id": schema.StringAttribute{

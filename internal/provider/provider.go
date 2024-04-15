@@ -1,3 +1,6 @@
+// Copyright (c) HashiCorp, Inc.
+// SPDX-License-Identifier: MPL-2.0
+
 package provider
 
 import (
@@ -29,6 +32,7 @@ func (p *randomProvider) Configure(context.Context, provider.ConfigureRequest, *
 func (p *randomProvider) Resources(context.Context) []func() resource.Resource {
 	return []func() resource.Resource{
 		NewIdResource,
+		NewBytesResource,
 		NewIntegerResource,
 		NewPasswordResource,
 		NewPetResource,

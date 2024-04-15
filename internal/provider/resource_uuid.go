@@ -1,3 +1,6 @@
+// Copyright (c) HashiCorp, Inc.
+// SPDX-License-Identifier: MPL-2.0
+
 package provider
 
 import (
@@ -32,11 +35,11 @@ func (r *uuidResource) Metadata(_ context.Context, req resource.MetadataRequest,
 
 func (r *uuidResource) Schema(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
 	resp.Schema = schema.Schema{
-		Description: "The resource `random_uuid` generates random uuid string that is intended to be " +
-			"used as unique identifiers for other resources.\n" +
+		Description: "The resource `random_uuid` generates a random uuid string that is intended to be " +
+			"used as a unique identifier for other resources.\n" +
 			"\n" +
 			"This resource uses [hashicorp/go-uuid](https://github.com/hashicorp/go-uuid) to generate a " +
-			"UUID-formatted string for use with services needed a unique string identifier.",
+			"UUID-formatted string for use with services needing a unique string identifier.",
 		Attributes: map[string]schema.Attribute{
 			"keepers": schema.MapAttribute{
 				Description: "Arbitrary map of values that, when changed, will trigger recreation of " +

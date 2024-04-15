@@ -1,3 +1,6 @@
+// Copyright (c) HashiCorp, Inc.
+// SPDX-License-Identifier: MPL-2.0
+
 package provider
 
 import (
@@ -8,14 +11,14 @@ import (
 	petname "github.com/dustinkirkland/golang-petname"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/int64default"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/int64planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringdefault"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 
-	int64planmodifiers "github.com/terraform-providers/terraform-provider-random/internal/planmodifiers/int64"
 	mapplanmodifiers "github.com/terraform-providers/terraform-provider-random/internal/planmodifiers/map"
-	stringplanmodifiers "github.com/terraform-providers/terraform-provider-random/internal/planmodifiers/string"
 )
 
 var _ resource.Resource = (*petResource)(nil)
@@ -52,10 +55,8 @@ func (r *petResource) Schema(ctx context.Context, req resource.SchemaRequest, re
 				Description: "The length (in words) of the pet name. Defaults to 2",
 				Optional:    true,
 				Computed:    true,
+				Default:     int64default.StaticInt64(2),
 				PlanModifiers: []planmodifier.Int64{
-					int64planmodifiers.DefaultValue(
-						types.Int64Value(2),
-					),
 					int64planmodifier.RequiresReplace(),
 				},
 			},
@@ -70,10 +71,8 @@ func (r *petResource) Schema(ctx context.Context, req resource.SchemaRequest, re
 				Description: "The character to separate words in the pet name. Defaults to \"-\"",
 				Optional:    true,
 				Computed:    true,
+				Default:     stringdefault.StaticString("-"),
 				PlanModifiers: []planmodifier.String{
-					stringplanmodifiers.DefaultValue(
-						types.StringValue("-"),
-					),
 					stringplanmodifier.RequiresReplace(),
 				},
 			},

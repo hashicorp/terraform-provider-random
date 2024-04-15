@@ -21,7 +21,7 @@ resource "random_shuffle" "az" {
 resource "aws_elb" "example" {
   # Place the ELB in any two of the given availability zones, selected
   # at random.
-  availability_zones = [random_shuffle.az.result]
+  availability_zones = random_shuffle.az.result
 
   # ... and other aws_elb arguments ...
 }
@@ -45,6 +45,4 @@ resource "aws_elb" "example" {
 ### Read-Only
 
 - `id` (String) A static value used internally by Terraform, this should not be referenced in configurations.
-- `result` (List of String) Random permutation of the list of strings given in `input`.
-
-
+- `result` (List of String) Random permutation of the list of strings given in `input`. The number of elements is determined by `result_count` if set, or the number of elements in `input`.
