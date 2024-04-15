@@ -67,6 +67,47 @@ func TestGenerateHash(t *testing.T) {
 	}
 }
 
+func TestCreateString(t *testing.T) {
+	t.Parallel()
+
+	testCases := map[string]struct {
+		input         random.StringParams
+		expectedError error
+	}{
+		"input-false": {
+			input: random.StringParams{
+				Length:  16, // Required
+				Lower:   false,
+				Numeric: false,
+				Special: false,
+				Upper:   false,
+			},
+			expectedError: errors.New("the character set specified is empty"),
+		},
+	}
+
+	equateErrorMessage := cmp.Comparer(func(x, y error) bool {
+		if x == nil || y == nil {
+			return x == nil && y == nil
+		}
+		return x.Error() == y.Error()
+	})
+
+	for name, testCase := range testCases {
+		name, testCase := name, testCase
+
+		t.Run(name, func(t *testing.T) {
+			t.Parallel()
+
+			_, err := random.CreateString(testCase.input)
+
+			if diff := cmp.Diff(testCase.expectedError, err, equateErrorMessage); diff != "" {
+				t.Errorf("unexpected difference: %s", diff)
+			}
+		})
+	}
+}
+
 func TestAccResourcePassword_Import(t *testing.T) {
 	resource.UnitTest(t, resource.TestCase{
 		ProtoV5ProviderFactories: protoV5ProviderFactories(),
@@ -2713,6 +2754,61 @@ func TestAccResourcePassword_Keepers_FrameworkMigration_NullMapValueToValue(t *t
 					testCheckAttributeValuesDiffer(&result1, &result2),
 					resource.TestCheckResourceAttr("random_password.test", "keepers.%", "2"),
 				),
+			},
+		},
+	})
+}
+
+func TestAccResourcePassword_NumericFalse(t *testing.T) {
+	resource.ParallelTest(t, resource.TestCase{
+		Steps: []resource.TestStep{
+			{
+				ProtoV5ProviderFactories: protoV5ProviderFactories(),
+				Config: `resource "random_password" "test" {
+					length = 12
+					special = false
+					upper = false
+					lower = false
+					numeric = false
+				}`,
+				ExpectError: regexp.MustCompile(`At least one attribute out of \[special,upper,lower,numeric\] must be specified`),
+			},
+		},
+	})
+}
+
+func TestAccResourcePassword_NumberFalse(t *testing.T) {
+	resource.ParallelTest(t, resource.TestCase{
+		Steps: []resource.TestStep{
+			{
+				ProtoV5ProviderFactories: protoV5ProviderFactories(),
+				Config: `resource "random_password" "test" {
+					length = 12
+					special = false
+					upper = false
+					lower = false
+					number = false
+				}`,
+				ExpectError: regexp.MustCompile(`At least one attribute out of \[special,upper,lower,number\] must be specified`),
+			},
+		},
+	})
+}
+
+func TestAccResourcePassword_NumericNumberFalse(t *testing.T) {
+	resource.ParallelTest(t, resource.TestCase{
+		Steps: []resource.TestStep{
+			{
+				ProtoV5ProviderFactories: protoV5ProviderFactories(),
+				Config: `resource "random_password" "test" {
+					length = 12
+					special = false
+					upper = false
+					lower = false
+					numeric = false
+					number = false
+				}`,
+				ExpectError: regexp.MustCompile(`At least one attribute out of \[special,upper,lower,numeric\] must be specified((.|\n)*)At least one attribute out of \[special,upper,lower,number\] must be specified`),
 			},
 		},
 	})

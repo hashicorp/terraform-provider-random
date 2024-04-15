@@ -1,0 +1,6 @@
+kind: BUG FIXES
+body: 'provider/random_string: Fix bug which causes panic when special, upper, lower
+  and number/numeric are all false'
+time: 2024-04-10T17:55:36.979987+01:00
+custom:
+  Issue: "551"

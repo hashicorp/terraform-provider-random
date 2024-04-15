@@ -1758,6 +1758,61 @@ func TestAccResourceString_Import_FromVersion3_4_2(t *testing.T) {
 	})
 }
 
+func TestAccResourceString_NumericFalse(t *testing.T) {
+	resource.ParallelTest(t, resource.TestCase{
+		Steps: []resource.TestStep{
+			{
+				ProtoV5ProviderFactories: protoV5ProviderFactories(),
+				Config: `resource "random_string" "test" {
+					length = 12
+					special = false
+					upper = false
+					lower = false
+					numeric = false
+				}`,
+				ExpectError: regexp.MustCompile(`At least one attribute out of \[special,upper,lower,numeric\] must be specified`),
+			},
+		},
+	})
+}
+
+func TestAccResourceString_NumberFalse(t *testing.T) {
+	resource.ParallelTest(t, resource.TestCase{
+		Steps: []resource.TestStep{
+			{
+				ProtoV5ProviderFactories: protoV5ProviderFactories(),
+				Config: `resource "random_string" "test" {
+					length = 12
+					special = false
+					upper = false
+					lower = false
+					number = false
+				}`,
+				ExpectError: regexp.MustCompile(`At least one attribute out of \[special,upper,lower,number\] must be specified`),
+			},
+		},
+	})
+}
+
+func TestAccResourceString_NumericNumberFalse(t *testing.T) {
+	resource.ParallelTest(t, resource.TestCase{
+		Steps: []resource.TestStep{
+			{
+				ProtoV5ProviderFactories: protoV5ProviderFactories(),
+				Config: `resource "random_string" "test" {
+					length = 12
+					special = false
+					upper = false
+					lower = false
+					numeric = false
+					number = false
+				}`,
+				ExpectError: regexp.MustCompile(`At least one attribute out of \[special,upper,lower,numeric\] must be specified((.|\n)*)At least one attribute out of \[special,upper,lower,number\] must be specified`),
+			},
+		},
+	})
+}
+
 func testCheckLen(expectedLen int) func(input string) error {
 	return func(input string) error {
 		if len(input) != expectedLen {
