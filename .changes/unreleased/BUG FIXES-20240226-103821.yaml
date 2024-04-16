@@ -1,6 +1,0 @@
-kind: BUG FIXES
-body: 'resource/random_shuffle: Prevent inconsistent result after apply when result_count
-  is set to 0'
-time: 2024-02-26T10:38:21.636994-05:00
-custom:
-  Issue: "409"

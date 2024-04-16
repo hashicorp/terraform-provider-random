@@ -1,6 +1,0 @@
-kind: BUG FIXES
-body: 'provider/random_password: Fix bug which causes panic when special, upper, lower
-  and number/numeric are all false'
-time: 2024-04-10T17:54:23.219223+01:00
-custom:
-  Issue: "551"
