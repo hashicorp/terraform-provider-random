@@ -17,6 +17,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/tfsdk"
 	"github.com/hashicorp/terraform-plugin-go/tftypes"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
+	"github.com/hashicorp/terraform-plugin-testing/plancheck"
 	"github.com/hashicorp/terraform-plugin-testing/terraform"
 	"golang.org/x/crypto/bcrypt"
 
@@ -382,13 +383,11 @@ func TestAccResourcePassword_Import_FromVersion3_1_3(t *testing.T) {
 				Config: `resource "random_password" "test" {
 					length = 12
 				}`,
-				PlanOnly: true,
-			},
-			{
-				ProtoV5ProviderFactories: protoV5ProviderFactories(),
-				Config: `resource "random_password" "test" {
-							length = 12
-						}`,
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectEmptyPlan(),
+					},
+				},
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttrWith("random_password.test", "result", testCheckLen(12)),
 					resource.TestCheckResourceAttr("random_password.test", "number", "true"),
