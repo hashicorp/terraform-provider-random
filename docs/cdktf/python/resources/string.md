@@ -53,8 +53,8 @@ class MyConvertedCode(TerraformStack):
 - `min_numeric` (Number) Minimum number of numeric characters in the result. Default value is `0`.
 - `min_special` (Number) Minimum number of special characters in the result. Default value is `0`.
 - `min_upper` (Number) Minimum number of uppercase alphabet characters in the result. Default value is `0`.
-- `number` (Boolean, Deprecated) Include numeric characters in the result. Default value is `true`. **NOTE**: This is deprecated, use `numeric` instead.
-- `numeric` (Boolean) Include numeric characters in the result. Default value is `true`.
+- `number` (Boolean, Deprecated) Include numeric characters in the result. Default value is `true`. If `number`, `upper`, `lower`, and `special` are all configured, at least one of them must be set to `true`. **NOTE**: This is deprecated, use `numeric` instead.
+- `numeric` (Boolean) Include numeric characters in the result. Default value is `true`. If `numeric`, `upper`, `lower`, and `special` are all configured, at least one of them must be set to `true`.
 - `override_special` (String) Supply your own list of special characters to use for string generation.  This overrides the default character list in the special argument.  The `special` argument must still be set to true for any overwritten characters to be used in generation.
 - `special` (Boolean) Include special characters in the result. These are `!@#$%&*()-_=+[]{}<>:?`. Default value is `true`.
 - `upper` (Boolean) Include uppercase alphabet characters in the result. Default value is `true`.
@@ -168,4 +168,4 @@ class MyConvertedCode(TerraformStack):
 
     **NOTE** `ignore_changes` is only required until the resource is recreated after import,
     after which it will use the configuration values specified.
-<!-- cache-key: cdktf-0.20.1 input-54afc295b1f13e4a8837c027e2fd4b275761a58e02a58fa325f8460acce4ca8f -->
+<!-- cache-key: cdktf-0.20.1 input-380dd9a189f0c8c879abe5f7e2e35c6d71b199e2708eeba1179938ca5680e05b -->

@@ -61,8 +61,8 @@ class MyConvertedCode extends TerraformStack {
 - `minNumeric` (Number) Minimum number of numeric characters in the result. Default value is `0`.
 - `minSpecial` (Number) Minimum number of special characters in the result. Default value is `0`.
 - `minUpper` (Number) Minimum number of uppercase alphabet characters in the result. Default value is `0`.
-- `number` (Boolean, Deprecated) Include numeric characters in the result. Default value is `true`. **NOTE**: This is deprecated, use `numeric` instead.
-- `numeric` (Boolean) Include numeric characters in the result. Default value is `true`.
+- `number` (Boolean, Deprecated) Include numeric characters in the result. Default value is `true`. If `number`, `upper`, `lower`, and `special` are all configured, at least one of them must be set to `true`. **NOTE**: This is deprecated, use `numeric` instead.
+- `numeric` (Boolean) Include numeric characters in the result. Default value is `true`. If `numeric`, `upper`, `lower`, and `special` are all configured, at least one of them must be set to `true`.
 - `overrideSpecial` (String) Supply your own list of special characters to use for string generation.  This overrides the default character list in the special argument.  The `special` argument must still be set to true for any overwritten characters to be used in generation.
 - `special` (Boolean) Include special characters in the result. These are `!@#$%&*()-_=+[]{}<>:?`. Default value is `true`.
 - `upper` (Boolean) Include uppercase alphabet characters in the result. Default value is `true`.
@@ -194,4 +194,4 @@ class MyConvertedCode extends TerraformStack {
     **NOTE** `ignore_changes` is only required until the resource is recreated after import,
     after which it will use the configuration values specified.
 
-<!-- cache-key: cdktf-0.20.1 input-679f2842bdae2deada09d08030e614f09c42f4d6c2a4a7861ed1b7a84f1ceeea -->
+<!-- cache-key: cdktf-0.20.1 input-4f3bbf00fd66a8220b635b87411f240ece545761c828563b01b2a6f1c565befe -->
