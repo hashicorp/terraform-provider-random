@@ -1,0 +1,5 @@
+kind: NOTES
+body: 'resource/random_pet: Results have been updated to the latest upstream petname data'
+time: 2024-05-21T15:25:22.081016-04:00
+custom:
+    Issue: "581"
