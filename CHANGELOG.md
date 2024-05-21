@@ -1,3 +1,9 @@
+## 3.6.2 (May 21, 2024)
+
+NOTES:
+
+* resource/random_pet: Results have been updated to the latest upstream petname data ([#581](https://github.com/hashicorp/terraform-provider-random/issues/581))
+
 ## 3.6.1 (April 16, 2024)
 
 BUG FIXES:
