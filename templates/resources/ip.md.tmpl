@@ -1,0 +1,35 @@
+---
+page_title: "{{.Name}} {{.Type}} - {{.ProviderName}}"
+subcategory: ""
+description: |-
+{{ .Description | plainmarkdown | trimspace | prefixlines "  " }}
+---
+
+# {{.Name}} ({{.Type}})
+
+{{ .Description | trimspace }}
+
+## Example Usage
+
+### ipv4
+
+{{ tffile (printf "examples/resources/%s/ipv4.tf" .Name)}}
+
+### IPv6
+
+{{ tffile (printf "examples/resources/%s/ipv4.tf" .Name)}}
+
+### Using a count
+
+It could be useful to randomly generate a number of IP addresses. This can be done using a [count](https://developer.hashicorp.com/terraform/language/meta-arguments/count).
+
+{{ tffile (printf "examples/resources/%s/count.tf" .Name)}}
+
+### Using a count followed by a distinct
+
+Keep in mind that using a [count](https://developer.hashicorp.com/terraform/language/meta-arguments/count) you could end up with duplicate IP addresses. 
+If you want to avoid this, perform a [distinct](https://developer.hashicorp.com/terraform/language/functions/distinct) on the list of IP addresses.
+
+{{ tffile (printf "examples/resources/%s/count_distinct.tf" .Name)}}
+
+{{ .SchemaMarkdown | trimspace }}
