@@ -8,7 +8,11 @@ import (
 	"regexp"
 	"testing"
 
+	"github.com/hashicorp/terraform-plugin-testing/compare"
+	"github.com/hashicorp/terraform-plugin-testing/knownvalue"
+	"github.com/hashicorp/terraform-plugin-testing/statecheck"
 	"github.com/hashicorp/terraform-plugin-testing/terraform"
+	"github.com/hashicorp/terraform-plugin-testing/tfjsonpath"
 
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 )
@@ -21,11 +25,11 @@ func TestAccResourceBytes(t *testing.T) {
 				Config: `resource "random_bytes" "basic" {
 							length = 32
 						}`,
-				Check: resource.ComposeTestCheckFunc(
-					resource.TestMatchResourceAttr("random_bytes.basic", "base64", regexp.MustCompile(`^[A-Za-z/+\d]{43}=$`)),
-					resource.TestMatchResourceAttr("random_bytes.basic", "hex", regexp.MustCompile(`^[a-f\d]{64}$`)),
-					resource.TestCheckResourceAttr("random_bytes.basic", "length", "32"),
-				),
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue("random_bytes.basic", tfjsonpath.New("base64"), knownvalue.StringRegexp(regexp.MustCompile(`^[A-Za-z/+\d]{43}=$`))),
+					statecheck.ExpectKnownValue("random_bytes.basic", tfjsonpath.New("hex"), knownvalue.StringRegexp(regexp.MustCompile(`^[a-f\d]{64}$`))),
+					statecheck.ExpectKnownValue("random_bytes.basic", tfjsonpath.New("length"), knownvalue.Int64Exact(32)),
+				},
 			},
 			{
 				// Usage of ImportStateIdFunc is required as the value passed to the `terraform import` command needs
@@ -63,11 +67,11 @@ func TestAccResourceBytes_ImportWithoutKeepersThenUpdateShouldNotTriggerChange(t
 				Config: `resource "random_bytes" "basic" {
 							length = 32
 						}`,
-				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttr("random_bytes.basic", "base64", "hkvbcU5f8qGysTFhkI4gzf3yRWC1jXW3aRLCNQFOtNw="),
-					resource.TestCheckResourceAttr("random_bytes.basic", "hex", "864bdb714e5ff2a1b2b13161908e20cdfdf24560b58d75b76912c235014eb4dc"),
-					resource.TestCheckResourceAttr("random_bytes.basic", "length", "32"),
-				),
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue("random_bytes.basic", tfjsonpath.New("base64"), knownvalue.StringExact("hkvbcU5f8qGysTFhkI4gzf3yRWC1jXW3aRLCNQFOtNw=")),
+					statecheck.ExpectKnownValue("random_bytes.basic", tfjsonpath.New("hex"), knownvalue.StringExact("864bdb714e5ff2a1b2b13161908e20cdfdf24560b58d75b76912c235014eb4dc")),
+					statecheck.ExpectKnownValue("random_bytes.basic", tfjsonpath.New("length"), knownvalue.Int64Exact(32)),
+				},
 			},
 			{
 				Config: `resource "random_bytes" "basic" {
@@ -94,7 +98,8 @@ func TestAccResourceBytes_LengthErrors(t *testing.T) {
 }
 
 func TestAccResourceBytes_Length_ForceReplacement(t *testing.T) {
-	var bytes1, bytes2 string
+	// The base64 attribute values should differ between test steps
+	assertBase64Differ := statecheck.CompareValue(compare.ValuesDiffer())
 
 	resource.ParallelTest(t, resource.TestCase{
 		Steps: []resource.TestStep{
@@ -103,30 +108,30 @@ func TestAccResourceBytes_Length_ForceReplacement(t *testing.T) {
 				Config: `resource "random_bytes" "test" {
 					length = 1
 				}`,
-				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttr("random_bytes.test", "length", "1"),
-					testExtractResourceAttr("random_bytes.test", "base64", &bytes1),
-					resource.TestCheckResourceAttrWith("random_bytes.test", "hex", testCheckLen(2)),
-				),
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue("random_bytes.test", tfjsonpath.New("length"), knownvalue.Int64Exact(1)),
+					assertBase64Differ.AddStateValue("random_bytes.test", tfjsonpath.New("base64")),
+					statecheck.ExpectKnownValue("random_bytes.test", tfjsonpath.New("hex"), knownvalue.StringRegexp(regexp.MustCompile(`^[a-f\d]{2}$`))),
+				},
 			},
 			{
 				ProtoV5ProviderFactories: protoV5ProviderFactories(),
 				Config: `resource "random_bytes" "test" {
 					length = 2
 				}`,
-				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttr("random_bytes.test", "length", "2"),
-					testExtractResourceAttr("random_bytes.test", "base64", &bytes2),
-					resource.TestCheckResourceAttrWith("random_bytes.test", "hex", testCheckLen(4)),
-					testCheckAttributeValuesDiffer(&bytes1, &bytes2),
-				),
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue("random_bytes.test", tfjsonpath.New("length"), knownvalue.Int64Exact(2)),
+					statecheck.ExpectKnownValue("random_bytes.test", tfjsonpath.New("hex"), knownvalue.StringRegexp(regexp.MustCompile(`^[a-f\d]{4}$`))),
+					assertBase64Differ.AddStateValue("random_bytes.test", tfjsonpath.New("base64")),
+				},
 			},
 		},
 	})
 }
 
 func TestAccResourceBytes_Keepers_Keep_EmptyMap(t *testing.T) {
-	var result1, result2 string
+	// The hex attribute values should be the same between test steps
+	assertHexSame := statecheck.CompareValue(compare.ValuesSame())
 
 	resource.ParallelTest(t, resource.TestCase{
 		Steps: []resource.TestStep{
@@ -136,10 +141,10 @@ func TestAccResourceBytes_Keepers_Keep_EmptyMap(t *testing.T) {
 					length = 12
 					keepers = {}
 				}`,
-				Check: resource.ComposeTestCheckFunc(
-					testExtractResourceAttr("random_bytes.test", "hex", &result1),
-					resource.TestCheckResourceAttr("random_bytes.test", "keepers.%", "0"),
-				),
+				ConfigStateChecks: []statecheck.StateCheck{
+					assertHexSame.AddStateValue("random_bytes.test", tfjsonpath.New("hex")),
+					statecheck.ExpectKnownValue("random_bytes.test", tfjsonpath.New("keepers"), knownvalue.MapSizeExact(0)),
+				},
 			},
 			{
 				ProtoV5ProviderFactories: protoV5ProviderFactories(),
@@ -147,18 +152,18 @@ func TestAccResourceBytes_Keepers_Keep_EmptyMap(t *testing.T) {
 					length = 12
 					keepers = {}
 				}`,
-				Check: resource.ComposeTestCheckFunc(
-					testExtractResourceAttr("random_bytes.test", "hex", &result2),
-					testCheckAttributeValuesEqual(&result1, &result2),
-					resource.TestCheckResourceAttr("random_bytes.test", "keepers.%", "0"),
-				),
+				ConfigStateChecks: []statecheck.StateCheck{
+					assertHexSame.AddStateValue("random_bytes.test", tfjsonpath.New("hex")),
+					statecheck.ExpectKnownValue("random_bytes.test", tfjsonpath.New("keepers"), knownvalue.MapSizeExact(0)),
+				},
 			},
 		},
 	})
 }
 
 func TestAccResourceBytes_Keepers_Keep_NullMap(t *testing.T) {
-	var result1, result2 string
+	// The hex attribute values should be the same between test steps
+	assertHexSame := statecheck.CompareValue(compare.ValuesSame())
 
 	resource.ParallelTest(t, resource.TestCase{
 		Steps: []resource.TestStep{
@@ -167,28 +172,28 @@ func TestAccResourceBytes_Keepers_Keep_NullMap(t *testing.T) {
 				Config: `resource "random_bytes" "test" {
 					length = 12
 				}`,
-				Check: resource.ComposeTestCheckFunc(
-					testExtractResourceAttr("random_bytes.test", "hex", &result1),
-					resource.TestCheckResourceAttr("random_bytes.test", "keepers.%", "0"),
-				),
+				ConfigStateChecks: []statecheck.StateCheck{
+					assertHexSame.AddStateValue("random_bytes.test", tfjsonpath.New("hex")),
+					statecheck.ExpectKnownValue("random_bytes.test", tfjsonpath.New("keepers"), knownvalue.Null()),
+				},
 			},
 			{
 				ProtoV5ProviderFactories: protoV5ProviderFactories(),
 				Config: `resource "random_bytes" "test" {
 					length = 12
 				}`,
-				Check: resource.ComposeTestCheckFunc(
-					testExtractResourceAttr("random_bytes.test", "hex", &result2),
-					testCheckAttributeValuesEqual(&result1, &result2),
-					resource.TestCheckResourceAttr("random_bytes.test", "keepers.%", "0"),
-				),
+				ConfigStateChecks: []statecheck.StateCheck{
+					assertHexSame.AddStateValue("random_bytes.test", tfjsonpath.New("hex")),
+					statecheck.ExpectKnownValue("random_bytes.test", tfjsonpath.New("keepers"), knownvalue.Null()),
+				},
 			},
 		},
 	})
 }
 
 func TestAccResourceBytes_Keepers_Keep_NullValue(t *testing.T) {
-	var result1, result2 string
+	// The hex attribute values should be the same between test steps
+	assertHexSame := statecheck.CompareValue(compare.ValuesSame())
 
 	resource.ParallelTest(t, resource.TestCase{
 		Steps: []resource.TestStep{
@@ -200,10 +205,16 @@ func TestAccResourceBytes_Keepers_Keep_NullValue(t *testing.T) {
 						"key" = null
 					}
 				}`,
-				Check: resource.ComposeTestCheckFunc(
-					testExtractResourceAttr("random_bytes.test", "hex", &result1),
-					resource.TestCheckResourceAttr("random_bytes.test", "keepers.%", "1"),
-				),
+				ConfigStateChecks: []statecheck.StateCheck{
+					assertHexSame.AddStateValue("random_bytes.test", tfjsonpath.New("hex")),
+					statecheck.ExpectKnownValue("random_bytes.test", tfjsonpath.New("keepers"),
+						knownvalue.MapExact(
+							map[string]knownvalue.Check{
+								"key": knownvalue.Null(),
+							},
+						),
+					),
+				},
 			},
 			{
 				ProtoV5ProviderFactories: protoV5ProviderFactories(),
@@ -213,18 +224,24 @@ func TestAccResourceBytes_Keepers_Keep_NullValue(t *testing.T) {
 						"key" = null
 					}
 				}`,
-				Check: resource.ComposeTestCheckFunc(
-					testExtractResourceAttr("random_bytes.test", "hex", &result2),
-					testCheckAttributeValuesEqual(&result1, &result2),
-					resource.TestCheckResourceAttr("random_bytes.test", "keepers.%", "1"),
-				),
+				ConfigStateChecks: []statecheck.StateCheck{
+					assertHexSame.AddStateValue("random_bytes.test", tfjsonpath.New("hex")),
+					statecheck.ExpectKnownValue("random_bytes.test", tfjsonpath.New("keepers"),
+						knownvalue.MapExact(
+							map[string]knownvalue.Check{
+								"key": knownvalue.Null(),
+							},
+						),
+					),
+				},
 			},
 		},
 	})
 }
 
 func TestAccResourceBytes_Keepers_Keep_NullValues(t *testing.T) {
-	var result1, result2 string
+	// The hex attribute values should be the same between test steps
+	assertHexSame := statecheck.CompareValue(compare.ValuesSame())
 
 	resource.ParallelTest(t, resource.TestCase{
 		Steps: []resource.TestStep{
@@ -237,10 +254,17 @@ func TestAccResourceBytes_Keepers_Keep_NullValues(t *testing.T) {
 						"key2" = null
 					}
 				}`,
-				Check: resource.ComposeTestCheckFunc(
-					testExtractResourceAttr("random_bytes.test", "hex", &result1),
-					resource.TestCheckResourceAttr("random_bytes.test", "keepers.%", "2"),
-				),
+				ConfigStateChecks: []statecheck.StateCheck{
+					assertHexSame.AddStateValue("random_bytes.test", tfjsonpath.New("hex")),
+					statecheck.ExpectKnownValue("random_bytes.test", tfjsonpath.New("keepers"),
+						knownvalue.MapExact(
+							map[string]knownvalue.Check{
+								"key1": knownvalue.Null(),
+								"key2": knownvalue.Null(),
+							},
+						),
+					),
+				},
 			},
 			{
 				ProtoV5ProviderFactories: protoV5ProviderFactories(),
@@ -251,18 +275,25 @@ func TestAccResourceBytes_Keepers_Keep_NullValues(t *testing.T) {
 						"key2" = null
 					}
 				}`,
-				Check: resource.ComposeTestCheckFunc(
-					testExtractResourceAttr("random_bytes.test", "hex", &result2),
-					testCheckAttributeValuesEqual(&result1, &result2),
-					resource.TestCheckResourceAttr("random_bytes.test", "keepers.%", "2"),
-				),
+				ConfigStateChecks: []statecheck.StateCheck{
+					assertHexSame.AddStateValue("random_bytes.test", tfjsonpath.New("hex")),
+					statecheck.ExpectKnownValue("random_bytes.test", tfjsonpath.New("keepers"),
+						knownvalue.MapExact(
+							map[string]knownvalue.Check{
+								"key1": knownvalue.Null(),
+								"key2": knownvalue.Null(),
+							},
+						),
+					),
+				},
 			},
 		},
 	})
 }
 
 func TestAccResourceBytes_Keepers_Keep_Value(t *testing.T) {
-	var result1, result2 string
+	// The hex attribute values should be the same between test steps
+	assertHexSame := statecheck.CompareValue(compare.ValuesSame())
 
 	resource.ParallelTest(t, resource.TestCase{
 		Steps: []resource.TestStep{
@@ -274,10 +305,16 @@ func TestAccResourceBytes_Keepers_Keep_Value(t *testing.T) {
 						"key" = "123"
 					}
 				}`,
-				Check: resource.ComposeTestCheckFunc(
-					testExtractResourceAttr("random_bytes.test", "hex", &result1),
-					resource.TestCheckResourceAttr("random_bytes.test", "keepers.%", "1"),
-				),
+				ConfigStateChecks: []statecheck.StateCheck{
+					assertHexSame.AddStateValue("random_bytes.test", tfjsonpath.New("hex")),
+					statecheck.ExpectKnownValue("random_bytes.test", tfjsonpath.New("keepers"),
+						knownvalue.MapExact(
+							map[string]knownvalue.Check{
+								"key": knownvalue.StringExact("123"),
+							},
+						),
+					),
+				},
 			},
 			{
 				ProtoV5ProviderFactories: protoV5ProviderFactories(),
@@ -287,18 +324,24 @@ func TestAccResourceBytes_Keepers_Keep_Value(t *testing.T) {
 						"key" = "123"
 					}
 				}`,
-				Check: resource.ComposeTestCheckFunc(
-					testExtractResourceAttr("random_bytes.test", "hex", &result2),
-					testCheckAttributeValuesEqual(&result1, &result2),
-					resource.TestCheckResourceAttr("random_bytes.test", "keepers.%", "1"),
-				),
+				ConfigStateChecks: []statecheck.StateCheck{
+					assertHexSame.AddStateValue("random_bytes.test", tfjsonpath.New("hex")),
+					statecheck.ExpectKnownValue("random_bytes.test", tfjsonpath.New("keepers"),
+						knownvalue.MapExact(
+							map[string]knownvalue.Check{
+								"key": knownvalue.StringExact("123"),
+							},
+						),
+					),
+				},
 			},
 		},
 	})
 }
 
 func TestAccResourceBytes_Keepers_Keep_Values(t *testing.T) {
-	var result1, result2 string
+	// The hex attribute values should be the same between test steps
+	assertHexSame := statecheck.CompareValue(compare.ValuesSame())
 
 	resource.ParallelTest(t, resource.TestCase{
 		Steps: []resource.TestStep{
@@ -311,10 +354,17 @@ func TestAccResourceBytes_Keepers_Keep_Values(t *testing.T) {
 						"key2" = "456"
 					}
 				}`,
-				Check: resource.ComposeTestCheckFunc(
-					testExtractResourceAttr("random_bytes.test", "hex", &result1),
-					resource.TestCheckResourceAttr("random_bytes.test", "keepers.%", "2"),
-				),
+				ConfigStateChecks: []statecheck.StateCheck{
+					assertHexSame.AddStateValue("random_bytes.test", tfjsonpath.New("hex")),
+					statecheck.ExpectKnownValue("random_bytes.test", tfjsonpath.New("keepers"),
+						knownvalue.MapExact(
+							map[string]knownvalue.Check{
+								"key1": knownvalue.StringExact("123"),
+								"key2": knownvalue.StringExact("456"),
+							},
+						),
+					),
+				},
 			},
 			{
 				ProtoV5ProviderFactories: protoV5ProviderFactories(),
@@ -325,18 +375,25 @@ func TestAccResourceBytes_Keepers_Keep_Values(t *testing.T) {
 						"key2" = "456"
 					}
 				}`,
-				Check: resource.ComposeTestCheckFunc(
-					testExtractResourceAttr("random_bytes.test", "hex", &result2),
-					testCheckAttributeValuesEqual(&result1, &result2),
-					resource.TestCheckResourceAttr("random_bytes.test", "keepers.%", "2"),
-				),
+				ConfigStateChecks: []statecheck.StateCheck{
+					assertHexSame.AddStateValue("random_bytes.test", tfjsonpath.New("hex")),
+					statecheck.ExpectKnownValue("random_bytes.test", tfjsonpath.New("keepers"),
+						knownvalue.MapExact(
+							map[string]knownvalue.Check{
+								"key1": knownvalue.StringExact("123"),
+								"key2": knownvalue.StringExact("456"),
+							},
+						),
+					),
+				},
 			},
 		},
 	})
 }
 
 func TestAccResourceBytes_Keepers_Replace_EmptyMapToValue(t *testing.T) {
-	var result1, result2 string
+	// The hex attribute values should differ between test steps
+	assertHexDiffer := statecheck.CompareValue(compare.ValuesDiffer())
 
 	resource.ParallelTest(t, resource.TestCase{
 		Steps: []resource.TestStep{
@@ -346,10 +403,10 @@ func TestAccResourceBytes_Keepers_Replace_EmptyMapToValue(t *testing.T) {
 					length = 12
 					keepers = {}
 				}`,
-				Check: resource.ComposeTestCheckFunc(
-					testExtractResourceAttr("random_bytes.test", "hex", &result1),
-					resource.TestCheckResourceAttr("random_bytes.test", "keepers.%", "0"),
-				),
+				ConfigStateChecks: []statecheck.StateCheck{
+					assertHexDiffer.AddStateValue("random_bytes.test", tfjsonpath.New("hex")),
+					statecheck.ExpectKnownValue("random_bytes.test", tfjsonpath.New("keepers"), knownvalue.MapSizeExact(0)),
+				},
 			},
 			{
 				ProtoV5ProviderFactories: protoV5ProviderFactories(),
@@ -359,18 +416,24 @@ func TestAccResourceBytes_Keepers_Replace_EmptyMapToValue(t *testing.T) {
 						"key" = "123"
 					}
 				}`,
-				Check: resource.ComposeTestCheckFunc(
-					testExtractResourceAttr("random_bytes.test", "hex", &result2),
-					testCheckAttributeValuesDiffer(&result1, &result2),
-					resource.TestCheckResourceAttr("random_bytes.test", "keepers.%", "1"),
-				),
+				ConfigStateChecks: []statecheck.StateCheck{
+					assertHexDiffer.AddStateValue("random_bytes.test", tfjsonpath.New("hex")),
+					statecheck.ExpectKnownValue("random_bytes.test", tfjsonpath.New("keepers"),
+						knownvalue.MapExact(
+							map[string]knownvalue.Check{
+								"key": knownvalue.StringExact("123"),
+							},
+						),
+					),
+				},
 			},
 		},
 	})
 }
 
 func TestAccResourceBytes_Keepers_Replace_NullMapToValue(t *testing.T) {
-	var result1, result2 string
+	// The hex attribute values should differ between test steps
+	assertHexDiffer := statecheck.CompareValue(compare.ValuesDiffer())
 
 	resource.ParallelTest(t, resource.TestCase{
 		Steps: []resource.TestStep{
@@ -379,10 +442,10 @@ func TestAccResourceBytes_Keepers_Replace_NullMapToValue(t *testing.T) {
 				Config: `resource "random_bytes" "test" {
 					length = 12
 				}`,
-				Check: resource.ComposeTestCheckFunc(
-					testExtractResourceAttr("random_bytes.test", "hex", &result1),
-					resource.TestCheckResourceAttr("random_bytes.test", "keepers.%", "0"),
-				),
+				ConfigStateChecks: []statecheck.StateCheck{
+					assertHexDiffer.AddStateValue("random_bytes.test", tfjsonpath.New("hex")),
+					statecheck.ExpectKnownValue("random_bytes.test", tfjsonpath.New("keepers"), knownvalue.Null()),
+				},
 			},
 			{
 				ProtoV5ProviderFactories: protoV5ProviderFactories(),
@@ -392,18 +455,24 @@ func TestAccResourceBytes_Keepers_Replace_NullMapToValue(t *testing.T) {
 						"key" = "123"
 					}
 				}`,
-				Check: resource.ComposeTestCheckFunc(
-					testExtractResourceAttr("random_bytes.test", "hex", &result2),
-					testCheckAttributeValuesDiffer(&result1, &result2),
-					resource.TestCheckResourceAttr("random_bytes.test", "keepers.%", "1"),
-				),
+				ConfigStateChecks: []statecheck.StateCheck{
+					assertHexDiffer.AddStateValue("random_bytes.test", tfjsonpath.New("hex")),
+					statecheck.ExpectKnownValue("random_bytes.test", tfjsonpath.New("keepers"),
+						knownvalue.MapExact(
+							map[string]knownvalue.Check{
+								"key": knownvalue.StringExact("123"),
+							},
+						),
+					),
+				},
 			},
 		},
 	})
 }
 
 func TestAccResourceBytes_Keepers_Replace_NullValueToValue(t *testing.T) {
-	var result1, result2 string
+	// The hex attribute values should differ between test steps
+	assertHexDiffer := statecheck.CompareValue(compare.ValuesDiffer())
 
 	resource.ParallelTest(t, resource.TestCase{
 		Steps: []resource.TestStep{
@@ -415,10 +484,16 @@ func TestAccResourceBytes_Keepers_Replace_NullValueToValue(t *testing.T) {
 						"key" = null
 					}
 				}`,
-				Check: resource.ComposeTestCheckFunc(
-					testExtractResourceAttr("random_bytes.test", "hex", &result1),
-					resource.TestCheckResourceAttr("random_bytes.test", "keepers.%", "1"),
-				),
+				ConfigStateChecks: []statecheck.StateCheck{
+					assertHexDiffer.AddStateValue("random_bytes.test", tfjsonpath.New("hex")),
+					statecheck.ExpectKnownValue("random_bytes.test", tfjsonpath.New("keepers"),
+						knownvalue.MapExact(
+							map[string]knownvalue.Check{
+								"key": knownvalue.Null(),
+							},
+						),
+					),
+				},
 			},
 			{
 				ProtoV5ProviderFactories: protoV5ProviderFactories(),
@@ -428,18 +503,24 @@ func TestAccResourceBytes_Keepers_Replace_NullValueToValue(t *testing.T) {
 						"key" = "123"
 					}
 				}`,
-				Check: resource.ComposeTestCheckFunc(
-					testExtractResourceAttr("random_bytes.test", "hex", &result2),
-					testCheckAttributeValuesDiffer(&result1, &result2),
-					resource.TestCheckResourceAttr("random_bytes.test", "keepers.%", "1"),
-				),
+				ConfigStateChecks: []statecheck.StateCheck{
+					assertHexDiffer.AddStateValue("random_bytes.test", tfjsonpath.New("hex")),
+					statecheck.ExpectKnownValue("random_bytes.test", tfjsonpath.New("keepers"),
+						knownvalue.MapExact(
+							map[string]knownvalue.Check{
+								"key": knownvalue.StringExact("123"),
+							},
+						),
+					),
+				},
 			},
 		},
 	})
 }
 
 func TestAccResourceBytes_Keepers_Replace_ValueToEmptyMap(t *testing.T) {
-	var result1, result2 string
+	// The hex attribute values should differ between test steps
+	assertHexDiffer := statecheck.CompareValue(compare.ValuesDiffer())
 
 	resource.ParallelTest(t, resource.TestCase{
 		Steps: []resource.TestStep{
@@ -451,10 +532,16 @@ func TestAccResourceBytes_Keepers_Replace_ValueToEmptyMap(t *testing.T) {
 						"key" = "123"
 					}
 				}`,
-				Check: resource.ComposeTestCheckFunc(
-					testExtractResourceAttr("random_bytes.test", "hex", &result1),
-					resource.TestCheckResourceAttr("random_bytes.test", "keepers.%", "1"),
-				),
+				ConfigStateChecks: []statecheck.StateCheck{
+					assertHexDiffer.AddStateValue("random_bytes.test", tfjsonpath.New("hex")),
+					statecheck.ExpectKnownValue("random_bytes.test", tfjsonpath.New("keepers"),
+						knownvalue.MapExact(
+							map[string]knownvalue.Check{
+								"key": knownvalue.StringExact("123"),
+							},
+						),
+					),
+				},
 			},
 			{
 				ProtoV5ProviderFactories: protoV5ProviderFactories(),
@@ -462,18 +549,18 @@ func TestAccResourceBytes_Keepers_Replace_ValueToEmptyMap(t *testing.T) {
 					length = 12
 					keepers = {}
 				}`,
-				Check: resource.ComposeTestCheckFunc(
-					testExtractResourceAttr("random_bytes.test", "hex", &result2),
-					testCheckAttributeValuesDiffer(&result1, &result2),
-					resource.TestCheckResourceAttr("random_bytes.test", "keepers.%", "0"),
-				),
+				ConfigStateChecks: []statecheck.StateCheck{
+					assertHexDiffer.AddStateValue("random_bytes.test", tfjsonpath.New("hex")),
+					statecheck.ExpectKnownValue("random_bytes.test", tfjsonpath.New("keepers"), knownvalue.MapSizeExact(0)),
+				},
 			},
 		},
 	})
 }
 
 func TestAccResourceBytes_Keepers_Replace_ValueToNullMap(t *testing.T) {
-	var result1, result2 string
+	// The hex attribute values should differ between test steps
+	assertHexDiffer := statecheck.CompareValue(compare.ValuesDiffer())
 
 	resource.ParallelTest(t, resource.TestCase{
 		Steps: []resource.TestStep{
@@ -485,28 +572,34 @@ func TestAccResourceBytes_Keepers_Replace_ValueToNullMap(t *testing.T) {
 						"key" = "123"
 					}
 				}`,
-				Check: resource.ComposeTestCheckFunc(
-					testExtractResourceAttr("random_bytes.test", "hex", &result1),
-					resource.TestCheckResourceAttr("random_bytes.test", "keepers.%", "1"),
-				),
+				ConfigStateChecks: []statecheck.StateCheck{
+					assertHexDiffer.AddStateValue("random_bytes.test", tfjsonpath.New("hex")),
+					statecheck.ExpectKnownValue("random_bytes.test", tfjsonpath.New("keepers"),
+						knownvalue.MapExact(
+							map[string]knownvalue.Check{
+								"key": knownvalue.StringExact("123"),
+							},
+						),
+					),
+				},
 			},
 			{
 				ProtoV5ProviderFactories: protoV5ProviderFactories(),
 				Config: `resource "random_bytes" "test" {
 					length = 12
 				}`,
-				Check: resource.ComposeTestCheckFunc(
-					testExtractResourceAttr("random_bytes.test", "hex", &result2),
-					testCheckAttributeValuesDiffer(&result1, &result2),
-					resource.TestCheckResourceAttr("random_bytes.test", "keepers.%", "0"),
-				),
+				ConfigStateChecks: []statecheck.StateCheck{
+					assertHexDiffer.AddStateValue("random_bytes.test", tfjsonpath.New("hex")),
+					statecheck.ExpectKnownValue("random_bytes.test", tfjsonpath.New("keepers"), knownvalue.Null()),
+				},
 			},
 		},
 	})
 }
 
 func TestAccResourceBytes_Keepers_Replace_ValueToNullValue(t *testing.T) {
-	var result1, result2 string
+	// The hex attribute values should differ between test steps
+	assertHexDiffer := statecheck.CompareValue(compare.ValuesDiffer())
 
 	resource.ParallelTest(t, resource.TestCase{
 		Steps: []resource.TestStep{
@@ -518,10 +611,16 @@ func TestAccResourceBytes_Keepers_Replace_ValueToNullValue(t *testing.T) {
 						"key" = "123"
 					}
 				}`,
-				Check: resource.ComposeTestCheckFunc(
-					testExtractResourceAttr("random_bytes.test", "hex", &result1),
-					resource.TestCheckResourceAttr("random_bytes.test", "keepers.%", "1"),
-				),
+				ConfigStateChecks: []statecheck.StateCheck{
+					assertHexDiffer.AddStateValue("random_bytes.test", tfjsonpath.New("hex")),
+					statecheck.ExpectKnownValue("random_bytes.test", tfjsonpath.New("keepers"),
+						knownvalue.MapExact(
+							map[string]knownvalue.Check{
+								"key": knownvalue.StringExact("123"),
+							},
+						),
+					),
+				},
 			},
 			{
 				ProtoV5ProviderFactories: protoV5ProviderFactories(),
@@ -531,18 +630,24 @@ func TestAccResourceBytes_Keepers_Replace_ValueToNullValue(t *testing.T) {
 						"key" = null
 					}
 				}`,
-				Check: resource.ComposeTestCheckFunc(
-					testExtractResourceAttr("random_bytes.test", "hex", &result2),
-					testCheckAttributeValuesDiffer(&result1, &result2),
-					resource.TestCheckResourceAttr("random_bytes.test", "keepers.%", "1"),
-				),
+				ConfigStateChecks: []statecheck.StateCheck{
+					assertHexDiffer.AddStateValue("random_bytes.test", tfjsonpath.New("hex")),
+					statecheck.ExpectKnownValue("random_bytes.test", tfjsonpath.New("keepers"),
+						knownvalue.MapExact(
+							map[string]knownvalue.Check{
+								"key": knownvalue.Null(),
+							},
+						),
+					),
+				},
 			},
 		},
 	})
 }
 
 func TestAccResourceBytes_Keepers_Replace_ValueToNewValue(t *testing.T) {
-	var result1, result2 string
+	// The hex attribute values should differ between test steps
+	assertHexDiffer := statecheck.CompareValue(compare.ValuesDiffer())
 
 	resource.ParallelTest(t, resource.TestCase{
 		Steps: []resource.TestStep{
@@ -554,10 +659,16 @@ func TestAccResourceBytes_Keepers_Replace_ValueToNewValue(t *testing.T) {
 						"key" = "123"
 					}
 				}`,
-				Check: resource.ComposeTestCheckFunc(
-					testExtractResourceAttr("random_bytes.test", "hex", &result1),
-					resource.TestCheckResourceAttr("random_bytes.test", "keepers.%", "1"),
-				),
+				ConfigStateChecks: []statecheck.StateCheck{
+					assertHexDiffer.AddStateValue("random_bytes.test", tfjsonpath.New("hex")),
+					statecheck.ExpectKnownValue("random_bytes.test", tfjsonpath.New("keepers"),
+						knownvalue.MapExact(
+							map[string]knownvalue.Check{
+								"key": knownvalue.StringExact("123"),
+							},
+						),
+					),
+				},
 			},
 			{
 				ProtoV5ProviderFactories: protoV5ProviderFactories(),
@@ -567,11 +678,16 @@ func TestAccResourceBytes_Keepers_Replace_ValueToNewValue(t *testing.T) {
 						"key" = "456"
 					}
 				}`,
-				Check: resource.ComposeTestCheckFunc(
-					testExtractResourceAttr("random_bytes.test", "hex", &result2),
-					testCheckAttributeValuesDiffer(&result1, &result2),
-					resource.TestCheckResourceAttr("random_bytes.test", "keepers.%", "1"),
-				),
+				ConfigStateChecks: []statecheck.StateCheck{
+					assertHexDiffer.AddStateValue("random_bytes.test", tfjsonpath.New("hex")),
+					statecheck.ExpectKnownValue("random_bytes.test", tfjsonpath.New("keepers"),
+						knownvalue.MapExact(
+							map[string]knownvalue.Check{
+								"key": knownvalue.StringExact("456"),
+							},
+						),
+					),
+				},
 			},
 		},
 	})
