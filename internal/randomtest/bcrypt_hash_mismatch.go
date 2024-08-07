@@ -15,7 +15,7 @@ var _ compare.ValueComparer = bcryptHashMismatch{}
 
 type bcryptHashMismatch struct{}
 
-// CompareValues determines whether the first value is a valid bcrypt hash of the second value
+// CompareValues determines whether the first value is a valid bcrypt hash of the second value.
 func (v bcryptHashMismatch) CompareValues(values ...any) error {
 	if len(values) != 2 {
 		return fmt.Errorf("expected to receive two values to compare, but got: %d", len(values))
