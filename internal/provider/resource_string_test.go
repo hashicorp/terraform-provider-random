@@ -1845,14 +1845,3 @@ func testCheckLen(expectedLen int) func(input string) error {
 		return nil
 	}
 }
-
-//nolint:unparam
-func testCheckMinLen(minLen int) func(input string) error {
-	return func(input string) error {
-		if len(input) < minLen {
-			return fmt.Errorf("minimum length %d, actual length %d", minLen, len(input))
-		}
-
-		return nil
-	}
-}
