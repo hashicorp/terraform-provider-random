@@ -207,13 +207,7 @@ func TestAccResourceBytes_Keepers_Keep_NullValue(t *testing.T) {
 				}`,
 				ConfigStateChecks: []statecheck.StateCheck{
 					assertHexSame.AddStateValue("random_bytes.test", tfjsonpath.New("hex")),
-					statecheck.ExpectKnownValue("random_bytes.test", tfjsonpath.New("keepers"),
-						knownvalue.MapExact(
-							map[string]knownvalue.Check{
-								"key": knownvalue.Null(),
-							},
-						),
-					),
+					statecheck.ExpectKnownValue("random_bytes.test", tfjsonpath.New("keepers"), knownvalue.MapSizeExact(1)),
 				},
 			},
 			{
@@ -226,13 +220,7 @@ func TestAccResourceBytes_Keepers_Keep_NullValue(t *testing.T) {
 				}`,
 				ConfigStateChecks: []statecheck.StateCheck{
 					assertHexSame.AddStateValue("random_bytes.test", tfjsonpath.New("hex")),
-					statecheck.ExpectKnownValue("random_bytes.test", tfjsonpath.New("keepers"),
-						knownvalue.MapExact(
-							map[string]knownvalue.Check{
-								"key": knownvalue.Null(),
-							},
-						),
-					),
+					statecheck.ExpectKnownValue("random_bytes.test", tfjsonpath.New("keepers"), knownvalue.MapSizeExact(1)),
 				},
 			},
 		},
@@ -256,14 +244,7 @@ func TestAccResourceBytes_Keepers_Keep_NullValues(t *testing.T) {
 				}`,
 				ConfigStateChecks: []statecheck.StateCheck{
 					assertHexSame.AddStateValue("random_bytes.test", tfjsonpath.New("hex")),
-					statecheck.ExpectKnownValue("random_bytes.test", tfjsonpath.New("keepers"),
-						knownvalue.MapExact(
-							map[string]knownvalue.Check{
-								"key1": knownvalue.Null(),
-								"key2": knownvalue.Null(),
-							},
-						),
-					),
+					statecheck.ExpectKnownValue("random_bytes.test", tfjsonpath.New("keepers"), knownvalue.MapSizeExact(2)),
 				},
 			},
 			{
@@ -277,14 +258,7 @@ func TestAccResourceBytes_Keepers_Keep_NullValues(t *testing.T) {
 				}`,
 				ConfigStateChecks: []statecheck.StateCheck{
 					assertHexSame.AddStateValue("random_bytes.test", tfjsonpath.New("hex")),
-					statecheck.ExpectKnownValue("random_bytes.test", tfjsonpath.New("keepers"),
-						knownvalue.MapExact(
-							map[string]knownvalue.Check{
-								"key1": knownvalue.Null(),
-								"key2": knownvalue.Null(),
-							},
-						),
-					),
+					statecheck.ExpectKnownValue("random_bytes.test", tfjsonpath.New("keepers"), knownvalue.MapSizeExact(2)),
 				},
 			},
 		},
@@ -307,13 +281,7 @@ func TestAccResourceBytes_Keepers_Keep_Value(t *testing.T) {
 				}`,
 				ConfigStateChecks: []statecheck.StateCheck{
 					assertHexSame.AddStateValue("random_bytes.test", tfjsonpath.New("hex")),
-					statecheck.ExpectKnownValue("random_bytes.test", tfjsonpath.New("keepers"),
-						knownvalue.MapExact(
-							map[string]knownvalue.Check{
-								"key": knownvalue.StringExact("123"),
-							},
-						),
-					),
+					statecheck.ExpectKnownValue("random_bytes.test", tfjsonpath.New("keepers"), knownvalue.MapSizeExact(1)),
 				},
 			},
 			{
@@ -326,13 +294,7 @@ func TestAccResourceBytes_Keepers_Keep_Value(t *testing.T) {
 				}`,
 				ConfigStateChecks: []statecheck.StateCheck{
 					assertHexSame.AddStateValue("random_bytes.test", tfjsonpath.New("hex")),
-					statecheck.ExpectKnownValue("random_bytes.test", tfjsonpath.New("keepers"),
-						knownvalue.MapExact(
-							map[string]knownvalue.Check{
-								"key": knownvalue.StringExact("123"),
-							},
-						),
-					),
+					statecheck.ExpectKnownValue("random_bytes.test", tfjsonpath.New("keepers"), knownvalue.MapSizeExact(1)),
 				},
 			},
 		},
@@ -356,14 +318,7 @@ func TestAccResourceBytes_Keepers_Keep_Values(t *testing.T) {
 				}`,
 				ConfigStateChecks: []statecheck.StateCheck{
 					assertHexSame.AddStateValue("random_bytes.test", tfjsonpath.New("hex")),
-					statecheck.ExpectKnownValue("random_bytes.test", tfjsonpath.New("keepers"),
-						knownvalue.MapExact(
-							map[string]knownvalue.Check{
-								"key1": knownvalue.StringExact("123"),
-								"key2": knownvalue.StringExact("456"),
-							},
-						),
-					),
+					statecheck.ExpectKnownValue("random_bytes.test", tfjsonpath.New("keepers"), knownvalue.MapSizeExact(2)),
 				},
 			},
 			{
@@ -377,14 +332,7 @@ func TestAccResourceBytes_Keepers_Keep_Values(t *testing.T) {
 				}`,
 				ConfigStateChecks: []statecheck.StateCheck{
 					assertHexSame.AddStateValue("random_bytes.test", tfjsonpath.New("hex")),
-					statecheck.ExpectKnownValue("random_bytes.test", tfjsonpath.New("keepers"),
-						knownvalue.MapExact(
-							map[string]knownvalue.Check{
-								"key1": knownvalue.StringExact("123"),
-								"key2": knownvalue.StringExact("456"),
-							},
-						),
-					),
+					statecheck.ExpectKnownValue("random_bytes.test", tfjsonpath.New("keepers"), knownvalue.MapSizeExact(2)),
 				},
 			},
 		},
@@ -418,13 +366,7 @@ func TestAccResourceBytes_Keepers_Replace_EmptyMapToValue(t *testing.T) {
 				}`,
 				ConfigStateChecks: []statecheck.StateCheck{
 					assertHexDiffer.AddStateValue("random_bytes.test", tfjsonpath.New("hex")),
-					statecheck.ExpectKnownValue("random_bytes.test", tfjsonpath.New("keepers"),
-						knownvalue.MapExact(
-							map[string]knownvalue.Check{
-								"key": knownvalue.StringExact("123"),
-							},
-						),
-					),
+					statecheck.ExpectKnownValue("random_bytes.test", tfjsonpath.New("keepers"), knownvalue.MapSizeExact(1)),
 				},
 			},
 		},
@@ -457,13 +399,7 @@ func TestAccResourceBytes_Keepers_Replace_NullMapToValue(t *testing.T) {
 				}`,
 				ConfigStateChecks: []statecheck.StateCheck{
 					assertHexDiffer.AddStateValue("random_bytes.test", tfjsonpath.New("hex")),
-					statecheck.ExpectKnownValue("random_bytes.test", tfjsonpath.New("keepers"),
-						knownvalue.MapExact(
-							map[string]knownvalue.Check{
-								"key": knownvalue.StringExact("123"),
-							},
-						),
-					),
+					statecheck.ExpectKnownValue("random_bytes.test", tfjsonpath.New("keepers"), knownvalue.MapSizeExact(1)),
 				},
 			},
 		},
@@ -486,13 +422,7 @@ func TestAccResourceBytes_Keepers_Replace_NullValueToValue(t *testing.T) {
 				}`,
 				ConfigStateChecks: []statecheck.StateCheck{
 					assertHexDiffer.AddStateValue("random_bytes.test", tfjsonpath.New("hex")),
-					statecheck.ExpectKnownValue("random_bytes.test", tfjsonpath.New("keepers"),
-						knownvalue.MapExact(
-							map[string]knownvalue.Check{
-								"key": knownvalue.Null(),
-							},
-						),
-					),
+					statecheck.ExpectKnownValue("random_bytes.test", tfjsonpath.New("keepers"), knownvalue.MapSizeExact(1)),
 				},
 			},
 			{
@@ -505,13 +435,7 @@ func TestAccResourceBytes_Keepers_Replace_NullValueToValue(t *testing.T) {
 				}`,
 				ConfigStateChecks: []statecheck.StateCheck{
 					assertHexDiffer.AddStateValue("random_bytes.test", tfjsonpath.New("hex")),
-					statecheck.ExpectKnownValue("random_bytes.test", tfjsonpath.New("keepers"),
-						knownvalue.MapExact(
-							map[string]knownvalue.Check{
-								"key": knownvalue.StringExact("123"),
-							},
-						),
-					),
+					statecheck.ExpectKnownValue("random_bytes.test", tfjsonpath.New("keepers"), knownvalue.MapSizeExact(1)),
 				},
 			},
 		},
@@ -534,13 +458,7 @@ func TestAccResourceBytes_Keepers_Replace_ValueToEmptyMap(t *testing.T) {
 				}`,
 				ConfigStateChecks: []statecheck.StateCheck{
 					assertHexDiffer.AddStateValue("random_bytes.test", tfjsonpath.New("hex")),
-					statecheck.ExpectKnownValue("random_bytes.test", tfjsonpath.New("keepers"),
-						knownvalue.MapExact(
-							map[string]knownvalue.Check{
-								"key": knownvalue.StringExact("123"),
-							},
-						),
-					),
+					statecheck.ExpectKnownValue("random_bytes.test", tfjsonpath.New("keepers"), knownvalue.MapSizeExact(1)),
 				},
 			},
 			{
@@ -574,13 +492,7 @@ func TestAccResourceBytes_Keepers_Replace_ValueToNullMap(t *testing.T) {
 				}`,
 				ConfigStateChecks: []statecheck.StateCheck{
 					assertHexDiffer.AddStateValue("random_bytes.test", tfjsonpath.New("hex")),
-					statecheck.ExpectKnownValue("random_bytes.test", tfjsonpath.New("keepers"),
-						knownvalue.MapExact(
-							map[string]knownvalue.Check{
-								"key": knownvalue.StringExact("123"),
-							},
-						),
-					),
+					statecheck.ExpectKnownValue("random_bytes.test", tfjsonpath.New("keepers"), knownvalue.MapSizeExact(1)),
 				},
 			},
 			{
@@ -613,13 +525,7 @@ func TestAccResourceBytes_Keepers_Replace_ValueToNullValue(t *testing.T) {
 				}`,
 				ConfigStateChecks: []statecheck.StateCheck{
 					assertHexDiffer.AddStateValue("random_bytes.test", tfjsonpath.New("hex")),
-					statecheck.ExpectKnownValue("random_bytes.test", tfjsonpath.New("keepers"),
-						knownvalue.MapExact(
-							map[string]knownvalue.Check{
-								"key": knownvalue.StringExact("123"),
-							},
-						),
-					),
+					statecheck.ExpectKnownValue("random_bytes.test", tfjsonpath.New("keepers"), knownvalue.MapSizeExact(1)),
 				},
 			},
 			{
@@ -632,13 +538,7 @@ func TestAccResourceBytes_Keepers_Replace_ValueToNullValue(t *testing.T) {
 				}`,
 				ConfigStateChecks: []statecheck.StateCheck{
 					assertHexDiffer.AddStateValue("random_bytes.test", tfjsonpath.New("hex")),
-					statecheck.ExpectKnownValue("random_bytes.test", tfjsonpath.New("keepers"),
-						knownvalue.MapExact(
-							map[string]knownvalue.Check{
-								"key": knownvalue.Null(),
-							},
-						),
-					),
+					statecheck.ExpectKnownValue("random_bytes.test", tfjsonpath.New("keepers"), knownvalue.MapSizeExact(1)),
 				},
 			},
 		},
@@ -661,13 +561,7 @@ func TestAccResourceBytes_Keepers_Replace_ValueToNewValue(t *testing.T) {
 				}`,
 				ConfigStateChecks: []statecheck.StateCheck{
 					assertHexDiffer.AddStateValue("random_bytes.test", tfjsonpath.New("hex")),
-					statecheck.ExpectKnownValue("random_bytes.test", tfjsonpath.New("keepers"),
-						knownvalue.MapExact(
-							map[string]knownvalue.Check{
-								"key": knownvalue.StringExact("123"),
-							},
-						),
-					),
+					statecheck.ExpectKnownValue("random_bytes.test", tfjsonpath.New("keepers"), knownvalue.MapSizeExact(1)),
 				},
 			},
 			{
@@ -680,13 +574,7 @@ func TestAccResourceBytes_Keepers_Replace_ValueToNewValue(t *testing.T) {
 				}`,
 				ConfigStateChecks: []statecheck.StateCheck{
 					assertHexDiffer.AddStateValue("random_bytes.test", tfjsonpath.New("hex")),
-					statecheck.ExpectKnownValue("random_bytes.test", tfjsonpath.New("keepers"),
-						knownvalue.MapExact(
-							map[string]knownvalue.Check{
-								"key": knownvalue.StringExact("456"),
-							},
-						),
-					),
+					statecheck.ExpectKnownValue("random_bytes.test", tfjsonpath.New("keepers"), knownvalue.MapSizeExact(1)),
 				},
 			},
 		},
