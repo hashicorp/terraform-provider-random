@@ -997,6 +997,7 @@ func TestAccResourceInteger_Keepers_FrameworkMigration_NullMapValueToValue(t *te
 	})
 }
 
+//nolint:unparam // This function is only used to support the legacy import state check combinations with the Check function
 func testExtractResourceAttr(resourceName string, attributeName string, attributeValue *string) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 		rs, ok := s.RootModule().Resources[resourceName]
@@ -1012,16 +1013,6 @@ func testExtractResourceAttr(resourceName string, attributeName string, attribut
 		}
 
 		*attributeValue = attrValue
-
-		return nil
-	}
-}
-
-func testCheckAttributeValuesDiffer(i *string, j *string) resource.TestCheckFunc {
-	return func(s *terraform.State) error {
-		if testStringValue(i) == testStringValue(j) {
-			return fmt.Errorf("attribute values are the same")
-		}
 
 		return nil
 	}
