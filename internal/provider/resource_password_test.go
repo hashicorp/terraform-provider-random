@@ -383,7 +383,7 @@ func TestAccResourcePassword_Import_FromVersion3_1_3(t *testing.T) {
 				ImportStateId:      "Z=:cbrJE?Ltg",
 				ImportStatePersist: true,
 				// TODO: Import state checks haven't been implemented in terraform-plugin-testing yet, so can't use value comparers for now
-				// TODO: Create import state check issue in terraform-plugin-testing
+				// https://github.com/hashicorp/terraform-plugin-testing/issues/365
 				ImportStateCheck: composeImportStateCheck(
 					testCheckNoResourceAttrInstanceState("length"),
 					testCheckNoResourceAttrInstanceState("number"),
@@ -420,7 +420,7 @@ func TestAccResourcePassword_Import_FromVersion3_1_3(t *testing.T) {
 					statecheck.ExpectKnownValue("random_password.test", tfjsonpath.New("min_special"), knownvalue.Int64Exact(0)),
 				},
 				// TODO: Import state checks haven't been implemented in terraform-plugin-testing yet, so can't use value comparers for now
-				// TODO: Create import state check issue in terraform-plugin-testing
+				// https://github.com/hashicorp/terraform-plugin-testing/issues/365
 				Check: resource.ComposeTestCheckFunc(
 					testExtractResourceAttr("random_password.test", "result", &result2),
 					testCheckAttributeValuesEqual(&result1, &result2),
@@ -485,7 +485,7 @@ func TestAccResourcePassword_Import_FromVersion3_2_0(t *testing.T) {
 					statecheck.ExpectKnownValue("random_password.test", tfjsonpath.New("min_special"), knownvalue.Int64Exact(0)),
 				},
 				// TODO: Import state checks haven't been implemented in terraform-plugin-testing yet, so can't use value comparers for now
-				// TODO: Create import state check issue in terraform-plugin-testing
+				// https://github.com/hashicorp/terraform-plugin-testing/issues/365
 				Check: resource.ComposeTestCheckFunc(
 					testExtractResourceAttr("random_password.test", "result", &result2),
 					testCheckAttributeValuesEqual(&result1, &result2),
@@ -544,7 +544,7 @@ func TestAccResourcePassword_Import_FromVersion3_4_2(t *testing.T) {
 					statecheck.ExpectKnownValue("random_password.test", tfjsonpath.New("min_special"), knownvalue.Int64Exact(0)),
 				},
 				// TODO: Import state checks haven't been implemented in terraform-plugin-testing yet, so can't use value comparers for now
-				// TODO: Create import state check issue in terraform-plugin-testing
+				// https://github.com/hashicorp/terraform-plugin-testing/issues/365
 				Check: resource.ComposeTestCheckFunc(
 					testExtractResourceAttr("random_password.test", "result", &result2),
 					testCheckAttributeValuesEqual(&result1, &result2),

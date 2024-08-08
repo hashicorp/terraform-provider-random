@@ -1758,7 +1758,7 @@ func TestAccResourceString_Import_FromVersion3_1_3(t *testing.T) {
 					statecheck.ExpectKnownValue("random_string.test", tfjsonpath.New("min_special"), knownvalue.Int64Exact(0)),
 				},
 				// TODO: Import state checks haven't been implemented in terraform-plugin-testing yet, so can't use value comparers for now
-				// TODO: Create import state check issue in terraform-plugin-testing
+				// https://github.com/hashicorp/terraform-plugin-testing/issues/365
 				Check: resource.ComposeTestCheckFunc(
 					testExtractResourceAttr("random_string.test", "result", &result2),
 					testCheckAttributeValuesEqual(&result1, &result2),
@@ -1817,7 +1817,7 @@ func TestAccResourceString_Import_FromVersion3_4_2(t *testing.T) {
 					statecheck.ExpectKnownValue("random_string.test", tfjsonpath.New("min_special"), knownvalue.Int64Exact(0)),
 				},
 				// TODO: Import state checks haven't been implemented in terraform-plugin-testing yet, so can't use value comparers for now
-				// TODO: Create import state check issue in terraform-plugin-testing
+				// https://github.com/hashicorp/terraform-plugin-testing/issues/365
 				Check: resource.ComposeTestCheckFunc(
 					testExtractResourceAttr("random_string.test", "result", &result2),
 					testCheckAttributeValuesEqual(&result1, &result2),
