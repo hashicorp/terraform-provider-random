@@ -7,8 +7,12 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/hashicorp/terraform-plugin-testing/compare"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
+	"github.com/hashicorp/terraform-plugin-testing/knownvalue"
+	"github.com/hashicorp/terraform-plugin-testing/statecheck"
 	"github.com/hashicorp/terraform-plugin-testing/terraform"
+	"github.com/hashicorp/terraform-plugin-testing/tfjsonpath"
 )
 
 func TestAccResourceInteger(t *testing.T) {
@@ -22,15 +26,42 @@ func TestAccResourceInteger(t *testing.T) {
 							max  = 3
    							seed = "12345"
 						}`,
-				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttr("random_integer.integer_1", "result", "3"),
-				),
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue("random_integer.integer_1", tfjsonpath.New("result"), knownvalue.Int64Exact(3)),
+				},
 			},
 			{
 				ResourceName:      "random_integer.integer_1",
 				ImportState:       true,
 				ImportStateId:     "3,1,3,12345",
 				ImportStateVerify: true,
+			},
+		},
+	})
+}
+
+func TestAccResourceInteger_ImportWithoutKeepersProducesNoPlannedChanges(t *testing.T) {
+	resource.UnitTest(t, resource.TestCase{
+		ProtoV5ProviderFactories: protoV5ProviderFactories(),
+		Steps: []resource.TestStep{
+			{
+				Config: `resource "random_integer" "integer_1" {
+   							min  = 1
+							max  = 3
+   							seed = "12345"
+						}`,
+				ResourceName:       "random_integer.integer_1",
+				ImportStateId:      "3,1,3,12345",
+				ImportState:        true,
+				ImportStatePersist: true,
+			},
+			{
+				Config: `resource "random_integer" "integer_1" {
+   							min  = 1
+							max  = 3
+   							seed = "12345"
+						}`,
+				PlanOnly: true,
 			},
 		},
 	})
@@ -47,9 +78,9 @@ func TestAccResourceInteger_ChangeSeed(t *testing.T) {
 							max  = 3
    							seed = "12345"
 						}`,
-				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttr("random_integer.integer_1", "result", "3"),
-				),
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue("random_integer.integer_1", tfjsonpath.New("result"), knownvalue.Int64Exact(3)),
+				},
 			},
 			{
 				Config: `resource "random_integer" "integer_1" {
@@ -57,9 +88,9 @@ func TestAccResourceInteger_ChangeSeed(t *testing.T) {
    							max  = 3
    							seed = "123456"
 						}`,
-				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttr("random_integer.integer_1", "result", "2"),
-				),
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue("random_integer.integer_1", tfjsonpath.New("result"), knownvalue.Int64Exact(2)),
+				},
 			},
 		},
 	})
@@ -75,9 +106,9 @@ func TestAccResourceInteger_SeedlessToSeeded(t *testing.T) {
    							min  = 1
    							max  = 3
 						}`,
-				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttrWith("random_integer.integer_1", "result", testCheckNotEmptyString("result")),
-				),
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue("random_integer.integer_1", tfjsonpath.New("result"), knownvalue.NotNull()),
+				},
 			},
 			{
 				Config: `resource "random_integer" "integer_1" {
@@ -85,9 +116,9 @@ func TestAccResourceInteger_SeedlessToSeeded(t *testing.T) {
    							max  = 3
    							seed = "123456"
 						}`,
-				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttr("random_integer.integer_1", "result", "2"),
-				),
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue("random_integer.integer_1", tfjsonpath.New("result"), knownvalue.Int64Exact(2)),
+				},
 			},
 		},
 	})
@@ -104,18 +135,18 @@ func TestAccResourceInteger_SeededToSeedless(t *testing.T) {
 							max  = 3
    							seed = "12345"
 						}`,
-				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttr("random_integer.integer_1", "result", "3"),
-				),
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue("random_integer.integer_1", tfjsonpath.New("result"), knownvalue.Int64Exact(3)),
+				},
 			},
 			{
 				Config: `resource "random_integer" "integer_1" {
    							min  = 1
    							max  = 3
 						}`,
-				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttrWith("random_integer.integer_1", "result", testCheckNotEmptyString("result")),
-				),
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue("random_integer.integer_1", tfjsonpath.New("result"), knownvalue.NotNull()),
+				},
 			},
 		},
 	})
@@ -153,9 +184,9 @@ func TestAccResourceInteger_UpgradeFromVersion3_3_2(t *testing.T) {
 							max  = 3
    							seed = "12345"
 						}`,
-				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttr("random_integer.integer_1", "result", "3"),
-				),
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue("random_integer.integer_1", tfjsonpath.New("result"), knownvalue.Int64Exact(3)),
+				},
 			},
 			{
 				ProtoV5ProviderFactories: protoV5ProviderFactories(),
@@ -173,16 +204,17 @@ func TestAccResourceInteger_UpgradeFromVersion3_3_2(t *testing.T) {
 							max  = 3
    							seed = "12345"
 						}`,
-				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttr("random_integer.integer_1", "result", "3"),
-				),
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue("random_integer.integer_1", tfjsonpath.New("result"), knownvalue.Int64Exact(3)),
+				},
 			},
 		},
 	})
 }
 
 func TestAccResourceInteger_Keepers_Keep_EmptyMap(t *testing.T) {
-	var id1, id2 string
+	// The id attribute values should be the same between test steps
+	assertIdSame := statecheck.CompareValue(compare.ValuesSame())
 
 	resource.ParallelTest(t, resource.TestCase{
 		Steps: []resource.TestStep{
@@ -193,10 +225,10 @@ func TestAccResourceInteger_Keepers_Keep_EmptyMap(t *testing.T) {
 					max = 100000000
 					keepers = {}
 				}`,
-				Check: resource.ComposeTestCheckFunc(
-					testExtractResourceAttr("random_integer.test", "id", &id1),
-					resource.TestCheckResourceAttr("random_integer.test", "keepers.%", "0"),
-				),
+				ConfigStateChecks: []statecheck.StateCheck{
+					assertIdSame.AddStateValue("random_integer.test", tfjsonpath.New("id")),
+					statecheck.ExpectKnownValue("random_integer.test", tfjsonpath.New("keepers"), knownvalue.MapSizeExact(0)),
+				},
 			},
 			{
 				ProtoV5ProviderFactories: protoV5ProviderFactories(),
@@ -205,18 +237,18 @@ func TestAccResourceInteger_Keepers_Keep_EmptyMap(t *testing.T) {
 					max = 100000000
 					keepers = {}
 				}`,
-				Check: resource.ComposeTestCheckFunc(
-					testExtractResourceAttr("random_integer.test", "id", &id2),
-					testCheckAttributeValuesEqual(&id1, &id2),
-					resource.TestCheckResourceAttr("random_integer.test", "keepers.%", "0"),
-				),
+				ConfigStateChecks: []statecheck.StateCheck{
+					assertIdSame.AddStateValue("random_integer.test", tfjsonpath.New("id")),
+					statecheck.ExpectKnownValue("random_integer.test", tfjsonpath.New("keepers"), knownvalue.MapSizeExact(0)),
+				},
 			},
 		},
 	})
 }
 
 func TestAccResourceInteger_Keepers_Keep_EmptyMapToNullValue(t *testing.T) {
-	var id1, id2 string
+	// The id attribute values should be the same between test steps
+	assertIdSame := statecheck.CompareValue(compare.ValuesSame())
 
 	resource.ParallelTest(t, resource.TestCase{
 		Steps: []resource.TestStep{
@@ -227,10 +259,10 @@ func TestAccResourceInteger_Keepers_Keep_EmptyMapToNullValue(t *testing.T) {
 					max = 100000000
 					keepers = {}
 				}`,
-				Check: resource.ComposeTestCheckFunc(
-					testExtractResourceAttr("random_integer.test", "id", &id1),
-					resource.TestCheckResourceAttr("random_integer.test", "keepers.%", "0"),
-				),
+				ConfigStateChecks: []statecheck.StateCheck{
+					assertIdSame.AddStateValue("random_integer.test", tfjsonpath.New("id")),
+					statecheck.ExpectKnownValue("random_integer.test", tfjsonpath.New("keepers"), knownvalue.MapSizeExact(0)),
+				},
 			},
 			{
 				ProtoV5ProviderFactories: protoV5ProviderFactories(),
@@ -241,18 +273,18 @@ func TestAccResourceInteger_Keepers_Keep_EmptyMapToNullValue(t *testing.T) {
 						"key" = null
 					}
 				}`,
-				Check: resource.ComposeTestCheckFunc(
-					testExtractResourceAttr("random_integer.test", "id", &id2),
-					testCheckAttributeValuesEqual(&id1, &id2),
-					resource.TestCheckResourceAttr("random_integer.test", "keepers.%", "1"),
-				),
+				ConfigStateChecks: []statecheck.StateCheck{
+					assertIdSame.AddStateValue("random_integer.test", tfjsonpath.New("id")),
+					statecheck.ExpectKnownValue("random_integer.test", tfjsonpath.New("keepers"), knownvalue.MapSizeExact(1)),
+				},
 			},
 		},
 	})
 }
 
 func TestAccResourceInteger_Keepers_Keep_NullMap(t *testing.T) {
-	var id1, id2 string
+	// The id attribute values should be the same between test steps
+	assertIdSame := statecheck.CompareValue(compare.ValuesSame())
 
 	resource.ParallelTest(t, resource.TestCase{
 		Steps: []resource.TestStep{
@@ -262,10 +294,10 @@ func TestAccResourceInteger_Keepers_Keep_NullMap(t *testing.T) {
 					min = 1
 					max = 100000000
 				}`,
-				Check: resource.ComposeTestCheckFunc(
-					testExtractResourceAttr("random_integer.test", "id", &id1),
-					resource.TestCheckResourceAttr("random_integer.test", "keepers.%", "0"),
-				),
+				ConfigStateChecks: []statecheck.StateCheck{
+					assertIdSame.AddStateValue("random_integer.test", tfjsonpath.New("id")),
+					statecheck.ExpectKnownValue("random_integer.test", tfjsonpath.New("keepers"), knownvalue.Null()),
+				},
 			},
 			{
 				ProtoV5ProviderFactories: protoV5ProviderFactories(),
@@ -273,18 +305,18 @@ func TestAccResourceInteger_Keepers_Keep_NullMap(t *testing.T) {
 					min = 1
 					max = 100000000
 				}`,
-				Check: resource.ComposeTestCheckFunc(
-					testExtractResourceAttr("random_integer.test", "id", &id2),
-					testCheckAttributeValuesEqual(&id1, &id2),
-					resource.TestCheckResourceAttr("random_integer.test", "keepers.%", "0"),
-				),
+				ConfigStateChecks: []statecheck.StateCheck{
+					assertIdSame.AddStateValue("random_integer.test", tfjsonpath.New("id")),
+					statecheck.ExpectKnownValue("random_integer.test", tfjsonpath.New("keepers"), knownvalue.Null()),
+				},
 			},
 		},
 	})
 }
 
 func TestAccResourceInteger_Keepers_Keep_NullMapToNullValue(t *testing.T) {
-	var id1, id2 string
+	// The id attribute values should be the same between test steps
+	assertIdSame := statecheck.CompareValue(compare.ValuesSame())
 
 	resource.ParallelTest(t, resource.TestCase{
 		Steps: []resource.TestStep{
@@ -294,10 +326,10 @@ func TestAccResourceInteger_Keepers_Keep_NullMapToNullValue(t *testing.T) {
 					min = 1
 					max = 100000000
 				}`,
-				Check: resource.ComposeTestCheckFunc(
-					testExtractResourceAttr("random_integer.test", "id", &id1),
-					resource.TestCheckResourceAttr("random_integer.test", "keepers.%", "0"),
-				),
+				ConfigStateChecks: []statecheck.StateCheck{
+					assertIdSame.AddStateValue("random_integer.test", tfjsonpath.New("id")),
+					statecheck.ExpectKnownValue("random_integer.test", tfjsonpath.New("keepers"), knownvalue.Null()),
+				},
 			},
 			{
 				ProtoV5ProviderFactories: protoV5ProviderFactories(),
@@ -308,18 +340,18 @@ func TestAccResourceInteger_Keepers_Keep_NullMapToNullValue(t *testing.T) {
 						"key" = null
 					}
 				}`,
-				Check: resource.ComposeTestCheckFunc(
-					testExtractResourceAttr("random_integer.test", "id", &id2),
-					testCheckAttributeValuesEqual(&id1, &id2),
-					resource.TestCheckResourceAttr("random_integer.test", "keepers.%", "1"),
-				),
+				ConfigStateChecks: []statecheck.StateCheck{
+					assertIdSame.AddStateValue("random_integer.test", tfjsonpath.New("id")),
+					statecheck.ExpectKnownValue("random_integer.test", tfjsonpath.New("keepers"), knownvalue.MapSizeExact(1)),
+				},
 			},
 		},
 	})
 }
 
 func TestAccResourceInteger_Keepers_Keep_NullValue(t *testing.T) {
-	var id1, id2 string
+	// The id attribute values should be the same between test steps
+	assertIdSame := statecheck.CompareValue(compare.ValuesSame())
 
 	resource.ParallelTest(t, resource.TestCase{
 		Steps: []resource.TestStep{
@@ -332,10 +364,10 @@ func TestAccResourceInteger_Keepers_Keep_NullValue(t *testing.T) {
 						"key" = null
 					}
 				}`,
-				Check: resource.ComposeTestCheckFunc(
-					testExtractResourceAttr("random_integer.test", "id", &id1),
-					resource.TestCheckResourceAttr("random_integer.test", "keepers.%", "1"),
-				),
+				ConfigStateChecks: []statecheck.StateCheck{
+					assertIdSame.AddStateValue("random_integer.test", tfjsonpath.New("id")),
+					statecheck.ExpectKnownValue("random_integer.test", tfjsonpath.New("keepers"), knownvalue.MapSizeExact(1)),
+				},
 			},
 			{
 				ProtoV5ProviderFactories: protoV5ProviderFactories(),
@@ -346,18 +378,18 @@ func TestAccResourceInteger_Keepers_Keep_NullValue(t *testing.T) {
 						"key" = null
 					}
 				}`,
-				Check: resource.ComposeTestCheckFunc(
-					testExtractResourceAttr("random_integer.test", "id", &id2),
-					testCheckAttributeValuesEqual(&id1, &id2),
-					resource.TestCheckResourceAttr("random_integer.test", "keepers.%", "1"),
-				),
+				ConfigStateChecks: []statecheck.StateCheck{
+					assertIdSame.AddStateValue("random_integer.test", tfjsonpath.New("id")),
+					statecheck.ExpectKnownValue("random_integer.test", tfjsonpath.New("keepers"), knownvalue.MapSizeExact(1)),
+				},
 			},
 		},
 	})
 }
 
 func TestAccResourceInteger_Keepers_Keep_NullValues(t *testing.T) {
-	var id1, id2 string
+	// The id attribute values should be the same between test steps
+	assertIdSame := statecheck.CompareValue(compare.ValuesSame())
 
 	resource.ParallelTest(t, resource.TestCase{
 		Steps: []resource.TestStep{
@@ -371,10 +403,10 @@ func TestAccResourceInteger_Keepers_Keep_NullValues(t *testing.T) {
 						"key2" = null
 					}
 				}`,
-				Check: resource.ComposeTestCheckFunc(
-					testExtractResourceAttr("random_integer.test", "id", &id1),
-					resource.TestCheckResourceAttr("random_integer.test", "keepers.%", "2"),
-				),
+				ConfigStateChecks: []statecheck.StateCheck{
+					assertIdSame.AddStateValue("random_integer.test", tfjsonpath.New("id")),
+					statecheck.ExpectKnownValue("random_integer.test", tfjsonpath.New("keepers"), knownvalue.MapSizeExact(2)),
+				},
 			},
 			{
 				ProtoV5ProviderFactories: protoV5ProviderFactories(),
@@ -386,18 +418,18 @@ func TestAccResourceInteger_Keepers_Keep_NullValues(t *testing.T) {
 						"key2" = null
 					}
 				}`,
-				Check: resource.ComposeTestCheckFunc(
-					testExtractResourceAttr("random_integer.test", "id", &id2),
-					testCheckAttributeValuesEqual(&id1, &id2),
-					resource.TestCheckResourceAttr("random_integer.test", "keepers.%", "2"),
-				),
+				ConfigStateChecks: []statecheck.StateCheck{
+					assertIdSame.AddStateValue("random_integer.test", tfjsonpath.New("id")),
+					statecheck.ExpectKnownValue("random_integer.test", tfjsonpath.New("keepers"), knownvalue.MapSizeExact(2)),
+				},
 			},
 		},
 	})
 }
 
 func TestAccResourceInteger_Keepers_Keep_Value(t *testing.T) {
-	var id1, id2 string
+	// The id attribute values should be the same between test steps
+	assertIdSame := statecheck.CompareValue(compare.ValuesSame())
 
 	resource.ParallelTest(t, resource.TestCase{
 		Steps: []resource.TestStep{
@@ -410,10 +442,10 @@ func TestAccResourceInteger_Keepers_Keep_Value(t *testing.T) {
 						"key" = "123"
 					}
 				}`,
-				Check: resource.ComposeTestCheckFunc(
-					testExtractResourceAttr("random_integer.test", "id", &id1),
-					resource.TestCheckResourceAttr("random_integer.test", "keepers.%", "1"),
-				),
+				ConfigStateChecks: []statecheck.StateCheck{
+					assertIdSame.AddStateValue("random_integer.test", tfjsonpath.New("id")),
+					statecheck.ExpectKnownValue("random_integer.test", tfjsonpath.New("keepers"), knownvalue.MapSizeExact(1)),
+				},
 			},
 			{
 				ProtoV5ProviderFactories: protoV5ProviderFactories(),
@@ -424,18 +456,18 @@ func TestAccResourceInteger_Keepers_Keep_Value(t *testing.T) {
 						"key" = "123"
 					}
 				}`,
-				Check: resource.ComposeTestCheckFunc(
-					testExtractResourceAttr("random_integer.test", "id", &id2),
-					testCheckAttributeValuesEqual(&id1, &id2),
-					resource.TestCheckResourceAttr("random_integer.test", "keepers.%", "1"),
-				),
+				ConfigStateChecks: []statecheck.StateCheck{
+					assertIdSame.AddStateValue("random_integer.test", tfjsonpath.New("id")),
+					statecheck.ExpectKnownValue("random_integer.test", tfjsonpath.New("keepers"), knownvalue.MapSizeExact(1)),
+				},
 			},
 		},
 	})
 }
 
 func TestAccResourceInteger_Keepers_Keep_Values(t *testing.T) {
-	var id1, id2 string
+	// The id attribute values should be the same between test steps
+	assertIdSame := statecheck.CompareValue(compare.ValuesSame())
 
 	resource.ParallelTest(t, resource.TestCase{
 		Steps: []resource.TestStep{
@@ -449,10 +481,10 @@ func TestAccResourceInteger_Keepers_Keep_Values(t *testing.T) {
 						"key2" = "456"
 					}
 				}`,
-				Check: resource.ComposeTestCheckFunc(
-					testExtractResourceAttr("random_integer.test", "id", &id1),
-					resource.TestCheckResourceAttr("random_integer.test", "keepers.%", "2"),
-				),
+				ConfigStateChecks: []statecheck.StateCheck{
+					assertIdSame.AddStateValue("random_integer.test", tfjsonpath.New("id")),
+					statecheck.ExpectKnownValue("random_integer.test", tfjsonpath.New("keepers"), knownvalue.MapSizeExact(2)),
+				},
 			},
 			{
 				ProtoV5ProviderFactories: protoV5ProviderFactories(),
@@ -464,18 +496,18 @@ func TestAccResourceInteger_Keepers_Keep_Values(t *testing.T) {
 						"key2" = "456"
 					}
 				}`,
-				Check: resource.ComposeTestCheckFunc(
-					testExtractResourceAttr("random_integer.test", "id", &id2),
-					testCheckAttributeValuesEqual(&id1, &id2),
-					resource.TestCheckResourceAttr("random_integer.test", "keepers.%", "2"),
-				),
+				ConfigStateChecks: []statecheck.StateCheck{
+					assertIdSame.AddStateValue("random_integer.test", tfjsonpath.New("id")),
+					statecheck.ExpectKnownValue("random_integer.test", tfjsonpath.New("keepers"), knownvalue.MapSizeExact(2)),
+				},
 			},
 		},
 	})
 }
 
 func TestAccResourceInteger_Keepers_Replace_EmptyMapToValue(t *testing.T) {
-	var id1, id2 string
+	// The id attribute values should differ between test steps
+	assertIdDiffer := statecheck.CompareValue(compare.ValuesDiffer())
 
 	resource.ParallelTest(t, resource.TestCase{
 		Steps: []resource.TestStep{
@@ -486,10 +518,10 @@ func TestAccResourceInteger_Keepers_Replace_EmptyMapToValue(t *testing.T) {
 					max = 100000000
 					keepers = {}
 				}`,
-				Check: resource.ComposeTestCheckFunc(
-					testExtractResourceAttr("random_integer.test", "id", &id1),
-					resource.TestCheckResourceAttr("random_integer.test", "keepers.%", "0"),
-				),
+				ConfigStateChecks: []statecheck.StateCheck{
+					assertIdDiffer.AddStateValue("random_integer.test", tfjsonpath.New("id")),
+					statecheck.ExpectKnownValue("random_integer.test", tfjsonpath.New("keepers"), knownvalue.MapSizeExact(0)),
+				},
 			},
 			{
 				ProtoV5ProviderFactories: protoV5ProviderFactories(),
@@ -500,18 +532,18 @@ func TestAccResourceInteger_Keepers_Replace_EmptyMapToValue(t *testing.T) {
 						"key" = "123"
 					}
 				}`,
-				Check: resource.ComposeTestCheckFunc(
-					testExtractResourceAttr("random_integer.test", "id", &id2),
-					testCheckAttributeValuesDiffer(&id1, &id2),
-					resource.TestCheckResourceAttr("random_integer.test", "keepers.%", "1"),
-				),
+				ConfigStateChecks: []statecheck.StateCheck{
+					assertIdDiffer.AddStateValue("random_integer.test", tfjsonpath.New("id")),
+					statecheck.ExpectKnownValue("random_integer.test", tfjsonpath.New("keepers"), knownvalue.MapSizeExact(1)),
+				},
 			},
 		},
 	})
 }
 
 func TestAccResourceInteger_Keepers_Replace_NullMapToValue(t *testing.T) {
-	var id1, id2 string
+	// The id attribute values should differ between test steps
+	assertIdDiffer := statecheck.CompareValue(compare.ValuesDiffer())
 
 	resource.ParallelTest(t, resource.TestCase{
 		Steps: []resource.TestStep{
@@ -521,10 +553,10 @@ func TestAccResourceInteger_Keepers_Replace_NullMapToValue(t *testing.T) {
 					min = 1
 					max = 100000000
 				}`,
-				Check: resource.ComposeTestCheckFunc(
-					testExtractResourceAttr("random_integer.test", "id", &id1),
-					resource.TestCheckResourceAttr("random_integer.test", "keepers.%", "0"),
-				),
+				ConfigStateChecks: []statecheck.StateCheck{
+					assertIdDiffer.AddStateValue("random_integer.test", tfjsonpath.New("id")),
+					statecheck.ExpectKnownValue("random_integer.test", tfjsonpath.New("keepers"), knownvalue.Null()),
+				},
 			},
 			{
 				ProtoV5ProviderFactories: protoV5ProviderFactories(),
@@ -535,18 +567,18 @@ func TestAccResourceInteger_Keepers_Replace_NullMapToValue(t *testing.T) {
 						"key" = "123"
 					}
 				}`,
-				Check: resource.ComposeTestCheckFunc(
-					testExtractResourceAttr("random_integer.test", "id", &id2),
-					testCheckAttributeValuesDiffer(&id1, &id2),
-					resource.TestCheckResourceAttr("random_integer.test", "keepers.%", "1"),
-				),
+				ConfigStateChecks: []statecheck.StateCheck{
+					assertIdDiffer.AddStateValue("random_integer.test", tfjsonpath.New("id")),
+					statecheck.ExpectKnownValue("random_integer.test", tfjsonpath.New("keepers"), knownvalue.MapSizeExact(1)),
+				},
 			},
 		},
 	})
 }
 
 func TestAccResourceInteger_Keepers_Replace_NullValueToValue(t *testing.T) {
-	var id1, id2 string
+	// The id attribute values should differ between test steps
+	assertIdDiffer := statecheck.CompareValue(compare.ValuesDiffer())
 
 	resource.ParallelTest(t, resource.TestCase{
 		Steps: []resource.TestStep{
@@ -559,10 +591,10 @@ func TestAccResourceInteger_Keepers_Replace_NullValueToValue(t *testing.T) {
 						"key" = null
 					}
 				}`,
-				Check: resource.ComposeTestCheckFunc(
-					testExtractResourceAttr("random_integer.test", "id", &id1),
-					resource.TestCheckResourceAttr("random_integer.test", "keepers.%", "1"),
-				),
+				ConfigStateChecks: []statecheck.StateCheck{
+					assertIdDiffer.AddStateValue("random_integer.test", tfjsonpath.New("id")),
+					statecheck.ExpectKnownValue("random_integer.test", tfjsonpath.New("keepers"), knownvalue.MapSizeExact(1)),
+				},
 			},
 			{
 				ProtoV5ProviderFactories: protoV5ProviderFactories(),
@@ -573,18 +605,18 @@ func TestAccResourceInteger_Keepers_Replace_NullValueToValue(t *testing.T) {
 						"key" = "123"
 					}
 				}`,
-				Check: resource.ComposeTestCheckFunc(
-					testExtractResourceAttr("random_integer.test", "id", &id2),
-					testCheckAttributeValuesDiffer(&id1, &id2),
-					resource.TestCheckResourceAttr("random_integer.test", "keepers.%", "1"),
-				),
+				ConfigStateChecks: []statecheck.StateCheck{
+					assertIdDiffer.AddStateValue("random_integer.test", tfjsonpath.New("id")),
+					statecheck.ExpectKnownValue("random_integer.test", tfjsonpath.New("keepers"), knownvalue.MapSizeExact(1)),
+				},
 			},
 		},
 	})
 }
 
 func TestAccResourceInteger_Keepers_Replace_ValueToEmptyMap(t *testing.T) {
-	var id1, id2 string
+	// The id attribute values should differ between test steps
+	assertIdDiffer := statecheck.CompareValue(compare.ValuesDiffer())
 
 	resource.ParallelTest(t, resource.TestCase{
 		Steps: []resource.TestStep{
@@ -597,10 +629,10 @@ func TestAccResourceInteger_Keepers_Replace_ValueToEmptyMap(t *testing.T) {
 						"key" = "123"
 					}
 				}`,
-				Check: resource.ComposeTestCheckFunc(
-					testExtractResourceAttr("random_integer.test", "id", &id1),
-					resource.TestCheckResourceAttr("random_integer.test", "keepers.%", "1"),
-				),
+				ConfigStateChecks: []statecheck.StateCheck{
+					assertIdDiffer.AddStateValue("random_integer.test", tfjsonpath.New("id")),
+					statecheck.ExpectKnownValue("random_integer.test", tfjsonpath.New("keepers"), knownvalue.MapSizeExact(1)),
+				},
 			},
 			{
 				ProtoV5ProviderFactories: protoV5ProviderFactories(),
@@ -609,18 +641,18 @@ func TestAccResourceInteger_Keepers_Replace_ValueToEmptyMap(t *testing.T) {
 					max = 100000000
 					keepers = {}
 				}`,
-				Check: resource.ComposeTestCheckFunc(
-					testExtractResourceAttr("random_integer.test", "id", &id2),
-					testCheckAttributeValuesDiffer(&id1, &id2),
-					resource.TestCheckResourceAttr("random_integer.test", "keepers.%", "0"),
-				),
+				ConfigStateChecks: []statecheck.StateCheck{
+					assertIdDiffer.AddStateValue("random_integer.test", tfjsonpath.New("id")),
+					statecheck.ExpectKnownValue("random_integer.test", tfjsonpath.New("keepers"), knownvalue.MapSizeExact(0)),
+				},
 			},
 		},
 	})
 }
 
 func TestAccResourceInteger_Keepers_Replace_ValueToNullMap(t *testing.T) {
-	var id1, id2 string
+	// The id attribute values should differ between test steps
+	assertIdDiffer := statecheck.CompareValue(compare.ValuesDiffer())
 
 	resource.ParallelTest(t, resource.TestCase{
 		Steps: []resource.TestStep{
@@ -633,10 +665,10 @@ func TestAccResourceInteger_Keepers_Replace_ValueToNullMap(t *testing.T) {
 						"key" = "123"
 					}
 				}`,
-				Check: resource.ComposeTestCheckFunc(
-					testExtractResourceAttr("random_integer.test", "id", &id1),
-					resource.TestCheckResourceAttr("random_integer.test", "keepers.%", "1"),
-				),
+				ConfigStateChecks: []statecheck.StateCheck{
+					assertIdDiffer.AddStateValue("random_integer.test", tfjsonpath.New("id")),
+					statecheck.ExpectKnownValue("random_integer.test", tfjsonpath.New("keepers"), knownvalue.MapSizeExact(1)),
+				},
 			},
 			{
 				ProtoV5ProviderFactories: protoV5ProviderFactories(),
@@ -644,18 +676,18 @@ func TestAccResourceInteger_Keepers_Replace_ValueToNullMap(t *testing.T) {
 					min = 1
 					max = 100000000
 				}`,
-				Check: resource.ComposeTestCheckFunc(
-					testExtractResourceAttr("random_integer.test", "id", &id2),
-					testCheckAttributeValuesDiffer(&id1, &id2),
-					resource.TestCheckResourceAttr("random_integer.test", "keepers.%", "0"),
-				),
+				ConfigStateChecks: []statecheck.StateCheck{
+					assertIdDiffer.AddStateValue("random_integer.test", tfjsonpath.New("id")),
+					statecheck.ExpectKnownValue("random_integer.test", tfjsonpath.New("keepers"), knownvalue.Null()),
+				},
 			},
 		},
 	})
 }
 
 func TestAccResourceInteger_Keepers_Replace_ValueToNullValue(t *testing.T) {
-	var id1, id2 string
+	// The id attribute values should differ between test steps
+	assertIdDiffer := statecheck.CompareValue(compare.ValuesDiffer())
 
 	resource.ParallelTest(t, resource.TestCase{
 		Steps: []resource.TestStep{
@@ -668,10 +700,10 @@ func TestAccResourceInteger_Keepers_Replace_ValueToNullValue(t *testing.T) {
 						"key" = "123"
 					}
 				}`,
-				Check: resource.ComposeTestCheckFunc(
-					testExtractResourceAttr("random_integer.test", "id", &id1),
-					resource.TestCheckResourceAttr("random_integer.test", "keepers.%", "1"),
-				),
+				ConfigStateChecks: []statecheck.StateCheck{
+					assertIdDiffer.AddStateValue("random_integer.test", tfjsonpath.New("id")),
+					statecheck.ExpectKnownValue("random_integer.test", tfjsonpath.New("keepers"), knownvalue.MapSizeExact(1)),
+				},
 			},
 			{
 				ProtoV5ProviderFactories: protoV5ProviderFactories(),
@@ -682,18 +714,18 @@ func TestAccResourceInteger_Keepers_Replace_ValueToNullValue(t *testing.T) {
 						"key" = null
 					}
 				}`,
-				Check: resource.ComposeTestCheckFunc(
-					testExtractResourceAttr("random_integer.test", "id", &id2),
-					testCheckAttributeValuesDiffer(&id1, &id2),
-					resource.TestCheckResourceAttr("random_integer.test", "keepers.%", "1"),
-				),
+				ConfigStateChecks: []statecheck.StateCheck{
+					assertIdDiffer.AddStateValue("random_integer.test", tfjsonpath.New("id")),
+					statecheck.ExpectKnownValue("random_integer.test", tfjsonpath.New("keepers"), knownvalue.MapSizeExact(1)),
+				},
 			},
 		},
 	})
 }
 
 func TestAccResourceInteger_Keepers_Replace_ValueToNewValue(t *testing.T) {
-	var id1, id2 string
+	// The id attribute values should differ between test steps
+	assertIdDiffer := statecheck.CompareValue(compare.ValuesDiffer())
 
 	resource.ParallelTest(t, resource.TestCase{
 		Steps: []resource.TestStep{
@@ -706,10 +738,10 @@ func TestAccResourceInteger_Keepers_Replace_ValueToNewValue(t *testing.T) {
 						"key" = "123"
 					}
 				}`,
-				Check: resource.ComposeTestCheckFunc(
-					testExtractResourceAttr("random_integer.test", "id", &id1),
-					resource.TestCheckResourceAttr("random_integer.test", "keepers.%", "1"),
-				),
+				ConfigStateChecks: []statecheck.StateCheck{
+					assertIdDiffer.AddStateValue("random_integer.test", tfjsonpath.New("id")),
+					statecheck.ExpectKnownValue("random_integer.test", tfjsonpath.New("keepers"), knownvalue.MapSizeExact(1)),
+				},
 			},
 			{
 				ProtoV5ProviderFactories: protoV5ProviderFactories(),
@@ -720,18 +752,18 @@ func TestAccResourceInteger_Keepers_Replace_ValueToNewValue(t *testing.T) {
 						"key" = "456"
 					}
 				}`,
-				Check: resource.ComposeTestCheckFunc(
-					testExtractResourceAttr("random_integer.test", "id", &id2),
-					testCheckAttributeValuesDiffer(&id1, &id2),
-					resource.TestCheckResourceAttr("random_integer.test", "keepers.%", "1"),
-				),
+				ConfigStateChecks: []statecheck.StateCheck{
+					assertIdDiffer.AddStateValue("random_integer.test", tfjsonpath.New("id")),
+					statecheck.ExpectKnownValue("random_integer.test", tfjsonpath.New("keepers"), knownvalue.MapSizeExact(1)),
+				},
 			},
 		},
 	})
 }
 
 func TestAccResourceInteger_Keepers_FrameworkMigration_NullMapToNullValue(t *testing.T) {
-	var id1, id2 string
+	// The id attribute values should be the same between test steps
+	assertIdSame := statecheck.CompareValue(compare.ValuesSame())
 
 	resource.ParallelTest(t, resource.TestCase{
 		Steps: []resource.TestStep{
@@ -744,10 +776,10 @@ func TestAccResourceInteger_Keepers_FrameworkMigration_NullMapToNullValue(t *tes
 						"key" = null
 					}
 				}`,
-				Check: resource.ComposeTestCheckFunc(
-					testExtractResourceAttr("random_integer.test", "id", &id1),
-					resource.TestCheckResourceAttr("random_integer.test", "keepers.%", "0"),
-				),
+				ConfigStateChecks: []statecheck.StateCheck{
+					assertIdSame.AddStateValue("random_integer.test", tfjsonpath.New("id")),
+					statecheck.ExpectKnownValue("random_integer.test", tfjsonpath.New("keepers"), knownvalue.Null()),
+				},
 			},
 			{
 				ProtoV5ProviderFactories: protoV5ProviderFactories(),
@@ -758,18 +790,18 @@ func TestAccResourceInteger_Keepers_FrameworkMigration_NullMapToNullValue(t *tes
 						"key" = null
 					}
 				}`,
-				Check: resource.ComposeTestCheckFunc(
-					testExtractResourceAttr("random_integer.test", "id", &id2),
-					testCheckAttributeValuesEqual(&id1, &id2),
-					resource.TestCheckResourceAttr("random_integer.test", "keepers.%", "1"),
-				),
+				ConfigStateChecks: []statecheck.StateCheck{
+					assertIdSame.AddStateValue("random_integer.test", tfjsonpath.New("id")),
+					statecheck.ExpectKnownValue("random_integer.test", tfjsonpath.New("keepers"), knownvalue.MapSizeExact(1)),
+				},
 			},
 		},
 	})
 }
 
 func TestAccResourceInteger_Keepers_FrameworkMigration_NullMapToValue(t *testing.T) {
-	var id1, id2 string
+	// The id attribute values should differ between test steps
+	assertIdDiffer := statecheck.CompareValue(compare.ValuesDiffer())
 
 	resource.ParallelTest(t, resource.TestCase{
 		Steps: []resource.TestStep{
@@ -782,10 +814,10 @@ func TestAccResourceInteger_Keepers_FrameworkMigration_NullMapToValue(t *testing
 						"key" = null
 					}
 				}`,
-				Check: resource.ComposeTestCheckFunc(
-					testExtractResourceAttr("random_integer.test", "id", &id1),
-					resource.TestCheckResourceAttr("random_integer.test", "keepers.%", "0"),
-				),
+				ConfigStateChecks: []statecheck.StateCheck{
+					assertIdDiffer.AddStateValue("random_integer.test", tfjsonpath.New("id")),
+					statecheck.ExpectKnownValue("random_integer.test", tfjsonpath.New("keepers"), knownvalue.Null()),
+				},
 			},
 			{
 				ProtoV5ProviderFactories: protoV5ProviderFactories(),
@@ -796,18 +828,18 @@ func TestAccResourceInteger_Keepers_FrameworkMigration_NullMapToValue(t *testing
 						"key" = "123"
 					}
 				}`,
-				Check: resource.ComposeTestCheckFunc(
-					testExtractResourceAttr("random_integer.test", "id", &id2),
-					testCheckAttributeValuesDiffer(&id1, &id2),
-					resource.TestCheckResourceAttr("random_integer.test", "keepers.%", "1"),
-				),
+				ConfigStateChecks: []statecheck.StateCheck{
+					assertIdDiffer.AddStateValue("random_integer.test", tfjsonpath.New("id")),
+					statecheck.ExpectKnownValue("random_integer.test", tfjsonpath.New("keepers"), knownvalue.MapSizeExact(1)),
+				},
 			},
 		},
 	})
 }
 
 func TestAccResourceInteger_Keepers_FrameworkMigration_NullMapToMultipleNullValue(t *testing.T) {
-	var id1, id2 string
+	// The id attribute values should be the same between test steps
+	assertIdSame := statecheck.CompareValue(compare.ValuesSame())
 
 	resource.ParallelTest(t, resource.TestCase{
 		Steps: []resource.TestStep{
@@ -821,10 +853,10 @@ func TestAccResourceInteger_Keepers_FrameworkMigration_NullMapToMultipleNullValu
 						"key2" = null
 					}
 				}`,
-				Check: resource.ComposeTestCheckFunc(
-					testExtractResourceAttr("random_integer.test", "id", &id1),
-					resource.TestCheckResourceAttr("random_integer.test", "keepers.%", "0"),
-				),
+				ConfigStateChecks: []statecheck.StateCheck{
+					assertIdSame.AddStateValue("random_integer.test", tfjsonpath.New("id")),
+					statecheck.ExpectKnownValue("random_integer.test", tfjsonpath.New("keepers"), knownvalue.Null()),
+				},
 			},
 			{
 				ProtoV5ProviderFactories: protoV5ProviderFactories(),
@@ -836,18 +868,18 @@ func TestAccResourceInteger_Keepers_FrameworkMigration_NullMapToMultipleNullValu
 						"key2" = null
 					}
 				}`,
-				Check: resource.ComposeTestCheckFunc(
-					testExtractResourceAttr("random_integer.test", "id", &id2),
-					testCheckAttributeValuesEqual(&id1, &id2),
-					resource.TestCheckResourceAttr("random_integer.test", "keepers.%", "2"),
-				),
+				ConfigStateChecks: []statecheck.StateCheck{
+					assertIdSame.AddStateValue("random_integer.test", tfjsonpath.New("id")),
+					statecheck.ExpectKnownValue("random_integer.test", tfjsonpath.New("keepers"), knownvalue.MapSizeExact(2)),
+				},
 			},
 		},
 	})
 }
 
 func TestAccResourceInteger_Keepers_FrameworkMigration_NullMapToMultipleValue(t *testing.T) {
-	var id1, id2 string
+	// The id attribute values should differ between test steps
+	assertIdDiffer := statecheck.CompareValue(compare.ValuesDiffer())
 
 	resource.ParallelTest(t, resource.TestCase{
 		Steps: []resource.TestStep{
@@ -861,10 +893,10 @@ func TestAccResourceInteger_Keepers_FrameworkMigration_NullMapToMultipleValue(t 
 						"key2" = null
 					}
 				}`,
-				Check: resource.ComposeTestCheckFunc(
-					testExtractResourceAttr("random_integer.test", "id", &id1),
-					resource.TestCheckResourceAttr("random_integer.test", "keepers.%", "0"),
-				),
+				ConfigStateChecks: []statecheck.StateCheck{
+					assertIdDiffer.AddStateValue("random_integer.test", tfjsonpath.New("id")),
+					statecheck.ExpectKnownValue("random_integer.test", tfjsonpath.New("keepers"), knownvalue.Null()),
+				},
 			},
 			{
 				ProtoV5ProviderFactories: protoV5ProviderFactories(),
@@ -876,18 +908,18 @@ func TestAccResourceInteger_Keepers_FrameworkMigration_NullMapToMultipleValue(t 
 						"key2" = "456"
 					}
 				}`,
-				Check: resource.ComposeTestCheckFunc(
-					testExtractResourceAttr("random_integer.test", "id", &id2),
-					testCheckAttributeValuesDiffer(&id1, &id2),
-					resource.TestCheckResourceAttr("random_integer.test", "keepers.%", "2"),
-				),
+				ConfigStateChecks: []statecheck.StateCheck{
+					assertIdDiffer.AddStateValue("random_integer.test", tfjsonpath.New("id")),
+					statecheck.ExpectKnownValue("random_integer.test", tfjsonpath.New("keepers"), knownvalue.MapSizeExact(2)),
+				},
 			},
 		},
 	})
 }
 
 func TestAccResourceInteger_Keepers_FrameworkMigration_NullMapValue(t *testing.T) {
-	var id1, id2 string
+	// The id attribute values should be the same between test steps
+	assertIdSame := statecheck.CompareValue(compare.ValuesSame())
 
 	resource.ParallelTest(t, resource.TestCase{
 		Steps: []resource.TestStep{
@@ -901,10 +933,10 @@ func TestAccResourceInteger_Keepers_FrameworkMigration_NullMapValue(t *testing.T
 						"key2" = null
 					}
 				}`,
-				Check: resource.ComposeTestCheckFunc(
-					testExtractResourceAttr("random_integer.test", "id", &id1),
-					resource.TestCheckResourceAttr("random_integer.test", "keepers.%", "1"),
-				),
+				ConfigStateChecks: []statecheck.StateCheck{
+					assertIdSame.AddStateValue("random_integer.test", tfjsonpath.New("id")),
+					statecheck.ExpectKnownValue("random_integer.test", tfjsonpath.New("keepers"), knownvalue.MapSizeExact(1)),
+				},
 			},
 			{
 				ProtoV5ProviderFactories: protoV5ProviderFactories(),
@@ -916,18 +948,18 @@ func TestAccResourceInteger_Keepers_FrameworkMigration_NullMapValue(t *testing.T
 						"key2" = null
 					}
 				}`,
-				Check: resource.ComposeTestCheckFunc(
-					testExtractResourceAttr("random_integer.test", "id", &id2),
-					testCheckAttributeValuesEqual(&id1, &id2),
-					resource.TestCheckResourceAttr("random_integer.test", "keepers.%", "2"),
-				),
+				ConfigStateChecks: []statecheck.StateCheck{
+					assertIdSame.AddStateValue("random_integer.test", tfjsonpath.New("id")),
+					statecheck.ExpectKnownValue("random_integer.test", tfjsonpath.New("keepers"), knownvalue.MapSizeExact(2)),
+				},
 			},
 		},
 	})
 }
 
 func TestAccResourceInteger_Keepers_FrameworkMigration_NullMapValueToValue(t *testing.T) {
-	var id1, id2 string
+	// The id attribute values should differ between test steps
+	assertIdDiffer := statecheck.CompareValue(compare.ValuesDiffer())
 
 	resource.ParallelTest(t, resource.TestCase{
 		Steps: []resource.TestStep{
@@ -941,10 +973,10 @@ func TestAccResourceInteger_Keepers_FrameworkMigration_NullMapValueToValue(t *te
 						"key2" = null
 					}
 				}`,
-				Check: resource.ComposeTestCheckFunc(
-					testExtractResourceAttr("random_integer.test", "id", &id1),
-					resource.TestCheckResourceAttr("random_integer.test", "keepers.%", "1"),
-				),
+				ConfigStateChecks: []statecheck.StateCheck{
+					assertIdDiffer.AddStateValue("random_integer.test", tfjsonpath.New("id")),
+					statecheck.ExpectKnownValue("random_integer.test", tfjsonpath.New("keepers"), knownvalue.MapSizeExact(1)),
+				},
 			},
 			{
 				ProtoV5ProviderFactories: protoV5ProviderFactories(),
@@ -956,26 +988,16 @@ func TestAccResourceInteger_Keepers_FrameworkMigration_NullMapValueToValue(t *te
 						"key2" = "456"
 					}
 				}`,
-				Check: resource.ComposeTestCheckFunc(
-					testExtractResourceAttr("random_integer.test", "id", &id2),
-					testCheckAttributeValuesDiffer(&id1, &id2),
-					resource.TestCheckResourceAttr("random_integer.test", "keepers.%", "2"),
-				),
+				ConfigStateChecks: []statecheck.StateCheck{
+					assertIdDiffer.AddStateValue("random_integer.test", tfjsonpath.New("id")),
+					statecheck.ExpectKnownValue("random_integer.test", tfjsonpath.New("keepers"), knownvalue.MapSizeExact(2)),
+				},
 			},
 		},
 	})
 }
 
-func testCheckNotEmptyString(field string) func(input string) error {
-	return func(input string) error {
-		if input == "" {
-			return fmt.Errorf("%s is empty string", field)
-		}
-
-		return nil
-	}
-}
-
+//nolint:unparam // This function is only used to support the legacy import state check combinations with the Check function
 func testExtractResourceAttr(resourceName string, attributeName string, attributeValue *string) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 		rs, ok := s.RootModule().Resources[resourceName]
@@ -991,16 +1013,6 @@ func testExtractResourceAttr(resourceName string, attributeName string, attribut
 		}
 
 		*attributeValue = attrValue
-
-		return nil
-	}
-}
-
-func testCheckAttributeValuesDiffer(i *string, j *string) resource.TestCheckFunc {
-	return func(s *terraform.State) error {
-		if testStringValue(i) == testStringValue(j) {
-			return fmt.Errorf("attribute values are the same")
-		}
 
 		return nil
 	}

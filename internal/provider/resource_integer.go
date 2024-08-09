@@ -202,8 +202,7 @@ func (r *integerResource) ImportState(ctx context.Context, req resource.ImportSt
 	var state integerModelV0
 
 	state.ID = types.StringValue(parts[0])
-	// Using types.MapValueMust to ensure map is known.
-	state.Keepers = types.MapValueMust(types.StringType, nil)
+	state.Keepers = types.MapNull(types.StringType)
 	state.Result = types.Int64Value(result)
 	state.Min = types.Int64Value(min)
 	state.Max = types.Int64Value(max)

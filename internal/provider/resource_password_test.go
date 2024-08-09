@@ -16,11 +16,17 @@ import (
 	res "github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/tfsdk"
 	"github.com/hashicorp/terraform-plugin-go/tftypes"
+	"github.com/hashicorp/terraform-plugin-testing/compare"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
+	"github.com/hashicorp/terraform-plugin-testing/knownvalue"
+	"github.com/hashicorp/terraform-plugin-testing/plancheck"
+	"github.com/hashicorp/terraform-plugin-testing/statecheck"
 	"github.com/hashicorp/terraform-plugin-testing/terraform"
+	"github.com/hashicorp/terraform-plugin-testing/tfjsonpath"
 	"golang.org/x/crypto/bcrypt"
 
 	"github.com/terraform-providers/terraform-provider-random/internal/random"
+	"github.com/terraform-providers/terraform-provider-random/internal/randomtest"
 )
 
 func TestGenerateHash(t *testing.T) {
@@ -67,6 +73,47 @@ func TestGenerateHash(t *testing.T) {
 	}
 }
 
+func TestCreateString(t *testing.T) {
+	t.Parallel()
+
+	testCases := map[string]struct {
+		input         random.StringParams
+		expectedError error
+	}{
+		"input-false": {
+			input: random.StringParams{
+				Length:  16, // Required
+				Lower:   false,
+				Numeric: false,
+				Special: false,
+				Upper:   false,
+			},
+			expectedError: errors.New("the character set specified is empty"),
+		},
+	}
+
+	equateErrorMessage := cmp.Comparer(func(x, y error) bool {
+		if x == nil || y == nil {
+			return x == nil && y == nil
+		}
+		return x.Error() == y.Error()
+	})
+
+	for name, testCase := range testCases {
+		name, testCase := name, testCase
+
+		t.Run(name, func(t *testing.T) {
+			t.Parallel()
+
+			_, err := random.CreateString(testCase.input)
+
+			if diff := cmp.Diff(testCase.expectedError, err, equateErrorMessage); diff != "" {
+				t.Errorf("unexpected difference: %s", diff)
+			}
+		})
+	}
+}
+
 func TestAccResourcePassword_Import(t *testing.T) {
 	resource.UnitTest(t, resource.TestCase{
 		ProtoV5ProviderFactories: protoV5ProviderFactories(),
@@ -75,9 +122,9 @@ func TestAccResourcePassword_Import(t *testing.T) {
 				Config: `resource "random_password" "basic" {
 							length = 12
 						}`,
-				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttrWith("random_password.basic", "result", testCheckLen(12)),
-				),
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue("random_password.basic", tfjsonpath.New("result"), randomtest.StringLengthExact(12)),
+				},
 			},
 			{
 				ResourceName: "random_password.basic",
@@ -107,8 +154,6 @@ func TestAccResourcePassword_Import(t *testing.T) {
 func TestAccResourcePassword_BcryptHash(t *testing.T) {
 	t.Parallel()
 
-	var result, bcryptHash string
-
 	resource.UnitTest(t, resource.TestCase{
 		ProtoV5ProviderFactories: protoV5ProviderFactories(),
 		Steps: []resource.TestStep{
@@ -116,11 +161,13 @@ func TestAccResourcePassword_BcryptHash(t *testing.T) {
 				Config: `resource "random_password" "test" {
 							length = 73
 						}`,
-				Check: resource.ComposeTestCheckFunc(
-					testExtractResourceAttr("random_password.test", "bcrypt_hash", &bcryptHash),
-					testExtractResourceAttr("random_password.test", "result", &result),
-					testBcryptHashValid(&bcryptHash, &result),
-				),
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.CompareValuePairs(
+						"random_password.test", tfjsonpath.New("bcrypt_hash"),
+						"random_password.test", tfjsonpath.New("result"),
+						randomtest.BcryptHashMatch(),
+					),
+				},
 			},
 		},
 	})
@@ -129,7 +176,8 @@ func TestAccResourcePassword_BcryptHash(t *testing.T) {
 // TestAccResourcePassword_BcryptHash_FromVersion3_3_2 verifies behaviour when
 // upgrading state from schema V2 to V3 without a bcrypt_hash update.
 func TestAccResourcePassword_BcryptHash_FromVersion3_3_2(t *testing.T) {
-	var bcryptHash1, bcryptHash2, result1, result2 string
+	// The bcrypt_hash attribute values should be the same between test steps
+	assertBcryptHashSame := statecheck.CompareValue(compare.ValuesSame())
 
 	resource.ParallelTest(t, resource.TestCase{
 		Steps: []resource.TestStep{
@@ -138,23 +186,28 @@ func TestAccResourcePassword_BcryptHash_FromVersion3_3_2(t *testing.T) {
 				Config: `resource "random_password" "test" {
 							length = 12
 						}`,
-				Check: resource.ComposeTestCheckFunc(
-					testExtractResourceAttr("random_password.test", "bcrypt_hash", &bcryptHash1),
-					testExtractResourceAttr("random_password.test", "result", &result1),
-					testBcryptHashValid(&bcryptHash1, &result1),
-				),
+				ConfigStateChecks: []statecheck.StateCheck{
+					assertBcryptHashSame.AddStateValue("random_password.test", tfjsonpath.New("bcrypt_hash")),
+					statecheck.CompareValuePairs(
+						"random_password.test", tfjsonpath.New("bcrypt_hash"),
+						"random_password.test", tfjsonpath.New("result"),
+						randomtest.BcryptHashMatch(),
+					),
+				},
 			},
 			{
 				ProtoV5ProviderFactories: protoV5ProviderFactories(),
 				Config: `resource "random_password" "test" {
 					length = 12
 				}`,
-				Check: resource.ComposeTestCheckFunc(
-					testExtractResourceAttr("random_password.test", "bcrypt_hash", &bcryptHash2),
-					testExtractResourceAttr("random_password.test", "result", &result2),
-					testCheckAttributeValuesEqual(&bcryptHash1, &bcryptHash2),
-					testBcryptHashValid(&bcryptHash2, &result2),
-				),
+				ConfigStateChecks: []statecheck.StateCheck{
+					assertBcryptHashSame.AddStateValue("random_password.test", tfjsonpath.New("bcrypt_hash")),
+					statecheck.CompareValuePairs(
+						"random_password.test", tfjsonpath.New("bcrypt_hash"),
+						"random_password.test", tfjsonpath.New("result"),
+						randomtest.BcryptHashMatch(),
+					),
+				},
 			},
 		},
 	})
@@ -163,7 +216,8 @@ func TestAccResourcePassword_BcryptHash_FromVersion3_3_2(t *testing.T) {
 // TestAccResourcePassword_BcryptHash_FromVersion3_4_2 verifies behaviour when
 // upgrading state from schema V2 to V3 with an expected bcrypt_hash update.
 func TestAccResourcePassword_BcryptHash_FromVersion3_4_2(t *testing.T) {
-	var bcryptHash1, bcryptHash2, result1, result2 string
+	// The bcrypt_hash attribute values should differ between test steps
+	assertBcryptHashDiffer := statecheck.CompareValue(compare.ValuesDiffer())
 
 	resource.ParallelTest(t, resource.TestCase{
 		Steps: []resource.TestStep{
@@ -172,23 +226,28 @@ func TestAccResourcePassword_BcryptHash_FromVersion3_4_2(t *testing.T) {
 				Config: `resource "random_password" "test" {
 							length = 12
 						}`,
-				Check: resource.ComposeTestCheckFunc(
-					testExtractResourceAttr("random_password.test", "bcrypt_hash", &bcryptHash1),
-					testExtractResourceAttr("random_password.test", "result", &result1),
-					testBcryptHashInvalid(&bcryptHash1, &result1),
-				),
+				ConfigStateChecks: []statecheck.StateCheck{
+					assertBcryptHashDiffer.AddStateValue("random_password.test", tfjsonpath.New("bcrypt_hash")),
+					statecheck.CompareValuePairs(
+						"random_password.test", tfjsonpath.New("bcrypt_hash"),
+						"random_password.test", tfjsonpath.New("result"),
+						randomtest.BcryptHashMismatch(),
+					),
+				},
 			},
 			{
 				ProtoV5ProviderFactories: protoV5ProviderFactories(),
 				Config: `resource "random_password" "test" {
 					length = 12
 				}`,
-				Check: resource.ComposeTestCheckFunc(
-					testExtractResourceAttr("random_password.test", "bcrypt_hash", &bcryptHash2),
-					testExtractResourceAttr("random_password.test", "result", &result2),
-					testCheckAttributeValuesDiffer(&bcryptHash1, &bcryptHash2),
-					testBcryptHashValid(&bcryptHash2, &result2),
-				),
+				ConfigStateChecks: []statecheck.StateCheck{
+					assertBcryptHashDiffer.AddStateValue("random_password.test", tfjsonpath.New("bcrypt_hash")),
+					statecheck.CompareValuePairs(
+						"random_password.test", tfjsonpath.New("bcrypt_hash"),
+						"random_password.test", tfjsonpath.New("result"),
+						randomtest.BcryptHashMatch(),
+					),
+				},
 			},
 		},
 	})
@@ -206,10 +265,10 @@ func TestAccResourcePassword_Override(t *testing.T) {
 							upper = false
 							numeric = false
 						}`,
-				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttrWith("random_password.override", "result", testCheckLen(4)),
-					resource.TestCheckResourceAttr("random_password.override", "result", "!!!!"),
-				),
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue("random_password.override", tfjsonpath.New("result"), randomtest.StringLengthExact(4)),
+					statecheck.ExpectKnownValue("random_password.override", tfjsonpath.New("result"), knownvalue.StringExact("!!!!")),
+				},
 			},
 		},
 	})
@@ -220,7 +279,8 @@ func TestAccResourcePassword_Override(t *testing.T) {
 // override_special value to null and should not result in a plan difference.
 // Reference: https://github.com/hashicorp/terraform-provider-random/issues/306
 func TestAccResourcePassword_OverrideSpecial_FromVersion3_3_2(t *testing.T) {
-	var result1, result2 string
+	// The result attribute values should be the same between test steps
+	assertResultSame := statecheck.CompareValue(compare.ValuesSame())
 
 	resource.ParallelTest(t, resource.TestCase{
 		Steps: []resource.TestStep{
@@ -229,21 +289,20 @@ func TestAccResourcePassword_OverrideSpecial_FromVersion3_3_2(t *testing.T) {
 				Config: `resource "random_password" "test" {
 							length = 12
 						}`,
-				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckNoResourceAttr("random_password.test", "override_special"),
-					testExtractResourceAttr("random_password.test", "result", &result1),
-				),
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue("random_password.test", tfjsonpath.New("override_special"), knownvalue.Null()),
+					assertResultSame.AddStateValue("random_password.test", tfjsonpath.New("result")),
+				},
 			},
 			{
 				ProtoV5ProviderFactories: protoV5ProviderFactories(),
 				Config: `resource "random_password" "test" {
 					length = 12
 				}`,
-				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckNoResourceAttr("random_password.test", "override_special"),
-					testExtractResourceAttr("random_password.test", "result", &result2),
-					testCheckAttributeValuesEqual(&result1, &result2),
-				),
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue("random_password.test", tfjsonpath.New("override_special"), knownvalue.Null()),
+					assertResultSame.AddStateValue("random_password.test", tfjsonpath.New("result")),
+				},
 			},
 		},
 	})
@@ -254,7 +313,8 @@ func TestAccResourcePassword_OverrideSpecial_FromVersion3_3_2(t *testing.T) {
 // override_special value to "", while other versions do not.
 // Reference: https://github.com/hashicorp/terraform-provider-random/issues/306
 func TestAccResourcePassword_OverrideSpecial_FromVersion3_4_2(t *testing.T) {
-	var result1, result2 string
+	// The result attribute values should be the same between test steps
+	assertResultSame := statecheck.CompareValue(compare.ValuesSame())
 
 	resource.ParallelTest(t, resource.TestCase{
 		Steps: []resource.TestStep{
@@ -263,21 +323,43 @@ func TestAccResourcePassword_OverrideSpecial_FromVersion3_4_2(t *testing.T) {
 				Config: `resource "random_password" "test" {
 							length = 12
 						}`,
-				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttr("random_password.test", "override_special", ""),
-					testExtractResourceAttr("random_password.test", "result", &result1),
-				),
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue("random_password.test", tfjsonpath.New("override_special"), knownvalue.StringExact("")),
+					assertResultSame.AddStateValue("random_password.test", tfjsonpath.New("result")),
+				},
 			},
 			{
 				ProtoV5ProviderFactories: protoV5ProviderFactories(),
 				Config: `resource "random_password" "test" {
 					length = 12
 				}`,
-				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckNoResourceAttr("random_password.test", "override_special"),
-					testExtractResourceAttr("random_password.test", "result", &result2),
-					testCheckAttributeValuesEqual(&result1, &result2),
-				),
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue("random_password.test", tfjsonpath.New("override_special"), knownvalue.Null()),
+					assertResultSame.AddStateValue("random_password.test", tfjsonpath.New("result")),
+				},
+			},
+		},
+	})
+}
+
+func TestAccResourcePassword_ImportWithoutKeepersProducesNoPlannedChanges(t *testing.T) {
+	resource.UnitTest(t, resource.TestCase{
+		ProtoV5ProviderFactories: protoV5ProviderFactories(),
+		Steps: []resource.TestStep{
+			{
+				Config: `resource "random_password" "test" {
+							length = 12
+						}`,
+				ResourceName:       "random_password.test",
+				ImportStateId:      "Z=:cbrJE?Ltg",
+				ImportState:        true,
+				ImportStatePersist: true,
+			},
+			{
+				Config: `resource "random_password" "test" {
+							length = 12
+						}`,
+				PlanOnly: true,
 			},
 		},
 	})
@@ -300,6 +382,8 @@ func TestAccResourcePassword_Import_FromVersion3_1_3(t *testing.T) {
 				ImportState:        true,
 				ImportStateId:      "Z=:cbrJE?Ltg",
 				ImportStatePersist: true,
+				// TODO: Import state checks haven't been implemented in terraform-plugin-testing yet, so can't use value comparers for now
+				// https://github.com/hashicorp/terraform-plugin-testing/issues/365
 				ImportStateCheck: composeImportStateCheck(
 					testCheckNoResourceAttrInstanceState("length"),
 					testCheckNoResourceAttrInstanceState("number"),
@@ -318,24 +402,26 @@ func TestAccResourcePassword_Import_FromVersion3_1_3(t *testing.T) {
 				Config: `resource "random_password" "test" {
 					length = 12
 				}`,
-				PlanOnly: true,
-			},
-			{
-				ProtoV5ProviderFactories: protoV5ProviderFactories(),
-				Config: `resource "random_password" "test" {
-							length = 12
-						}`,
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectEmptyPlan(),
+					},
+				},
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue("random_password.test", tfjsonpath.New("result"), randomtest.StringLengthExact(12)),
+					statecheck.ExpectKnownValue("random_password.test", tfjsonpath.New("number"), knownvalue.Bool(true)),
+					statecheck.ExpectKnownValue("random_password.test", tfjsonpath.New("numeric"), knownvalue.Bool(true)),
+					statecheck.ExpectKnownValue("random_password.test", tfjsonpath.New("upper"), knownvalue.Bool(true)),
+					statecheck.ExpectKnownValue("random_password.test", tfjsonpath.New("lower"), knownvalue.Bool(true)),
+					statecheck.ExpectKnownValue("random_password.test", tfjsonpath.New("special"), knownvalue.Bool(true)),
+					statecheck.ExpectKnownValue("random_password.test", tfjsonpath.New("min_numeric"), knownvalue.Int64Exact(0)),
+					statecheck.ExpectKnownValue("random_password.test", tfjsonpath.New("min_upper"), knownvalue.Int64Exact(0)),
+					statecheck.ExpectKnownValue("random_password.test", tfjsonpath.New("min_lower"), knownvalue.Int64Exact(0)),
+					statecheck.ExpectKnownValue("random_password.test", tfjsonpath.New("min_special"), knownvalue.Int64Exact(0)),
+				},
+				// TODO: Import state checks haven't been implemented in terraform-plugin-testing yet, so can't use value comparers for now
+				// https://github.com/hashicorp/terraform-plugin-testing/issues/365
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttrWith("random_password.test", "result", testCheckLen(12)),
-					resource.TestCheckResourceAttr("random_password.test", "number", "true"),
-					resource.TestCheckResourceAttr("random_password.test", "numeric", "true"),
-					resource.TestCheckResourceAttr("random_password.test", "upper", "true"),
-					resource.TestCheckResourceAttr("random_password.test", "lower", "true"),
-					resource.TestCheckResourceAttr("random_password.test", "special", "true"),
-					resource.TestCheckResourceAttr("random_password.test", "min_numeric", "0"),
-					resource.TestCheckResourceAttr("random_password.test", "min_upper", "0"),
-					resource.TestCheckResourceAttr("random_password.test", "min_lower", "0"),
-					resource.TestCheckResourceAttr("random_password.test", "min_special", "0"),
 					testExtractResourceAttr("random_password.test", "result", &result2),
 					testCheckAttributeValuesEqual(&result1, &result2),
 				),
@@ -386,17 +472,21 @@ func TestAccResourcePassword_Import_FromVersion3_2_0(t *testing.T) {
 				Config: `resource "random_password" "test" {
 							length = 12
 						}`,
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue("random_password.test", tfjsonpath.New("result"), randomtest.StringLengthExact(12)),
+					statecheck.ExpectKnownValue("random_password.test", tfjsonpath.New("number"), knownvalue.Bool(true)),
+					statecheck.ExpectKnownValue("random_password.test", tfjsonpath.New("numeric"), knownvalue.Bool(true)),
+					statecheck.ExpectKnownValue("random_password.test", tfjsonpath.New("upper"), knownvalue.Bool(true)),
+					statecheck.ExpectKnownValue("random_password.test", tfjsonpath.New("lower"), knownvalue.Bool(true)),
+					statecheck.ExpectKnownValue("random_password.test", tfjsonpath.New("special"), knownvalue.Bool(true)),
+					statecheck.ExpectKnownValue("random_password.test", tfjsonpath.New("min_numeric"), knownvalue.Int64Exact(0)),
+					statecheck.ExpectKnownValue("random_password.test", tfjsonpath.New("min_upper"), knownvalue.Int64Exact(0)),
+					statecheck.ExpectKnownValue("random_password.test", tfjsonpath.New("min_lower"), knownvalue.Int64Exact(0)),
+					statecheck.ExpectKnownValue("random_password.test", tfjsonpath.New("min_special"), knownvalue.Int64Exact(0)),
+				},
+				// TODO: Import state checks haven't been implemented in terraform-plugin-testing yet, so can't use value comparers for now
+				// https://github.com/hashicorp/terraform-plugin-testing/issues/365
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttrWith("random_password.test", "result", testCheckLen(12)),
-					resource.TestCheckResourceAttr("random_password.test", "number", "true"),
-					resource.TestCheckResourceAttr("random_password.test", "numeric", "true"),
-					resource.TestCheckResourceAttr("random_password.test", "upper", "true"),
-					resource.TestCheckResourceAttr("random_password.test", "lower", "true"),
-					resource.TestCheckResourceAttr("random_password.test", "special", "true"),
-					resource.TestCheckResourceAttr("random_password.test", "min_numeric", "0"),
-					resource.TestCheckResourceAttr("random_password.test", "min_upper", "0"),
-					resource.TestCheckResourceAttr("random_password.test", "min_lower", "0"),
-					resource.TestCheckResourceAttr("random_password.test", "min_special", "0"),
 					testExtractResourceAttr("random_password.test", "result", &result2),
 					testCheckAttributeValuesEqual(&result1, &result2),
 				),
@@ -441,17 +531,21 @@ func TestAccResourcePassword_Import_FromVersion3_4_2(t *testing.T) {
 				Config: `resource "random_password" "test" {
 							length = 12
 						}`,
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue("random_password.test", tfjsonpath.New("result"), randomtest.StringLengthExact(12)),
+					statecheck.ExpectKnownValue("random_password.test", tfjsonpath.New("number"), knownvalue.Bool(true)),
+					statecheck.ExpectKnownValue("random_password.test", tfjsonpath.New("numeric"), knownvalue.Bool(true)),
+					statecheck.ExpectKnownValue("random_password.test", tfjsonpath.New("upper"), knownvalue.Bool(true)),
+					statecheck.ExpectKnownValue("random_password.test", tfjsonpath.New("lower"), knownvalue.Bool(true)),
+					statecheck.ExpectKnownValue("random_password.test", tfjsonpath.New("special"), knownvalue.Bool(true)),
+					statecheck.ExpectKnownValue("random_password.test", tfjsonpath.New("min_numeric"), knownvalue.Int64Exact(0)),
+					statecheck.ExpectKnownValue("random_password.test", tfjsonpath.New("min_upper"), knownvalue.Int64Exact(0)),
+					statecheck.ExpectKnownValue("random_password.test", tfjsonpath.New("min_lower"), knownvalue.Int64Exact(0)),
+					statecheck.ExpectKnownValue("random_password.test", tfjsonpath.New("min_special"), knownvalue.Int64Exact(0)),
+				},
+				// TODO: Import state checks haven't been implemented in terraform-plugin-testing yet, so can't use value comparers for now
+				// https://github.com/hashicorp/terraform-plugin-testing/issues/365
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttrWith("random_password.test", "result", testCheckLen(12)),
-					resource.TestCheckResourceAttr("random_password.test", "number", "true"),
-					resource.TestCheckResourceAttr("random_password.test", "numeric", "true"),
-					resource.TestCheckResourceAttr("random_password.test", "upper", "true"),
-					resource.TestCheckResourceAttr("random_password.test", "lower", "true"),
-					resource.TestCheckResourceAttr("random_password.test", "special", "true"),
-					resource.TestCheckResourceAttr("random_password.test", "min_numeric", "0"),
-					resource.TestCheckResourceAttr("random_password.test", "min_upper", "0"),
-					resource.TestCheckResourceAttr("random_password.test", "min_lower", "0"),
-					resource.TestCheckResourceAttr("random_password.test", "min_special", "0"),
 					testExtractResourceAttr("random_password.test", "result", &result2),
 					testCheckAttributeValuesEqual(&result1, &result2),
 				),
@@ -467,11 +561,11 @@ func TestAccResourcePassword_StateUpgradeV0toV3(t *testing.T) {
 	t.Parallel()
 
 	cases := []struct {
-		name                string
-		configBeforeUpgrade string
-		configDuringUpgrade string
-		beforeStateUpgrade  []resource.TestCheckFunc
-		afterStateUpgrade   []resource.TestCheckFunc
+		name                     string
+		configBeforeUpgrade      string
+		configDuringUpgrade      string
+		beforeUpgradeStateChecks []statecheck.StateCheck
+		afterUpgradeStateChecks  []statecheck.StateCheck
 	}{
 		{
 			name: "bcrypt_hash",
@@ -481,11 +575,11 @@ func TestAccResourcePassword_StateUpgradeV0toV3(t *testing.T) {
 			configDuringUpgrade: `resource "random_password" "default" {
 						length = 12
 					}`,
-			beforeStateUpgrade: []resource.TestCheckFunc{
-				resource.TestCheckNoResourceAttr("random_password.default", "bcrypt_hash"),
+			beforeUpgradeStateChecks: []statecheck.StateCheck{
+				randomtest.ExpectNoAttribute("random_password.default", tfjsonpath.New("bcrypt_hash")),
 			},
-			afterStateUpgrade: []resource.TestCheckFunc{
-				resource.TestCheckResourceAttrSet("random_password.default", "bcrypt_hash"),
+			afterUpgradeStateChecks: []statecheck.StateCheck{
+				statecheck.ExpectKnownValue("random_password.default", tfjsonpath.New("bcrypt_hash"), knownvalue.NotNull()),
 			},
 		},
 		{
@@ -496,13 +590,17 @@ func TestAccResourcePassword_StateUpgradeV0toV3(t *testing.T) {
 			configDuringUpgrade: `resource "random_password" "default" {
 						length = 12
 					}`,
-			beforeStateUpgrade: []resource.TestCheckFunc{
-				resource.TestCheckResourceAttr("random_password.default", "number", "true"),
-				resource.TestCheckNoResourceAttr("random_password.default", "numeric"),
+			beforeUpgradeStateChecks: []statecheck.StateCheck{
+				statecheck.ExpectKnownValue("random_password.default", tfjsonpath.New("number"), knownvalue.Bool(true)),
+				randomtest.ExpectNoAttribute("random_password.default", tfjsonpath.New("numeric")),
 			},
-			afterStateUpgrade: []resource.TestCheckFunc{
-				resource.TestCheckResourceAttr("random_password.default", "number", "true"),
-				resource.TestCheckResourceAttrPair("random_password.default", "number", "random_password.default", "numeric"),
+			afterUpgradeStateChecks: []statecheck.StateCheck{
+				statecheck.ExpectKnownValue("random_password.default", tfjsonpath.New("number"), knownvalue.Bool(true)),
+				statecheck.CompareValuePairs(
+					"random_password.default", tfjsonpath.New("number"),
+					"random_password.default", tfjsonpath.New("numeric"),
+					compare.ValuesSame(),
+				),
 			},
 		},
 		{
@@ -514,13 +612,18 @@ func TestAccResourcePassword_StateUpgradeV0toV3(t *testing.T) {
 						length = 12
 						numeric = true
 					}`,
-			beforeStateUpgrade: []resource.TestCheckFunc{
-				resource.TestCheckResourceAttr("random_password.default", "number", "true"),
-				resource.TestCheckNoResourceAttr("random_password.default", "numeric"),
+			beforeUpgradeStateChecks: []statecheck.StateCheck{
+				statecheck.ExpectKnownValue("random_password.default", tfjsonpath.New("number"), knownvalue.Bool(true)),
+				randomtest.ExpectNoAttribute("random_password.default", tfjsonpath.New("numeric")),
 			},
-			afterStateUpgrade: []resource.TestCheckFunc{
-				resource.TestCheckResourceAttr("random_password.default", "number", "true"),
-				resource.TestCheckResourceAttrPair("random_password.default", "number", "random_password.default", "numeric")},
+			afterUpgradeStateChecks: []statecheck.StateCheck{
+				statecheck.ExpectKnownValue("random_password.default", tfjsonpath.New("number"), knownvalue.Bool(true)),
+				statecheck.CompareValuePairs(
+					"random_password.default", tfjsonpath.New("number"),
+					"random_password.default", tfjsonpath.New("numeric"),
+					compare.ValuesSame(),
+				),
+			},
 		},
 		{
 			name: "number is absent before numeric is false during",
@@ -531,13 +634,17 @@ func TestAccResourcePassword_StateUpgradeV0toV3(t *testing.T) {
 						length = 12
 						numeric = false
 					}`,
-			beforeStateUpgrade: []resource.TestCheckFunc{
-				resource.TestCheckResourceAttr("random_password.default", "number", "true"),
-				resource.TestCheckNoResourceAttr("random_password.default", "numeric"),
+			beforeUpgradeStateChecks: []statecheck.StateCheck{
+				statecheck.ExpectKnownValue("random_password.default", tfjsonpath.New("number"), knownvalue.Bool(true)),
+				randomtest.ExpectNoAttribute("random_password.default", tfjsonpath.New("numeric")),
 			},
-			afterStateUpgrade: []resource.TestCheckFunc{
-				resource.TestCheckResourceAttr("random_password.default", "number", "false"),
-				resource.TestCheckResourceAttrPair("random_password.default", "number", "random_password.default", "numeric"),
+			afterUpgradeStateChecks: []statecheck.StateCheck{
+				statecheck.ExpectKnownValue("random_password.default", tfjsonpath.New("number"), knownvalue.Bool(false)),
+				statecheck.CompareValuePairs(
+					"random_password.default", tfjsonpath.New("number"),
+					"random_password.default", tfjsonpath.New("numeric"),
+					compare.ValuesSame(),
+				),
 			},
 		},
 		{
@@ -549,13 +656,17 @@ func TestAccResourcePassword_StateUpgradeV0toV3(t *testing.T) {
 			configDuringUpgrade: `resource "random_password" "default" {
 						length = 12
 					}`,
-			beforeStateUpgrade: []resource.TestCheckFunc{
-				resource.TestCheckResourceAttr("random_password.default", "number", "true"),
-				resource.TestCheckNoResourceAttr("random_password.default", "numeric"),
+			beforeUpgradeStateChecks: []statecheck.StateCheck{
+				statecheck.ExpectKnownValue("random_password.default", tfjsonpath.New("number"), knownvalue.Bool(true)),
+				randomtest.ExpectNoAttribute("random_password.default", tfjsonpath.New("numeric")),
 			},
-			afterStateUpgrade: []resource.TestCheckFunc{
-				resource.TestCheckResourceAttr("random_password.default", "number", "true"),
-				resource.TestCheckResourceAttrPair("random_password.default", "number", "random_password.default", "numeric"),
+			afterUpgradeStateChecks: []statecheck.StateCheck{
+				statecheck.ExpectKnownValue("random_password.default", tfjsonpath.New("number"), knownvalue.Bool(true)),
+				statecheck.CompareValuePairs(
+					"random_password.default", tfjsonpath.New("number"),
+					"random_password.default", tfjsonpath.New("numeric"),
+					compare.ValuesSame(),
+				),
 			},
 		},
 		{
@@ -568,13 +679,17 @@ func TestAccResourcePassword_StateUpgradeV0toV3(t *testing.T) {
 						length = 12
 						numeric = false
 					}`,
-			beforeStateUpgrade: []resource.TestCheckFunc{
-				resource.TestCheckResourceAttr("random_password.default", "number", "true"),
-				resource.TestCheckNoResourceAttr("random_password.default", "numeric"),
+			beforeUpgradeStateChecks: []statecheck.StateCheck{
+				statecheck.ExpectKnownValue("random_password.default", tfjsonpath.New("number"), knownvalue.Bool(true)),
+				randomtest.ExpectNoAttribute("random_password.default", tfjsonpath.New("numeric")),
 			},
-			afterStateUpgrade: []resource.TestCheckFunc{
-				resource.TestCheckResourceAttr("random_password.default", "number", "false"),
-				resource.TestCheckResourceAttrPair("random_password.default", "number", "random_password.default", "numeric"),
+			afterUpgradeStateChecks: []statecheck.StateCheck{
+				statecheck.ExpectKnownValue("random_password.default", tfjsonpath.New("number"), knownvalue.Bool(false)),
+				statecheck.CompareValuePairs(
+					"random_password.default", tfjsonpath.New("number"),
+					"random_password.default", tfjsonpath.New("numeric"),
+					compare.ValuesSame(),
+				),
 			},
 		},
 		{
@@ -587,13 +702,17 @@ func TestAccResourcePassword_StateUpgradeV0toV3(t *testing.T) {
 						length = 12
 						numeric = false
 					}`,
-			beforeStateUpgrade: []resource.TestCheckFunc{
-				resource.TestCheckResourceAttr("random_password.default", "number", "false"),
-				resource.TestCheckNoResourceAttr("random_password.default", "numeric"),
+			beforeUpgradeStateChecks: []statecheck.StateCheck{
+				statecheck.ExpectKnownValue("random_password.default", tfjsonpath.New("number"), knownvalue.Bool(false)),
+				randomtest.ExpectNoAttribute("random_password.default", tfjsonpath.New("numeric")),
 			},
-			afterStateUpgrade: []resource.TestCheckFunc{
-				resource.TestCheckResourceAttr("random_password.default", "number", "false"),
-				resource.TestCheckResourceAttrPair("random_password.default", "number", "random_password.default", "numeric"),
+			afterUpgradeStateChecks: []statecheck.StateCheck{
+				statecheck.ExpectKnownValue("random_password.default", tfjsonpath.New("number"), knownvalue.Bool(false)),
+				statecheck.CompareValuePairs(
+					"random_password.default", tfjsonpath.New("number"),
+					"random_password.default", tfjsonpath.New("numeric"),
+					compare.ValuesSame(),
+				),
 			},
 		},
 		{
@@ -605,13 +724,17 @@ func TestAccResourcePassword_StateUpgradeV0toV3(t *testing.T) {
 			configDuringUpgrade: `resource "random_password" "default" {
 						length = 12
 					}`,
-			beforeStateUpgrade: []resource.TestCheckFunc{
-				resource.TestCheckResourceAttr("random_password.default", "number", "false"),
-				resource.TestCheckNoResourceAttr("random_password.default", "numeric"),
+			beforeUpgradeStateChecks: []statecheck.StateCheck{
+				statecheck.ExpectKnownValue("random_password.default", tfjsonpath.New("number"), knownvalue.Bool(false)),
+				randomtest.ExpectNoAttribute("random_password.default", tfjsonpath.New("numeric")),
 			},
-			afterStateUpgrade: []resource.TestCheckFunc{
-				resource.TestCheckResourceAttr("random_password.default", "number", "true"),
-				resource.TestCheckResourceAttrPair("random_password.default", "number", "random_password.default", "numeric"),
+			afterUpgradeStateChecks: []statecheck.StateCheck{
+				statecheck.ExpectKnownValue("random_password.default", tfjsonpath.New("number"), knownvalue.Bool(true)),
+				statecheck.CompareValuePairs(
+					"random_password.default", tfjsonpath.New("number"),
+					"random_password.default", tfjsonpath.New("numeric"),
+					compare.ValuesSame(),
+				),
 			},
 		},
 		{
@@ -624,33 +747,37 @@ func TestAccResourcePassword_StateUpgradeV0toV3(t *testing.T) {
 						length = 12
 						numeric = true
 					}`,
-			beforeStateUpgrade: []resource.TestCheckFunc{
-				resource.TestCheckResourceAttr("random_password.default", "number", "false"),
-				resource.TestCheckNoResourceAttr("random_password.default", "numeric"),
+			beforeUpgradeStateChecks: []statecheck.StateCheck{
+				statecheck.ExpectKnownValue("random_password.default", tfjsonpath.New("number"), knownvalue.Bool(false)),
+				randomtest.ExpectNoAttribute("random_password.default", tfjsonpath.New("numeric")),
 			},
-			afterStateUpgrade: []resource.TestCheckFunc{
-				resource.TestCheckResourceAttr("random_password.default", "number", "true"),
-				resource.TestCheckResourceAttrPair("random_password.default", "number", "random_password.default", "numeric"),
+			afterUpgradeStateChecks: []statecheck.StateCheck{
+				statecheck.ExpectKnownValue("random_password.default", tfjsonpath.New("number"), knownvalue.Bool(true)),
+				statecheck.CompareValuePairs(
+					"random_password.default", tfjsonpath.New("number"),
+					"random_password.default", tfjsonpath.New("numeric"),
+					compare.ValuesSame(),
+				),
 			},
 		},
 	}
 
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
-			resource.UnitTest(t, resource.TestCase{
+			resource.Test(t, resource.TestCase{
 				Steps: []resource.TestStep{
 					{
 						ExternalProviders: map[string]resource.ExternalProvider{"random": {
 							VersionConstraint: "3.1.3",
 							Source:            "hashicorp/random",
 						}},
-						Config: c.configBeforeUpgrade,
-						Check:  resource.ComposeTestCheckFunc(c.beforeStateUpgrade...),
+						Config:            c.configBeforeUpgrade,
+						ConfigStateChecks: c.beforeUpgradeStateChecks,
 					},
 					{
 						ProtoV5ProviderFactories: protoV5ProviderFactories(),
 						Config:                   c.configDuringUpgrade,
-						Check:                    resource.ComposeTestCheckFunc(c.afterStateUpgrade...),
+						ConfigStateChecks:        c.afterUpgradeStateChecks,
 					},
 				},
 			})
@@ -666,11 +793,13 @@ func TestAccResourcePassword_StateUpgradeV1toV3(t *testing.T) {
 	t.Parallel()
 
 	cases := []struct {
-		name                string
-		configBeforeUpgrade string
-		configDuringUpgrade string
-		beforeStateUpgrade  []resource.TestCheckFunc
-		afterStateUpgrade   []resource.TestCheckFunc
+		name                     string
+		configBeforeUpgrade      string
+		configDuringUpgrade      string
+		beforeUpgradeStateChecks []statecheck.StateCheck
+		afterUpgradeStateChecks  []statecheck.StateCheck
+		beforeStateUpgrade       []resource.TestCheckFunc
+		afterStateUpgrade        []resource.TestCheckFunc
 	}{
 		{
 			name: "number is absent before number and numeric are absent during",
@@ -680,13 +809,17 @@ func TestAccResourcePassword_StateUpgradeV1toV3(t *testing.T) {
 			configDuringUpgrade: `resource "random_password" "default" {
 						length = 12
 					}`,
-			beforeStateUpgrade: []resource.TestCheckFunc{
-				resource.TestCheckResourceAttr("random_password.default", "number", "true"),
-				resource.TestCheckNoResourceAttr("random_password.default", "numeric"),
+			beforeUpgradeStateChecks: []statecheck.StateCheck{
+				statecheck.ExpectKnownValue("random_password.default", tfjsonpath.New("number"), knownvalue.Bool(true)),
+				randomtest.ExpectNoAttribute("random_password.default", tfjsonpath.New("numeric")),
 			},
-			afterStateUpgrade: []resource.TestCheckFunc{
-				resource.TestCheckResourceAttr("random_password.default", "number", "true"),
-				resource.TestCheckResourceAttrPair("random_password.default", "number", "random_password.default", "numeric"),
+			afterUpgradeStateChecks: []statecheck.StateCheck{
+				statecheck.ExpectKnownValue("random_password.default", tfjsonpath.New("number"), knownvalue.Bool(true)),
+				statecheck.CompareValuePairs(
+					"random_password.default", tfjsonpath.New("number"),
+					"random_password.default", tfjsonpath.New("numeric"),
+					compare.ValuesSame(),
+				),
 			},
 		},
 		{
@@ -698,13 +831,17 @@ func TestAccResourcePassword_StateUpgradeV1toV3(t *testing.T) {
 						length = 12
 						numeric = true
 					}`,
-			beforeStateUpgrade: []resource.TestCheckFunc{
-				resource.TestCheckResourceAttr("random_password.default", "number", "true"),
-				resource.TestCheckNoResourceAttr("random_password.default", "numeric"),
+			beforeUpgradeStateChecks: []statecheck.StateCheck{
+				statecheck.ExpectKnownValue("random_password.default", tfjsonpath.New("number"), knownvalue.Bool(true)),
+				randomtest.ExpectNoAttribute("random_password.default", tfjsonpath.New("numeric")),
 			},
-			afterStateUpgrade: []resource.TestCheckFunc{
-				resource.TestCheckResourceAttr("random_password.default", "number", "true"),
-				resource.TestCheckResourceAttrPair("random_password.default", "number", "random_password.default", "numeric"),
+			afterUpgradeStateChecks: []statecheck.StateCheck{
+				statecheck.ExpectKnownValue("random_password.default", tfjsonpath.New("number"), knownvalue.Bool(true)),
+				statecheck.CompareValuePairs(
+					"random_password.default", tfjsonpath.New("number"),
+					"random_password.default", tfjsonpath.New("numeric"),
+					compare.ValuesSame(),
+				),
 			},
 		},
 		{
@@ -716,13 +853,17 @@ func TestAccResourcePassword_StateUpgradeV1toV3(t *testing.T) {
 						length = 12
 						numeric = false
 					}`,
-			beforeStateUpgrade: []resource.TestCheckFunc{
-				resource.TestCheckResourceAttr("random_password.default", "number", "true"),
-				resource.TestCheckNoResourceAttr("random_password.default", "numeric"),
+			beforeUpgradeStateChecks: []statecheck.StateCheck{
+				statecheck.ExpectKnownValue("random_password.default", tfjsonpath.New("number"), knownvalue.Bool(true)),
+				randomtest.ExpectNoAttribute("random_password.default", tfjsonpath.New("numeric")),
 			},
-			afterStateUpgrade: []resource.TestCheckFunc{
-				resource.TestCheckResourceAttr("random_password.default", "number", "false"),
-				resource.TestCheckResourceAttrPair("random_password.default", "number", "random_password.default", "numeric"),
+			afterUpgradeStateChecks: []statecheck.StateCheck{
+				statecheck.ExpectKnownValue("random_password.default", tfjsonpath.New("number"), knownvalue.Bool(false)),
+				statecheck.CompareValuePairs(
+					"random_password.default", tfjsonpath.New("number"),
+					"random_password.default", tfjsonpath.New("numeric"),
+					compare.ValuesSame(),
+				),
 			},
 		},
 		{
@@ -735,13 +876,17 @@ func TestAccResourcePassword_StateUpgradeV1toV3(t *testing.T) {
 						length = 12
 						numeric = true
 					}`,
-			beforeStateUpgrade: []resource.TestCheckFunc{
-				resource.TestCheckResourceAttr("random_password.default", "number", "true"),
-				resource.TestCheckNoResourceAttr("random_password.default", "numeric"),
+			beforeUpgradeStateChecks: []statecheck.StateCheck{
+				statecheck.ExpectKnownValue("random_password.default", tfjsonpath.New("number"), knownvalue.Bool(true)),
+				randomtest.ExpectNoAttribute("random_password.default", tfjsonpath.New("numeric")),
 			},
-			afterStateUpgrade: []resource.TestCheckFunc{
-				resource.TestCheckResourceAttr("random_password.default", "number", "true"),
-				resource.TestCheckResourceAttrPair("random_password.default", "number", "random_password.default", "numeric"),
+			afterUpgradeStateChecks: []statecheck.StateCheck{
+				statecheck.ExpectKnownValue("random_password.default", tfjsonpath.New("number"), knownvalue.Bool(true)),
+				statecheck.CompareValuePairs(
+					"random_password.default", tfjsonpath.New("number"),
+					"random_password.default", tfjsonpath.New("numeric"),
+					compare.ValuesSame(),
+				),
 			},
 		},
 		{
@@ -753,13 +898,17 @@ func TestAccResourcePassword_StateUpgradeV1toV3(t *testing.T) {
 			configDuringUpgrade: `resource "random_password" "default" {
 						length = 12
 					}`,
-			beforeStateUpgrade: []resource.TestCheckFunc{
-				resource.TestCheckResourceAttr("random_password.default", "number", "true"),
-				resource.TestCheckNoResourceAttr("random_password.default", "numeric"),
+			beforeUpgradeStateChecks: []statecheck.StateCheck{
+				statecheck.ExpectKnownValue("random_password.default", tfjsonpath.New("number"), knownvalue.Bool(true)),
+				randomtest.ExpectNoAttribute("random_password.default", tfjsonpath.New("numeric")),
 			},
-			afterStateUpgrade: []resource.TestCheckFunc{
-				resource.TestCheckResourceAttr("random_password.default", "number", "true"),
-				resource.TestCheckResourceAttrPair("random_password.default", "number", "random_password.default", "numeric"),
+			afterUpgradeStateChecks: []statecheck.StateCheck{
+				statecheck.ExpectKnownValue("random_password.default", tfjsonpath.New("number"), knownvalue.Bool(true)),
+				statecheck.CompareValuePairs(
+					"random_password.default", tfjsonpath.New("number"),
+					"random_password.default", tfjsonpath.New("numeric"),
+					compare.ValuesSame(),
+				),
 			},
 		},
 		{
@@ -772,13 +921,17 @@ func TestAccResourcePassword_StateUpgradeV1toV3(t *testing.T) {
 						length = 12
 						numeric = false
 					}`,
-			beforeStateUpgrade: []resource.TestCheckFunc{
-				resource.TestCheckResourceAttr("random_password.default", "number", "true"),
-				resource.TestCheckNoResourceAttr("random_password.default", "numeric"),
+			beforeUpgradeStateChecks: []statecheck.StateCheck{
+				statecheck.ExpectKnownValue("random_password.default", tfjsonpath.New("number"), knownvalue.Bool(true)),
+				randomtest.ExpectNoAttribute("random_password.default", tfjsonpath.New("numeric")),
 			},
-			afterStateUpgrade: []resource.TestCheckFunc{
-				resource.TestCheckResourceAttr("random_password.default", "number", "false"),
-				resource.TestCheckResourceAttrPair("random_password.default", "number", "random_password.default", "numeric"),
+			afterUpgradeStateChecks: []statecheck.StateCheck{
+				statecheck.ExpectKnownValue("random_password.default", tfjsonpath.New("number"), knownvalue.Bool(false)),
+				statecheck.CompareValuePairs(
+					"random_password.default", tfjsonpath.New("number"),
+					"random_password.default", tfjsonpath.New("numeric"),
+					compare.ValuesSame(),
+				),
 			},
 		},
 		{
@@ -791,13 +944,17 @@ func TestAccResourcePassword_StateUpgradeV1toV3(t *testing.T) {
 						length = 12
 						numeric = false
 					}`,
-			beforeStateUpgrade: []resource.TestCheckFunc{
-				resource.TestCheckResourceAttr("random_password.default", "number", "false"),
-				resource.TestCheckNoResourceAttr("random_password.default", "numeric"),
+			beforeUpgradeStateChecks: []statecheck.StateCheck{
+				statecheck.ExpectKnownValue("random_password.default", tfjsonpath.New("number"), knownvalue.Bool(false)),
+				randomtest.ExpectNoAttribute("random_password.default", tfjsonpath.New("numeric")),
 			},
-			afterStateUpgrade: []resource.TestCheckFunc{
-				resource.TestCheckResourceAttr("random_password.default", "number", "false"),
-				resource.TestCheckResourceAttrPair("random_password.default", "number", "random_password.default", "numeric"),
+			afterUpgradeStateChecks: []statecheck.StateCheck{
+				statecheck.ExpectKnownValue("random_password.default", tfjsonpath.New("number"), knownvalue.Bool(false)),
+				statecheck.CompareValuePairs(
+					"random_password.default", tfjsonpath.New("number"),
+					"random_password.default", tfjsonpath.New("numeric"),
+					compare.ValuesSame(),
+				),
 			},
 		},
 		{
@@ -809,13 +966,17 @@ func TestAccResourcePassword_StateUpgradeV1toV3(t *testing.T) {
 			configDuringUpgrade: `resource "random_password" "default" {
 						length = 12
 					}`,
-			beforeStateUpgrade: []resource.TestCheckFunc{
-				resource.TestCheckResourceAttr("random_password.default", "number", "false"),
-				resource.TestCheckNoResourceAttr("random_password.default", "numeric"),
+			beforeUpgradeStateChecks: []statecheck.StateCheck{
+				statecheck.ExpectKnownValue("random_password.default", tfjsonpath.New("number"), knownvalue.Bool(false)),
+				randomtest.ExpectNoAttribute("random_password.default", tfjsonpath.New("numeric")),
 			},
-			afterStateUpgrade: []resource.TestCheckFunc{
-				resource.TestCheckResourceAttr("random_password.default", "number", "true"),
-				resource.TestCheckResourceAttrPair("random_password.default", "number", "random_password.default", "numeric"),
+			afterUpgradeStateChecks: []statecheck.StateCheck{
+				statecheck.ExpectKnownValue("random_password.default", tfjsonpath.New("number"), knownvalue.Bool(true)),
+				statecheck.CompareValuePairs(
+					"random_password.default", tfjsonpath.New("number"),
+					"random_password.default", tfjsonpath.New("numeric"),
+					compare.ValuesSame(),
+				),
 			},
 		},
 		{
@@ -828,13 +989,17 @@ func TestAccResourcePassword_StateUpgradeV1toV3(t *testing.T) {
 						length = 12
 						numeric = true
 					}`,
-			beforeStateUpgrade: []resource.TestCheckFunc{
-				resource.TestCheckResourceAttr("random_password.default", "number", "false"),
-				resource.TestCheckNoResourceAttr("random_password.default", "numeric"),
+			beforeUpgradeStateChecks: []statecheck.StateCheck{
+				statecheck.ExpectKnownValue("random_password.default", tfjsonpath.New("number"), knownvalue.Bool(false)),
+				randomtest.ExpectNoAttribute("random_password.default", tfjsonpath.New("numeric")),
 			},
-			afterStateUpgrade: []resource.TestCheckFunc{
-				resource.TestCheckResourceAttr("random_password.default", "number", "true"),
-				resource.TestCheckResourceAttrPair("random_password.default", "number", "random_password.default", "numeric"),
+			afterUpgradeStateChecks: []statecheck.StateCheck{
+				statecheck.ExpectKnownValue("random_password.default", tfjsonpath.New("number"), knownvalue.Bool(true)),
+				statecheck.CompareValuePairs(
+					"random_password.default", tfjsonpath.New("number"),
+					"random_password.default", tfjsonpath.New("numeric"),
+					compare.ValuesSame(),
+				),
 			},
 		},
 	}
@@ -845,21 +1010,20 @@ func TestAccResourcePassword_StateUpgradeV1toV3(t *testing.T) {
 				c.configDuringUpgrade = c.configBeforeUpgrade
 			}
 
-			// TODO: Why is resource.Test not being used here
-			resource.UnitTest(t, resource.TestCase{
+			resource.Test(t, resource.TestCase{
 				Steps: []resource.TestStep{
 					{
 						ExternalProviders: map[string]resource.ExternalProvider{"random": {
 							VersionConstraint: "3.2.0",
 							Source:            "hashicorp/random",
 						}},
-						Config: c.configBeforeUpgrade,
-						Check:  resource.ComposeTestCheckFunc(c.beforeStateUpgrade...),
+						Config:            c.configBeforeUpgrade,
+						ConfigStateChecks: c.beforeUpgradeStateChecks,
 					},
 					{
 						ProtoV5ProviderFactories: protoV5ProviderFactories(),
 						Config:                   c.configDuringUpgrade,
-						Check:                    resource.ComposeTestCheckFunc(c.afterStateUpgrade...),
+						ConfigStateChecks:        c.afterUpgradeStateChecks,
 					},
 				},
 			})
@@ -880,13 +1044,13 @@ func TestAccResourcePassword_Min(t *testing.T) {
 							min_special = 1
 							min_numeric = 4
 						}`,
-				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttrWith("random_password.min", "result", testCheckLen(12)),
-					resource.TestMatchResourceAttr("random_password.min", "result", regexp.MustCompile(`([a-z].*){2,}`)),
-					resource.TestMatchResourceAttr("random_password.min", "result", regexp.MustCompile(`([A-Z].*){3,}`)),
-					resource.TestMatchResourceAttr("random_password.min", "result", regexp.MustCompile(`([0-9].*){4,}`)),
-					resource.TestMatchResourceAttr("random_password.min", "result", regexp.MustCompile(`([!#@])`)),
-				),
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue("random_password.min", tfjsonpath.New("result"), randomtest.StringLengthExact(12)),
+					statecheck.ExpectKnownValue("random_password.min", tfjsonpath.New("result"), knownvalue.StringRegexp(regexp.MustCompile(`([a-z].*){2,}`))),
+					statecheck.ExpectKnownValue("random_password.min", tfjsonpath.New("result"), knownvalue.StringRegexp(regexp.MustCompile(`([A-Z].*){3,}`))),
+					statecheck.ExpectKnownValue("random_password.min", tfjsonpath.New("result"), knownvalue.StringRegexp(regexp.MustCompile(`([0-9].*){4,}`))),
+					statecheck.ExpectKnownValue("random_password.min", tfjsonpath.New("result"), knownvalue.StringRegexp(regexp.MustCompile(`([!#@])`))),
+				},
 			},
 		},
 	})
@@ -911,21 +1075,21 @@ func TestAccResourcePassword_UpgradeFromVersion2_2_1(t *testing.T) {
 							min_special = 1
 							min_numeric = 4
 						}`,
-				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttrWith("random_password.min", "result", testCheckLen(12)),
-					resource.TestMatchResourceAttr("random_password.min", "result", regexp.MustCompile(`([a-z].*){2,}`)),
-					resource.TestMatchResourceAttr("random_password.min", "result", regexp.MustCompile(`([A-Z].*){3,}`)),
-					resource.TestMatchResourceAttr("random_password.min", "result", regexp.MustCompile(`([0-9].*){4,}`)),
-					resource.TestMatchResourceAttr("random_password.min", "result", regexp.MustCompile(`([!#@])`)),
-					resource.TestCheckResourceAttr("random_password.min", "special", "true"),
-					resource.TestCheckResourceAttr("random_password.min", "upper", "true"),
-					resource.TestCheckResourceAttr("random_password.min", "lower", "true"),
-					resource.TestCheckResourceAttr("random_password.min", "number", "true"),
-					resource.TestCheckResourceAttr("random_password.min", "min_special", "1"),
-					resource.TestCheckResourceAttr("random_password.min", "min_upper", "3"),
-					resource.TestCheckResourceAttr("random_password.min", "min_lower", "2"),
-					resource.TestCheckResourceAttr("random_password.min", "min_numeric", "4"),
-				),
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue("random_password.min", tfjsonpath.New("result"), randomtest.StringLengthExact(12)),
+					statecheck.ExpectKnownValue("random_password.min", tfjsonpath.New("result"), knownvalue.StringRegexp(regexp.MustCompile(`([a-z].*){2,}`))),
+					statecheck.ExpectKnownValue("random_password.min", tfjsonpath.New("result"), knownvalue.StringRegexp(regexp.MustCompile(`([A-Z].*){3,}`))),
+					statecheck.ExpectKnownValue("random_password.min", tfjsonpath.New("result"), knownvalue.StringRegexp(regexp.MustCompile(`([0-9].*){4,}`))),
+					statecheck.ExpectKnownValue("random_password.min", tfjsonpath.New("result"), knownvalue.StringRegexp(regexp.MustCompile(`([!#@])`))),
+					statecheck.ExpectKnownValue("random_password.min", tfjsonpath.New("special"), knownvalue.Bool(true)),
+					statecheck.ExpectKnownValue("random_password.min", tfjsonpath.New("upper"), knownvalue.Bool(true)),
+					statecheck.ExpectKnownValue("random_password.min", tfjsonpath.New("lower"), knownvalue.Bool(true)),
+					statecheck.ExpectKnownValue("random_password.min", tfjsonpath.New("number"), knownvalue.Bool(true)),
+					statecheck.ExpectKnownValue("random_password.min", tfjsonpath.New("min_special"), knownvalue.Int64Exact(1)),
+					statecheck.ExpectKnownValue("random_password.min", tfjsonpath.New("min_upper"), knownvalue.Int64Exact(3)),
+					statecheck.ExpectKnownValue("random_password.min", tfjsonpath.New("min_lower"), knownvalue.Int64Exact(2)),
+					statecheck.ExpectKnownValue("random_password.min", tfjsonpath.New("min_numeric"), knownvalue.Int64Exact(4)),
+				},
 			},
 			{
 				ProtoV5ProviderFactories: protoV5ProviderFactories(),
@@ -937,35 +1101,28 @@ func TestAccResourcePassword_UpgradeFromVersion2_2_1(t *testing.T) {
 							min_special = 1
 							min_numeric = 4
 						}`,
-				PlanOnly: true,
-			},
-			{
-				ProtoV5ProviderFactories: protoV5ProviderFactories(),
-				Config: `resource "random_password" "min" {
-							length = 12
-							override_special = "!#@"
-							min_lower = 2
-							min_upper = 3
-							min_special = 1
-							min_numeric = 4
-						}`,
-				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttrWith("random_password.min", "result", testCheckLen(12)),
-					resource.TestMatchResourceAttr("random_password.min", "result", regexp.MustCompile(`([a-z].*){2,}`)),
-					resource.TestMatchResourceAttr("random_password.min", "result", regexp.MustCompile(`([A-Z].*){3,}`)),
-					resource.TestMatchResourceAttr("random_password.min", "result", regexp.MustCompile(`([0-9].*){4,}`)),
-					resource.TestMatchResourceAttr("random_password.min", "result", regexp.MustCompile(`([!#@])`)),
-					resource.TestCheckResourceAttr("random_password.min", "special", "true"),
-					resource.TestCheckResourceAttr("random_password.min", "upper", "true"),
-					resource.TestCheckResourceAttr("random_password.min", "lower", "true"),
-					resource.TestCheckResourceAttr("random_password.min", "number", "true"),
-					resource.TestCheckResourceAttr("random_password.min", "numeric", "true"),
-					resource.TestCheckResourceAttr("random_password.min", "min_special", "1"),
-					resource.TestCheckResourceAttr("random_password.min", "min_upper", "3"),
-					resource.TestCheckResourceAttr("random_password.min", "min_lower", "2"),
-					resource.TestCheckResourceAttr("random_password.min", "min_numeric", "4"),
-					resource.TestCheckResourceAttrSet("random_password.min", "bcrypt_hash"),
-				),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectEmptyPlan(),
+					},
+				},
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue("random_password.min", tfjsonpath.New("result"), randomtest.StringLengthExact(12)),
+					statecheck.ExpectKnownValue("random_password.min", tfjsonpath.New("result"), knownvalue.StringRegexp(regexp.MustCompile(`([a-z].*){2,}`))),
+					statecheck.ExpectKnownValue("random_password.min", tfjsonpath.New("result"), knownvalue.StringRegexp(regexp.MustCompile(`([A-Z].*){3,}`))),
+					statecheck.ExpectKnownValue("random_password.min", tfjsonpath.New("result"), knownvalue.StringRegexp(regexp.MustCompile(`([0-9].*){4,}`))),
+					statecheck.ExpectKnownValue("random_password.min", tfjsonpath.New("result"), knownvalue.StringRegexp(regexp.MustCompile(`([!#@])`))),
+					statecheck.ExpectKnownValue("random_password.min", tfjsonpath.New("special"), knownvalue.Bool(true)),
+					statecheck.ExpectKnownValue("random_password.min", tfjsonpath.New("upper"), knownvalue.Bool(true)),
+					statecheck.ExpectKnownValue("random_password.min", tfjsonpath.New("lower"), knownvalue.Bool(true)),
+					statecheck.ExpectKnownValue("random_password.min", tfjsonpath.New("number"), knownvalue.Bool(true)),
+					statecheck.ExpectKnownValue("random_password.min", tfjsonpath.New("numeric"), knownvalue.Bool(true)),
+					statecheck.ExpectKnownValue("random_password.min", tfjsonpath.New("min_special"), knownvalue.Int64Exact(1)),
+					statecheck.ExpectKnownValue("random_password.min", tfjsonpath.New("min_upper"), knownvalue.Int64Exact(3)),
+					statecheck.ExpectKnownValue("random_password.min", tfjsonpath.New("min_lower"), knownvalue.Int64Exact(2)),
+					statecheck.ExpectKnownValue("random_password.min", tfjsonpath.New("min_numeric"), knownvalue.Int64Exact(4)),
+					statecheck.ExpectKnownValue("random_password.min", tfjsonpath.New("bcrypt_hash"), knownvalue.NotNull()),
+				},
 			},
 		},
 	})
@@ -985,22 +1142,22 @@ func TestAccResourcePassword_UpgradeFromVersion3_2_0(t *testing.T) {
 							min_special = 1
 							min_numeric = 4
 						}`,
-				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttrWith("random_password.min", "result", testCheckLen(12)),
-					resource.TestMatchResourceAttr("random_password.min", "result", regexp.MustCompile(`([a-z].*){2,}`)),
-					resource.TestMatchResourceAttr("random_password.min", "result", regexp.MustCompile(`([A-Z].*){3,}`)),
-					resource.TestMatchResourceAttr("random_password.min", "result", regexp.MustCompile(`([0-9].*){4,}`)),
-					resource.TestMatchResourceAttr("random_password.min", "result", regexp.MustCompile(`([!#@])`)),
-					resource.TestCheckResourceAttr("random_password.min", "special", "true"),
-					resource.TestCheckResourceAttr("random_password.min", "upper", "true"),
-					resource.TestCheckResourceAttr("random_password.min", "lower", "true"),
-					resource.TestCheckResourceAttr("random_password.min", "number", "true"),
-					resource.TestCheckResourceAttr("random_password.min", "min_special", "1"),
-					resource.TestCheckResourceAttr("random_password.min", "min_upper", "3"),
-					resource.TestCheckResourceAttr("random_password.min", "min_lower", "2"),
-					resource.TestCheckResourceAttr("random_password.min", "min_numeric", "4"),
-					resource.TestCheckResourceAttrSet("random_password.min", "bcrypt_hash"),
-				),
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue("random_password.min", tfjsonpath.New("result"), randomtest.StringLengthExact(12)),
+					statecheck.ExpectKnownValue("random_password.min", tfjsonpath.New("result"), knownvalue.StringRegexp(regexp.MustCompile(`([a-z].*){2,}`))),
+					statecheck.ExpectKnownValue("random_password.min", tfjsonpath.New("result"), knownvalue.StringRegexp(regexp.MustCompile(`([A-Z].*){3,}`))),
+					statecheck.ExpectKnownValue("random_password.min", tfjsonpath.New("result"), knownvalue.StringRegexp(regexp.MustCompile(`([0-9].*){4,}`))),
+					statecheck.ExpectKnownValue("random_password.min", tfjsonpath.New("result"), knownvalue.StringRegexp(regexp.MustCompile(`([!#@])`))),
+					statecheck.ExpectKnownValue("random_password.min", tfjsonpath.New("special"), knownvalue.Bool(true)),
+					statecheck.ExpectKnownValue("random_password.min", tfjsonpath.New("upper"), knownvalue.Bool(true)),
+					statecheck.ExpectKnownValue("random_password.min", tfjsonpath.New("lower"), knownvalue.Bool(true)),
+					statecheck.ExpectKnownValue("random_password.min", tfjsonpath.New("number"), knownvalue.Bool(true)),
+					statecheck.ExpectKnownValue("random_password.min", tfjsonpath.New("min_special"), knownvalue.Int64Exact(1)),
+					statecheck.ExpectKnownValue("random_password.min", tfjsonpath.New("min_upper"), knownvalue.Int64Exact(3)),
+					statecheck.ExpectKnownValue("random_password.min", tfjsonpath.New("min_lower"), knownvalue.Int64Exact(2)),
+					statecheck.ExpectKnownValue("random_password.min", tfjsonpath.New("min_numeric"), knownvalue.Int64Exact(4)),
+					statecheck.ExpectKnownValue("random_password.min", tfjsonpath.New("bcrypt_hash"), knownvalue.NotNull()),
+				},
 			},
 			{
 				ProtoV5ProviderFactories: protoV5ProviderFactories(),
@@ -1024,23 +1181,23 @@ func TestAccResourcePassword_UpgradeFromVersion3_2_0(t *testing.T) {
 							min_special = 1
 							min_numeric = 4
 						}`,
-				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttrWith("random_password.min", "result", testCheckLen(12)),
-					resource.TestMatchResourceAttr("random_password.min", "result", regexp.MustCompile(`([a-z].*){2,}`)),
-					resource.TestMatchResourceAttr("random_password.min", "result", regexp.MustCompile(`([A-Z].*){3,}`)),
-					resource.TestMatchResourceAttr("random_password.min", "result", regexp.MustCompile(`([0-9].*){4,}`)),
-					resource.TestMatchResourceAttr("random_password.min", "result", regexp.MustCompile(`([!#@])`)),
-					resource.TestCheckResourceAttr("random_password.min", "special", "true"),
-					resource.TestCheckResourceAttr("random_password.min", "upper", "true"),
-					resource.TestCheckResourceAttr("random_password.min", "lower", "true"),
-					resource.TestCheckResourceAttr("random_password.min", "number", "true"),
-					resource.TestCheckResourceAttr("random_password.min", "numeric", "true"),
-					resource.TestCheckResourceAttr("random_password.min", "min_special", "1"),
-					resource.TestCheckResourceAttr("random_password.min", "min_upper", "3"),
-					resource.TestCheckResourceAttr("random_password.min", "min_lower", "2"),
-					resource.TestCheckResourceAttr("random_password.min", "min_numeric", "4"),
-					resource.TestCheckResourceAttrSet("random_password.min", "bcrypt_hash"),
-				),
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue("random_password.min", tfjsonpath.New("result"), randomtest.StringLengthExact(12)),
+					statecheck.ExpectKnownValue("random_password.min", tfjsonpath.New("result"), knownvalue.StringRegexp(regexp.MustCompile(`([a-z].*){2,}`))),
+					statecheck.ExpectKnownValue("random_password.min", tfjsonpath.New("result"), knownvalue.StringRegexp(regexp.MustCompile(`([A-Z].*){3,}`))),
+					statecheck.ExpectKnownValue("random_password.min", tfjsonpath.New("result"), knownvalue.StringRegexp(regexp.MustCompile(`([0-9].*){4,}`))),
+					statecheck.ExpectKnownValue("random_password.min", tfjsonpath.New("result"), knownvalue.StringRegexp(regexp.MustCompile(`([!#@])`))),
+					statecheck.ExpectKnownValue("random_password.min", tfjsonpath.New("special"), knownvalue.Bool(true)),
+					statecheck.ExpectKnownValue("random_password.min", tfjsonpath.New("upper"), knownvalue.Bool(true)),
+					statecheck.ExpectKnownValue("random_password.min", tfjsonpath.New("lower"), knownvalue.Bool(true)),
+					statecheck.ExpectKnownValue("random_password.min", tfjsonpath.New("number"), knownvalue.Bool(true)),
+					statecheck.ExpectKnownValue("random_password.min", tfjsonpath.New("numeric"), knownvalue.Bool(true)),
+					statecheck.ExpectKnownValue("random_password.min", tfjsonpath.New("min_special"), knownvalue.Int64Exact(1)),
+					statecheck.ExpectKnownValue("random_password.min", tfjsonpath.New("min_upper"), knownvalue.Int64Exact(3)),
+					statecheck.ExpectKnownValue("random_password.min", tfjsonpath.New("min_lower"), knownvalue.Int64Exact(2)),
+					statecheck.ExpectKnownValue("random_password.min", tfjsonpath.New("min_numeric"), knownvalue.Int64Exact(4)),
+					statecheck.ExpectKnownValue("random_password.min", tfjsonpath.New("bcrypt_hash"), knownvalue.NotNull()),
+				},
 			},
 		},
 	})
@@ -1060,23 +1217,23 @@ func TestAccResourcePassword_UpgradeFromVersion3_3_2(t *testing.T) {
 							min_special = 1
 							min_numeric = 4
 						}`,
-				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttrWith("random_password.min", "result", testCheckLen(12)),
-					resource.TestMatchResourceAttr("random_password.min", "result", regexp.MustCompile(`([a-z].*){2,}`)),
-					resource.TestMatchResourceAttr("random_password.min", "result", regexp.MustCompile(`([A-Z].*){3,}`)),
-					resource.TestMatchResourceAttr("random_password.min", "result", regexp.MustCompile(`([0-9].*){4,}`)),
-					resource.TestMatchResourceAttr("random_password.min", "result", regexp.MustCompile(`([!#@])`)),
-					resource.TestCheckResourceAttr("random_password.min", "special", "true"),
-					resource.TestCheckResourceAttr("random_password.min", "upper", "true"),
-					resource.TestCheckResourceAttr("random_password.min", "lower", "true"),
-					resource.TestCheckResourceAttr("random_password.min", "number", "true"),
-					resource.TestCheckResourceAttr("random_password.min", "numeric", "true"),
-					resource.TestCheckResourceAttr("random_password.min", "min_special", "1"),
-					resource.TestCheckResourceAttr("random_password.min", "min_upper", "3"),
-					resource.TestCheckResourceAttr("random_password.min", "min_lower", "2"),
-					resource.TestCheckResourceAttr("random_password.min", "min_numeric", "4"),
-					resource.TestCheckResourceAttrSet("random_password.min", "bcrypt_hash"),
-				),
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue("random_password.min", tfjsonpath.New("result"), randomtest.StringLengthExact(12)),
+					statecheck.ExpectKnownValue("random_password.min", tfjsonpath.New("result"), knownvalue.StringRegexp(regexp.MustCompile(`([a-z].*){2,}`))),
+					statecheck.ExpectKnownValue("random_password.min", tfjsonpath.New("result"), knownvalue.StringRegexp(regexp.MustCompile(`([A-Z].*){3,}`))),
+					statecheck.ExpectKnownValue("random_password.min", tfjsonpath.New("result"), knownvalue.StringRegexp(regexp.MustCompile(`([0-9].*){4,}`))),
+					statecheck.ExpectKnownValue("random_password.min", tfjsonpath.New("result"), knownvalue.StringRegexp(regexp.MustCompile(`([!#@])`))),
+					statecheck.ExpectKnownValue("random_password.min", tfjsonpath.New("special"), knownvalue.Bool(true)),
+					statecheck.ExpectKnownValue("random_password.min", tfjsonpath.New("upper"), knownvalue.Bool(true)),
+					statecheck.ExpectKnownValue("random_password.min", tfjsonpath.New("lower"), knownvalue.Bool(true)),
+					statecheck.ExpectKnownValue("random_password.min", tfjsonpath.New("number"), knownvalue.Bool(true)),
+					statecheck.ExpectKnownValue("random_password.min", tfjsonpath.New("numeric"), knownvalue.Bool(true)),
+					statecheck.ExpectKnownValue("random_password.min", tfjsonpath.New("min_special"), knownvalue.Int64Exact(1)),
+					statecheck.ExpectKnownValue("random_password.min", tfjsonpath.New("min_upper"), knownvalue.Int64Exact(3)),
+					statecheck.ExpectKnownValue("random_password.min", tfjsonpath.New("min_lower"), knownvalue.Int64Exact(2)),
+					statecheck.ExpectKnownValue("random_password.min", tfjsonpath.New("min_numeric"), knownvalue.Int64Exact(4)),
+					statecheck.ExpectKnownValue("random_password.min", tfjsonpath.New("bcrypt_hash"), knownvalue.NotNull()),
+				},
 			},
 			{
 				ProtoV5ProviderFactories: protoV5ProviderFactories(),
@@ -1100,23 +1257,23 @@ func TestAccResourcePassword_UpgradeFromVersion3_3_2(t *testing.T) {
 							min_special = 1
 							min_numeric = 4
 						}`,
-				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttrWith("random_password.min", "result", testCheckLen(12)),
-					resource.TestMatchResourceAttr("random_password.min", "result", regexp.MustCompile(`([a-z].*){2,}`)),
-					resource.TestMatchResourceAttr("random_password.min", "result", regexp.MustCompile(`([A-Z].*){3,}`)),
-					resource.TestMatchResourceAttr("random_password.min", "result", regexp.MustCompile(`([0-9].*){4,}`)),
-					resource.TestMatchResourceAttr("random_password.min", "result", regexp.MustCompile(`([!#@])`)),
-					resource.TestCheckResourceAttr("random_password.min", "special", "true"),
-					resource.TestCheckResourceAttr("random_password.min", "upper", "true"),
-					resource.TestCheckResourceAttr("random_password.min", "lower", "true"),
-					resource.TestCheckResourceAttr("random_password.min", "number", "true"),
-					resource.TestCheckResourceAttr("random_password.min", "numeric", "true"),
-					resource.TestCheckResourceAttr("random_password.min", "min_special", "1"),
-					resource.TestCheckResourceAttr("random_password.min", "min_upper", "3"),
-					resource.TestCheckResourceAttr("random_password.min", "min_lower", "2"),
-					resource.TestCheckResourceAttr("random_password.min", "min_numeric", "4"),
-					resource.TestCheckResourceAttrSet("random_password.min", "bcrypt_hash"),
-				),
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue("random_password.min", tfjsonpath.New("result"), randomtest.StringLengthExact(12)),
+					statecheck.ExpectKnownValue("random_password.min", tfjsonpath.New("result"), knownvalue.StringRegexp(regexp.MustCompile(`([a-z].*){2,}`))),
+					statecheck.ExpectKnownValue("random_password.min", tfjsonpath.New("result"), knownvalue.StringRegexp(regexp.MustCompile(`([A-Z].*){3,}`))),
+					statecheck.ExpectKnownValue("random_password.min", tfjsonpath.New("result"), knownvalue.StringRegexp(regexp.MustCompile(`([0-9].*){4,}`))),
+					statecheck.ExpectKnownValue("random_password.min", tfjsonpath.New("result"), knownvalue.StringRegexp(regexp.MustCompile(`([!#@])`))),
+					statecheck.ExpectKnownValue("random_password.min", tfjsonpath.New("special"), knownvalue.Bool(true)),
+					statecheck.ExpectKnownValue("random_password.min", tfjsonpath.New("upper"), knownvalue.Bool(true)),
+					statecheck.ExpectKnownValue("random_password.min", tfjsonpath.New("lower"), knownvalue.Bool(true)),
+					statecheck.ExpectKnownValue("random_password.min", tfjsonpath.New("number"), knownvalue.Bool(true)),
+					statecheck.ExpectKnownValue("random_password.min", tfjsonpath.New("numeric"), knownvalue.Bool(true)),
+					statecheck.ExpectKnownValue("random_password.min", tfjsonpath.New("min_special"), knownvalue.Int64Exact(1)),
+					statecheck.ExpectKnownValue("random_password.min", tfjsonpath.New("min_upper"), knownvalue.Int64Exact(3)),
+					statecheck.ExpectKnownValue("random_password.min", tfjsonpath.New("min_lower"), knownvalue.Int64Exact(2)),
+					statecheck.ExpectKnownValue("random_password.min", tfjsonpath.New("min_numeric"), knownvalue.Int64Exact(4)),
+					statecheck.ExpectKnownValue("random_password.min", tfjsonpath.New("bcrypt_hash"), knownvalue.NotNull()),
+				},
 			},
 		},
 	})
@@ -1976,7 +2133,8 @@ func TestAccResourcePassword_NumberNumericErrors(t *testing.T) {
 }
 
 func TestAccResourcePassword_Keepers_Keep_EmptyMap(t *testing.T) {
-	var result1, result2 string
+	// The result attribute values should be the same between test steps
+	assertResultSame := statecheck.CompareValue(compare.ValuesSame())
 
 	resource.ParallelTest(t, resource.TestCase{
 		Steps: []resource.TestStep{
@@ -1986,10 +2144,10 @@ func TestAccResourcePassword_Keepers_Keep_EmptyMap(t *testing.T) {
 					length = 12
 					keepers = {}
 				}`,
-				Check: resource.ComposeTestCheckFunc(
-					testExtractResourceAttr("random_password.test", "result", &result1),
-					resource.TestCheckResourceAttr("random_password.test", "keepers.%", "0"),
-				),
+				ConfigStateChecks: []statecheck.StateCheck{
+					assertResultSame.AddStateValue("random_password.test", tfjsonpath.New("result")),
+					statecheck.ExpectKnownValue("random_password.test", tfjsonpath.New("keepers"), knownvalue.MapSizeExact(0)),
+				},
 			},
 			{
 				ProtoV5ProviderFactories: protoV5ProviderFactories(),
@@ -1997,18 +2155,18 @@ func TestAccResourcePassword_Keepers_Keep_EmptyMap(t *testing.T) {
 					length = 12
 					keepers = {}
 				}`,
-				Check: resource.ComposeTestCheckFunc(
-					testExtractResourceAttr("random_password.test", "result", &result2),
-					testCheckAttributeValuesEqual(&result1, &result2),
-					resource.TestCheckResourceAttr("random_password.test", "keepers.%", "0"),
-				),
+				ConfigStateChecks: []statecheck.StateCheck{
+					assertResultSame.AddStateValue("random_password.test", tfjsonpath.New("result")),
+					statecheck.ExpectKnownValue("random_password.test", tfjsonpath.New("keepers"), knownvalue.MapSizeExact(0)),
+				},
 			},
 		},
 	})
 }
 
 func TestAccResourcePassword_Keepers_Keep_EmptyMapToNullValue(t *testing.T) {
-	var result1, result2 string
+	// The result attribute values should be the same between test steps
+	assertResultSame := statecheck.CompareValue(compare.ValuesSame())
 
 	resource.ParallelTest(t, resource.TestCase{
 		Steps: []resource.TestStep{
@@ -2018,10 +2176,10 @@ func TestAccResourcePassword_Keepers_Keep_EmptyMapToNullValue(t *testing.T) {
 					length = 12
 					keepers = {}
 				}`,
-				Check: resource.ComposeTestCheckFunc(
-					testExtractResourceAttr("random_password.test", "result", &result1),
-					resource.TestCheckResourceAttr("random_password.test", "keepers.%", "0"),
-				),
+				ConfigStateChecks: []statecheck.StateCheck{
+					assertResultSame.AddStateValue("random_password.test", tfjsonpath.New("result")),
+					statecheck.ExpectKnownValue("random_password.test", tfjsonpath.New("keepers"), knownvalue.MapSizeExact(0)),
+				},
 			},
 			{
 				ProtoV5ProviderFactories: protoV5ProviderFactories(),
@@ -2031,18 +2189,18 @@ func TestAccResourcePassword_Keepers_Keep_EmptyMapToNullValue(t *testing.T) {
 						"key" = null
 					}
 				}`,
-				Check: resource.ComposeTestCheckFunc(
-					testExtractResourceAttr("random_password.test", "result", &result2),
-					testCheckAttributeValuesEqual(&result1, &result2),
-					resource.TestCheckResourceAttr("random_password.test", "keepers.%", "1"),
-				),
+				ConfigStateChecks: []statecheck.StateCheck{
+					assertResultSame.AddStateValue("random_password.test", tfjsonpath.New("result")),
+					statecheck.ExpectKnownValue("random_password.test", tfjsonpath.New("keepers"), knownvalue.MapSizeExact(1)),
+				},
 			},
 		},
 	})
 }
 
 func TestAccResourcePassword_Keepers_Keep_NullMap(t *testing.T) {
-	var result1, result2 string
+	// The result attribute values should be the same between test steps
+	assertResultSame := statecheck.CompareValue(compare.ValuesSame())
 
 	resource.ParallelTest(t, resource.TestCase{
 		Steps: []resource.TestStep{
@@ -2051,28 +2209,28 @@ func TestAccResourcePassword_Keepers_Keep_NullMap(t *testing.T) {
 				Config: `resource "random_password" "test" {
 					length = 12
 				}`,
-				Check: resource.ComposeTestCheckFunc(
-					testExtractResourceAttr("random_password.test", "result", &result1),
-					resource.TestCheckResourceAttr("random_password.test", "keepers.%", "0"),
-				),
+				ConfigStateChecks: []statecheck.StateCheck{
+					assertResultSame.AddStateValue("random_password.test", tfjsonpath.New("result")),
+					statecheck.ExpectKnownValue("random_password.test", tfjsonpath.New("keepers"), knownvalue.Null()),
+				},
 			},
 			{
 				ProtoV5ProviderFactories: protoV5ProviderFactories(),
 				Config: `resource "random_password" "test" {
 					length = 12
 				}`,
-				Check: resource.ComposeTestCheckFunc(
-					testExtractResourceAttr("random_password.test", "result", &result2),
-					testCheckAttributeValuesEqual(&result1, &result2),
-					resource.TestCheckResourceAttr("random_password.test", "keepers.%", "0"),
-				),
+				ConfigStateChecks: []statecheck.StateCheck{
+					assertResultSame.AddStateValue("random_password.test", tfjsonpath.New("result")),
+					statecheck.ExpectKnownValue("random_password.test", tfjsonpath.New("keepers"), knownvalue.Null()),
+				},
 			},
 		},
 	})
 }
 
 func TestAccResourcePassword_Keepers_Keep_NullMapToNullValue(t *testing.T) {
-	var result1, result2 string
+	// The result attribute values should be the same between test steps
+	assertResultSame := statecheck.CompareValue(compare.ValuesSame())
 
 	resource.ParallelTest(t, resource.TestCase{
 		Steps: []resource.TestStep{
@@ -2081,10 +2239,10 @@ func TestAccResourcePassword_Keepers_Keep_NullMapToNullValue(t *testing.T) {
 				Config: `resource "random_password" "test" {
 					length = 12
 				}`,
-				Check: resource.ComposeTestCheckFunc(
-					testExtractResourceAttr("random_password.test", "result", &result1),
-					resource.TestCheckResourceAttr("random_password.test", "keepers.%", "0"),
-				),
+				ConfigStateChecks: []statecheck.StateCheck{
+					assertResultSame.AddStateValue("random_password.test", tfjsonpath.New("result")),
+					statecheck.ExpectKnownValue("random_password.test", tfjsonpath.New("keepers"), knownvalue.Null()),
+				},
 			},
 			{
 				ProtoV5ProviderFactories: protoV5ProviderFactories(),
@@ -2094,18 +2252,18 @@ func TestAccResourcePassword_Keepers_Keep_NullMapToNullValue(t *testing.T) {
 						"key" = null
 					}
 				}`,
-				Check: resource.ComposeTestCheckFunc(
-					testExtractResourceAttr("random_password.test", "result", &result2),
-					testCheckAttributeValuesEqual(&result1, &result2),
-					resource.TestCheckResourceAttr("random_password.test", "keepers.%", "1"),
-				),
+				ConfigStateChecks: []statecheck.StateCheck{
+					assertResultSame.AddStateValue("random_password.test", tfjsonpath.New("result")),
+					statecheck.ExpectKnownValue("random_password.test", tfjsonpath.New("keepers"), knownvalue.MapSizeExact(1)),
+				},
 			},
 		},
 	})
 }
 
 func TestAccResourcePassword_Keepers_Keep_NullValue(t *testing.T) {
-	var result1, result2 string
+	// The result attribute values should be the same between test steps
+	assertResultSame := statecheck.CompareValue(compare.ValuesSame())
 
 	resource.ParallelTest(t, resource.TestCase{
 		Steps: []resource.TestStep{
@@ -2117,10 +2275,10 @@ func TestAccResourcePassword_Keepers_Keep_NullValue(t *testing.T) {
 						"key" = null
 					}
 				}`,
-				Check: resource.ComposeTestCheckFunc(
-					testExtractResourceAttr("random_password.test", "result", &result1),
-					resource.TestCheckResourceAttr("random_password.test", "keepers.%", "1"),
-				),
+				ConfigStateChecks: []statecheck.StateCheck{
+					assertResultSame.AddStateValue("random_password.test", tfjsonpath.New("result")),
+					statecheck.ExpectKnownValue("random_password.test", tfjsonpath.New("keepers"), knownvalue.MapSizeExact(1)),
+				},
 			},
 			{
 				ProtoV5ProviderFactories: protoV5ProviderFactories(),
@@ -2130,18 +2288,18 @@ func TestAccResourcePassword_Keepers_Keep_NullValue(t *testing.T) {
 						"key" = null
 					}
 				}`,
-				Check: resource.ComposeTestCheckFunc(
-					testExtractResourceAttr("random_password.test", "result", &result2),
-					testCheckAttributeValuesEqual(&result1, &result2),
-					resource.TestCheckResourceAttr("random_password.test", "keepers.%", "1"),
-				),
+				ConfigStateChecks: []statecheck.StateCheck{
+					assertResultSame.AddStateValue("random_password.test", tfjsonpath.New("result")),
+					statecheck.ExpectKnownValue("random_password.test", tfjsonpath.New("keepers"), knownvalue.MapSizeExact(1)),
+				},
 			},
 		},
 	})
 }
 
 func TestAccResourcePassword_Keepers_Keep_NullValues(t *testing.T) {
-	var result1, result2 string
+	// The result attribute values should be the same between test steps
+	assertResultSame := statecheck.CompareValue(compare.ValuesSame())
 
 	resource.ParallelTest(t, resource.TestCase{
 		Steps: []resource.TestStep{
@@ -2154,10 +2312,10 @@ func TestAccResourcePassword_Keepers_Keep_NullValues(t *testing.T) {
 						"key2" = null
 					}
 				}`,
-				Check: resource.ComposeTestCheckFunc(
-					testExtractResourceAttr("random_password.test", "result", &result1),
-					resource.TestCheckResourceAttr("random_password.test", "keepers.%", "2"),
-				),
+				ConfigStateChecks: []statecheck.StateCheck{
+					assertResultSame.AddStateValue("random_password.test", tfjsonpath.New("result")),
+					statecheck.ExpectKnownValue("random_password.test", tfjsonpath.New("keepers"), knownvalue.MapSizeExact(2)),
+				},
 			},
 			{
 				ProtoV5ProviderFactories: protoV5ProviderFactories(),
@@ -2168,18 +2326,18 @@ func TestAccResourcePassword_Keepers_Keep_NullValues(t *testing.T) {
 						"key2" = null
 					}
 				}`,
-				Check: resource.ComposeTestCheckFunc(
-					testExtractResourceAttr("random_password.test", "result", &result2),
-					testCheckAttributeValuesEqual(&result1, &result2),
-					resource.TestCheckResourceAttr("random_password.test", "keepers.%", "2"),
-				),
+				ConfigStateChecks: []statecheck.StateCheck{
+					assertResultSame.AddStateValue("random_password.test", tfjsonpath.New("result")),
+					statecheck.ExpectKnownValue("random_password.test", tfjsonpath.New("keepers"), knownvalue.MapSizeExact(2)),
+				},
 			},
 		},
 	})
 }
 
 func TestAccResourcePassword_Keepers_Keep_Value(t *testing.T) {
-	var result1, result2 string
+	// The result attribute values should be the same between test steps
+	assertResultSame := statecheck.CompareValue(compare.ValuesSame())
 
 	resource.ParallelTest(t, resource.TestCase{
 		Steps: []resource.TestStep{
@@ -2191,10 +2349,10 @@ func TestAccResourcePassword_Keepers_Keep_Value(t *testing.T) {
 						"key" = "123"
 					}
 				}`,
-				Check: resource.ComposeTestCheckFunc(
-					testExtractResourceAttr("random_password.test", "result", &result1),
-					resource.TestCheckResourceAttr("random_password.test", "keepers.%", "1"),
-				),
+				ConfigStateChecks: []statecheck.StateCheck{
+					assertResultSame.AddStateValue("random_password.test", tfjsonpath.New("result")),
+					statecheck.ExpectKnownValue("random_password.test", tfjsonpath.New("keepers"), knownvalue.MapSizeExact(1)),
+				},
 			},
 			{
 				ProtoV5ProviderFactories: protoV5ProviderFactories(),
@@ -2204,18 +2362,18 @@ func TestAccResourcePassword_Keepers_Keep_Value(t *testing.T) {
 						"key" = "123"
 					}
 				}`,
-				Check: resource.ComposeTestCheckFunc(
-					testExtractResourceAttr("random_password.test", "result", &result2),
-					testCheckAttributeValuesEqual(&result1, &result2),
-					resource.TestCheckResourceAttr("random_password.test", "keepers.%", "1"),
-				),
+				ConfigStateChecks: []statecheck.StateCheck{
+					assertResultSame.AddStateValue("random_password.test", tfjsonpath.New("result")),
+					statecheck.ExpectKnownValue("random_password.test", tfjsonpath.New("keepers"), knownvalue.MapSizeExact(1)),
+				},
 			},
 		},
 	})
 }
 
 func TestAccResourcePassword_Keepers_Keep_Values(t *testing.T) {
-	var result1, result2 string
+	// The result attribute values should be the same between test steps
+	assertResultSame := statecheck.CompareValue(compare.ValuesSame())
 
 	resource.ParallelTest(t, resource.TestCase{
 		Steps: []resource.TestStep{
@@ -2228,10 +2386,10 @@ func TestAccResourcePassword_Keepers_Keep_Values(t *testing.T) {
 						"key2" = "456"
 					}
 				}`,
-				Check: resource.ComposeTestCheckFunc(
-					testExtractResourceAttr("random_password.test", "result", &result1),
-					resource.TestCheckResourceAttr("random_password.test", "keepers.%", "2"),
-				),
+				ConfigStateChecks: []statecheck.StateCheck{
+					assertResultSame.AddStateValue("random_password.test", tfjsonpath.New("result")),
+					statecheck.ExpectKnownValue("random_password.test", tfjsonpath.New("keepers"), knownvalue.MapSizeExact(2)),
+				},
 			},
 			{
 				ProtoV5ProviderFactories: protoV5ProviderFactories(),
@@ -2242,18 +2400,18 @@ func TestAccResourcePassword_Keepers_Keep_Values(t *testing.T) {
 						"key2" = "456"
 					}
 				}`,
-				Check: resource.ComposeTestCheckFunc(
-					testExtractResourceAttr("random_password.test", "result", &result2),
-					testCheckAttributeValuesEqual(&result1, &result2),
-					resource.TestCheckResourceAttr("random_password.test", "keepers.%", "2"),
-				),
+				ConfigStateChecks: []statecheck.StateCheck{
+					assertResultSame.AddStateValue("random_password.test", tfjsonpath.New("result")),
+					statecheck.ExpectKnownValue("random_password.test", tfjsonpath.New("keepers"), knownvalue.MapSizeExact(2)),
+				},
 			},
 		},
 	})
 }
 
 func TestAccResourcePassword_Keepers_Replace_EmptyMapToValue(t *testing.T) {
-	var result1, result2 string
+	// The result attribute values should differ between test steps
+	assertResultDiffer := statecheck.CompareValue(compare.ValuesDiffer())
 
 	resource.ParallelTest(t, resource.TestCase{
 		Steps: []resource.TestStep{
@@ -2263,10 +2421,10 @@ func TestAccResourcePassword_Keepers_Replace_EmptyMapToValue(t *testing.T) {
 					length = 12
 					keepers = {}
 				}`,
-				Check: resource.ComposeTestCheckFunc(
-					testExtractResourceAttr("random_password.test", "result", &result1),
-					resource.TestCheckResourceAttr("random_password.test", "keepers.%", "0"),
-				),
+				ConfigStateChecks: []statecheck.StateCheck{
+					assertResultDiffer.AddStateValue("random_password.test", tfjsonpath.New("result")),
+					statecheck.ExpectKnownValue("random_password.test", tfjsonpath.New("keepers"), knownvalue.MapSizeExact(0)),
+				},
 			},
 			{
 				ProtoV5ProviderFactories: protoV5ProviderFactories(),
@@ -2276,18 +2434,18 @@ func TestAccResourcePassword_Keepers_Replace_EmptyMapToValue(t *testing.T) {
 						"key" = "123"
 					}
 				}`,
-				Check: resource.ComposeTestCheckFunc(
-					testExtractResourceAttr("random_password.test", "result", &result2),
-					testCheckAttributeValuesDiffer(&result1, &result2),
-					resource.TestCheckResourceAttr("random_password.test", "keepers.%", "1"),
-				),
+				ConfigStateChecks: []statecheck.StateCheck{
+					assertResultDiffer.AddStateValue("random_password.test", tfjsonpath.New("result")),
+					statecheck.ExpectKnownValue("random_password.test", tfjsonpath.New("keepers"), knownvalue.MapSizeExact(1)),
+				},
 			},
 		},
 	})
 }
 
 func TestAccResourcePassword_Keepers_Replace_NullMapToValue(t *testing.T) {
-	var result1, result2 string
+	// The result attribute values should differ between test steps
+	assertResultDiffer := statecheck.CompareValue(compare.ValuesDiffer())
 
 	resource.ParallelTest(t, resource.TestCase{
 		Steps: []resource.TestStep{
@@ -2296,10 +2454,10 @@ func TestAccResourcePassword_Keepers_Replace_NullMapToValue(t *testing.T) {
 				Config: `resource "random_password" "test" {
 					length = 12
 				}`,
-				Check: resource.ComposeTestCheckFunc(
-					testExtractResourceAttr("random_password.test", "result", &result1),
-					resource.TestCheckResourceAttr("random_password.test", "keepers.%", "0"),
-				),
+				ConfigStateChecks: []statecheck.StateCheck{
+					assertResultDiffer.AddStateValue("random_password.test", tfjsonpath.New("result")),
+					statecheck.ExpectKnownValue("random_password.test", tfjsonpath.New("keepers"), knownvalue.Null()),
+				},
 			},
 			{
 				ProtoV5ProviderFactories: protoV5ProviderFactories(),
@@ -2309,18 +2467,18 @@ func TestAccResourcePassword_Keepers_Replace_NullMapToValue(t *testing.T) {
 						"key" = "123"
 					}
 				}`,
-				Check: resource.ComposeTestCheckFunc(
-					testExtractResourceAttr("random_password.test", "result", &result2),
-					testCheckAttributeValuesDiffer(&result1, &result2),
-					resource.TestCheckResourceAttr("random_password.test", "keepers.%", "1"),
-				),
+				ConfigStateChecks: []statecheck.StateCheck{
+					assertResultDiffer.AddStateValue("random_password.test", tfjsonpath.New("result")),
+					statecheck.ExpectKnownValue("random_password.test", tfjsonpath.New("keepers"), knownvalue.MapSizeExact(1)),
+				},
 			},
 		},
 	})
 }
 
 func TestAccResourcePassword_Keepers_Replace_NullValueToValue(t *testing.T) {
-	var result1, result2 string
+	// The result attribute values should differ between test steps
+	assertResultDiffer := statecheck.CompareValue(compare.ValuesDiffer())
 
 	resource.ParallelTest(t, resource.TestCase{
 		Steps: []resource.TestStep{
@@ -2332,10 +2490,10 @@ func TestAccResourcePassword_Keepers_Replace_NullValueToValue(t *testing.T) {
 						"key" = null
 					}
 				}`,
-				Check: resource.ComposeTestCheckFunc(
-					testExtractResourceAttr("random_password.test", "result", &result1),
-					resource.TestCheckResourceAttr("random_password.test", "keepers.%", "1"),
-				),
+				ConfigStateChecks: []statecheck.StateCheck{
+					assertResultDiffer.AddStateValue("random_password.test", tfjsonpath.New("result")),
+					statecheck.ExpectKnownValue("random_password.test", tfjsonpath.New("keepers"), knownvalue.MapSizeExact(1)),
+				},
 			},
 			{
 				ProtoV5ProviderFactories: protoV5ProviderFactories(),
@@ -2345,18 +2503,18 @@ func TestAccResourcePassword_Keepers_Replace_NullValueToValue(t *testing.T) {
 						"key" = "123"
 					}
 				}`,
-				Check: resource.ComposeTestCheckFunc(
-					testExtractResourceAttr("random_password.test", "result", &result2),
-					testCheckAttributeValuesDiffer(&result1, &result2),
-					resource.TestCheckResourceAttr("random_password.test", "keepers.%", "1"),
-				),
+				ConfigStateChecks: []statecheck.StateCheck{
+					assertResultDiffer.AddStateValue("random_password.test", tfjsonpath.New("result")),
+					statecheck.ExpectKnownValue("random_password.test", tfjsonpath.New("keepers"), knownvalue.MapSizeExact(1)),
+				},
 			},
 		},
 	})
 }
 
 func TestAccResourcePassword_Keepers_Replace_ValueToEmptyMap(t *testing.T) {
-	var result1, result2 string
+	// The result attribute values should differ between test steps
+	assertResultDiffer := statecheck.CompareValue(compare.ValuesDiffer())
 
 	resource.ParallelTest(t, resource.TestCase{
 		Steps: []resource.TestStep{
@@ -2368,10 +2526,10 @@ func TestAccResourcePassword_Keepers_Replace_ValueToEmptyMap(t *testing.T) {
 						"key" = "123"
 					}
 				}`,
-				Check: resource.ComposeTestCheckFunc(
-					testExtractResourceAttr("random_password.test", "result", &result1),
-					resource.TestCheckResourceAttr("random_password.test", "keepers.%", "1"),
-				),
+				ConfigStateChecks: []statecheck.StateCheck{
+					assertResultDiffer.AddStateValue("random_password.test", tfjsonpath.New("result")),
+					statecheck.ExpectKnownValue("random_password.test", tfjsonpath.New("keepers"), knownvalue.MapSizeExact(1)),
+				},
 			},
 			{
 				ProtoV5ProviderFactories: protoV5ProviderFactories(),
@@ -2379,18 +2537,18 @@ func TestAccResourcePassword_Keepers_Replace_ValueToEmptyMap(t *testing.T) {
 					length = 12
 					keepers = {}
 				}`,
-				Check: resource.ComposeTestCheckFunc(
-					testExtractResourceAttr("random_password.test", "result", &result2),
-					testCheckAttributeValuesDiffer(&result1, &result2),
-					resource.TestCheckResourceAttr("random_password.test", "keepers.%", "0"),
-				),
+				ConfigStateChecks: []statecheck.StateCheck{
+					assertResultDiffer.AddStateValue("random_password.test", tfjsonpath.New("result")),
+					statecheck.ExpectKnownValue("random_password.test", tfjsonpath.New("keepers"), knownvalue.MapSizeExact(0)),
+				},
 			},
 		},
 	})
 }
 
 func TestAccResourcePassword_Keepers_Replace_ValueToNullMap(t *testing.T) {
-	var result1, result2 string
+	// The result attribute values should differ between test steps
+	assertResultDiffer := statecheck.CompareValue(compare.ValuesDiffer())
 
 	resource.ParallelTest(t, resource.TestCase{
 		Steps: []resource.TestStep{
@@ -2402,28 +2560,28 @@ func TestAccResourcePassword_Keepers_Replace_ValueToNullMap(t *testing.T) {
 						"key" = "123"
 					}
 				}`,
-				Check: resource.ComposeTestCheckFunc(
-					testExtractResourceAttr("random_password.test", "result", &result1),
-					resource.TestCheckResourceAttr("random_password.test", "keepers.%", "1"),
-				),
+				ConfigStateChecks: []statecheck.StateCheck{
+					assertResultDiffer.AddStateValue("random_password.test", tfjsonpath.New("result")),
+					statecheck.ExpectKnownValue("random_password.test", tfjsonpath.New("keepers"), knownvalue.MapSizeExact(1)),
+				},
 			},
 			{
 				ProtoV5ProviderFactories: protoV5ProviderFactories(),
 				Config: `resource "random_password" "test" {
 					length = 12
 				}`,
-				Check: resource.ComposeTestCheckFunc(
-					testExtractResourceAttr("random_password.test", "result", &result2),
-					testCheckAttributeValuesDiffer(&result1, &result2),
-					resource.TestCheckResourceAttr("random_password.test", "keepers.%", "0"),
-				),
+				ConfigStateChecks: []statecheck.StateCheck{
+					assertResultDiffer.AddStateValue("random_password.test", tfjsonpath.New("result")),
+					statecheck.ExpectKnownValue("random_password.test", tfjsonpath.New("keepers"), knownvalue.Null()),
+				},
 			},
 		},
 	})
 }
 
 func TestAccResourcePassword_Keepers_Replace_ValueToNullValue(t *testing.T) {
-	var result1, result2 string
+	// The result attribute values should differ between test steps
+	assertResultDiffer := statecheck.CompareValue(compare.ValuesDiffer())
 
 	resource.ParallelTest(t, resource.TestCase{
 		Steps: []resource.TestStep{
@@ -2435,10 +2593,10 @@ func TestAccResourcePassword_Keepers_Replace_ValueToNullValue(t *testing.T) {
 						"key" = "123"
 					}
 				}`,
-				Check: resource.ComposeTestCheckFunc(
-					testExtractResourceAttr("random_password.test", "result", &result1),
-					resource.TestCheckResourceAttr("random_password.test", "keepers.%", "1"),
-				),
+				ConfigStateChecks: []statecheck.StateCheck{
+					assertResultDiffer.AddStateValue("random_password.test", tfjsonpath.New("result")),
+					statecheck.ExpectKnownValue("random_password.test", tfjsonpath.New("keepers"), knownvalue.MapSizeExact(1)),
+				},
 			},
 			{
 				ProtoV5ProviderFactories: protoV5ProviderFactories(),
@@ -2448,18 +2606,18 @@ func TestAccResourcePassword_Keepers_Replace_ValueToNullValue(t *testing.T) {
 						"key" = null
 					}
 				}`,
-				Check: resource.ComposeTestCheckFunc(
-					testExtractResourceAttr("random_password.test", "result", &result2),
-					testCheckAttributeValuesDiffer(&result1, &result2),
-					resource.TestCheckResourceAttr("random_password.test", "keepers.%", "1"),
-				),
+				ConfigStateChecks: []statecheck.StateCheck{
+					assertResultDiffer.AddStateValue("random_password.test", tfjsonpath.New("result")),
+					statecheck.ExpectKnownValue("random_password.test", tfjsonpath.New("keepers"), knownvalue.MapSizeExact(1)),
+				},
 			},
 		},
 	})
 }
 
 func TestAccResourcePassword_Keepers_Replace_ValueToNewValue(t *testing.T) {
-	var result1, result2 string
+	// The result attribute values should differ between test steps
+	assertResultDiffer := statecheck.CompareValue(compare.ValuesDiffer())
 
 	resource.ParallelTest(t, resource.TestCase{
 		Steps: []resource.TestStep{
@@ -2471,10 +2629,10 @@ func TestAccResourcePassword_Keepers_Replace_ValueToNewValue(t *testing.T) {
 						"key" = "123"
 					}
 				}`,
-				Check: resource.ComposeTestCheckFunc(
-					testExtractResourceAttr("random_password.test", "result", &result1),
-					resource.TestCheckResourceAttr("random_password.test", "keepers.%", "1"),
-				),
+				ConfigStateChecks: []statecheck.StateCheck{
+					assertResultDiffer.AddStateValue("random_password.test", tfjsonpath.New("result")),
+					statecheck.ExpectKnownValue("random_password.test", tfjsonpath.New("keepers"), knownvalue.MapSizeExact(1)),
+				},
 			},
 			{
 				ProtoV5ProviderFactories: protoV5ProviderFactories(),
@@ -2484,18 +2642,18 @@ func TestAccResourcePassword_Keepers_Replace_ValueToNewValue(t *testing.T) {
 						"key" = "456"
 					}
 				}`,
-				Check: resource.ComposeTestCheckFunc(
-					testExtractResourceAttr("random_password.test", "result", &result2),
-					testCheckAttributeValuesDiffer(&result1, &result2),
-					resource.TestCheckResourceAttr("random_password.test", "keepers.%", "1"),
-				),
+				ConfigStateChecks: []statecheck.StateCheck{
+					assertResultDiffer.AddStateValue("random_password.test", tfjsonpath.New("result")),
+					statecheck.ExpectKnownValue("random_password.test", tfjsonpath.New("keepers"), knownvalue.MapSizeExact(1)),
+				},
 			},
 		},
 	})
 }
 
 func TestAccResourcePassword_Keepers_FrameworkMigration_NullMapToNullValue(t *testing.T) {
-	var result1, result2 string
+	// The result attribute values should be the same between test steps
+	assertResultSame := statecheck.CompareValue(compare.ValuesSame())
 
 	resource.ParallelTest(t, resource.TestCase{
 		Steps: []resource.TestStep{
@@ -2507,10 +2665,10 @@ func TestAccResourcePassword_Keepers_FrameworkMigration_NullMapToNullValue(t *te
 						"key" = null
 					}
 				}`,
-				Check: resource.ComposeTestCheckFunc(
-					testExtractResourceAttr("random_password.test", "result", &result1),
-					resource.TestCheckResourceAttr("random_password.test", "keepers.%", "0"),
-				),
+				ConfigStateChecks: []statecheck.StateCheck{
+					assertResultSame.AddStateValue("random_password.test", tfjsonpath.New("result")),
+					statecheck.ExpectKnownValue("random_password.test", tfjsonpath.New("keepers"), knownvalue.Null()),
+				},
 			},
 			{
 				ProtoV5ProviderFactories: protoV5ProviderFactories(),
@@ -2520,18 +2678,18 @@ func TestAccResourcePassword_Keepers_FrameworkMigration_NullMapToNullValue(t *te
 						"key" = null
 					}
 				}`,
-				Check: resource.ComposeTestCheckFunc(
-					testExtractResourceAttr("random_password.test", "result", &result2),
-					testCheckAttributeValuesEqual(&result1, &result2),
-					resource.TestCheckResourceAttr("random_password.test", "keepers.%", "1"),
-				),
+				ConfigStateChecks: []statecheck.StateCheck{
+					assertResultSame.AddStateValue("random_password.test", tfjsonpath.New("result")),
+					statecheck.ExpectKnownValue("random_password.test", tfjsonpath.New("keepers"), knownvalue.MapSizeExact(1)),
+				},
 			},
 		},
 	})
 }
 
 func TestAccResourcePassword_Keepers_FrameworkMigration_NullMapToValue(t *testing.T) {
-	var result1, result2 string
+	// The result attribute values should differ between test steps
+	assertResultDiffer := statecheck.CompareValue(compare.ValuesDiffer())
 
 	resource.ParallelTest(t, resource.TestCase{
 		Steps: []resource.TestStep{
@@ -2543,10 +2701,10 @@ func TestAccResourcePassword_Keepers_FrameworkMigration_NullMapToValue(t *testin
 						"key" = null
 					}
 				}`,
-				Check: resource.ComposeTestCheckFunc(
-					testExtractResourceAttr("random_password.test", "result", &result1),
-					resource.TestCheckResourceAttr("random_password.test", "keepers.%", "0"),
-				),
+				ConfigStateChecks: []statecheck.StateCheck{
+					assertResultDiffer.AddStateValue("random_password.test", tfjsonpath.New("result")),
+					statecheck.ExpectKnownValue("random_password.test", tfjsonpath.New("keepers"), knownvalue.Null()),
+				},
 			},
 			{
 				ProtoV5ProviderFactories: protoV5ProviderFactories(),
@@ -2556,18 +2714,18 @@ func TestAccResourcePassword_Keepers_FrameworkMigration_NullMapToValue(t *testin
 						"key" = "123"
 					}
 				}`,
-				Check: resource.ComposeTestCheckFunc(
-					testExtractResourceAttr("random_password.test", "result", &result2),
-					testCheckAttributeValuesDiffer(&result1, &result2),
-					resource.TestCheckResourceAttr("random_password.test", "keepers.%", "1"),
-				),
+				ConfigStateChecks: []statecheck.StateCheck{
+					assertResultDiffer.AddStateValue("random_password.test", tfjsonpath.New("result")),
+					statecheck.ExpectKnownValue("random_password.test", tfjsonpath.New("keepers"), knownvalue.MapSizeExact(1)),
+				},
 			},
 		},
 	})
 }
 
 func TestAccResourcePassword_Keepers_FrameworkMigration_NullMapToMultipleNullValue(t *testing.T) {
-	var result1, result2 string
+	// The result attribute values should be the same between test steps
+	assertResultSame := statecheck.CompareValue(compare.ValuesSame())
 
 	resource.ParallelTest(t, resource.TestCase{
 		Steps: []resource.TestStep{
@@ -2580,10 +2738,10 @@ func TestAccResourcePassword_Keepers_FrameworkMigration_NullMapToMultipleNullVal
 						"key2" = null
 					}
 				}`,
-				Check: resource.ComposeTestCheckFunc(
-					testExtractResourceAttr("random_password.test", "result", &result1),
-					resource.TestCheckResourceAttr("random_password.test", "keepers.%", "0"),
-				),
+				ConfigStateChecks: []statecheck.StateCheck{
+					assertResultSame.AddStateValue("random_password.test", tfjsonpath.New("result")),
+					statecheck.ExpectKnownValue("random_password.test", tfjsonpath.New("keepers"), knownvalue.Null()),
+				},
 			},
 			{
 				ProtoV5ProviderFactories: protoV5ProviderFactories(),
@@ -2594,18 +2752,18 @@ func TestAccResourcePassword_Keepers_FrameworkMigration_NullMapToMultipleNullVal
 						"key2" = null
 					}
 				}`,
-				Check: resource.ComposeTestCheckFunc(
-					testExtractResourceAttr("random_password.test", "result", &result2),
-					testCheckAttributeValuesEqual(&result1, &result2),
-					resource.TestCheckResourceAttr("random_password.test", "keepers.%", "2"),
-				),
+				ConfigStateChecks: []statecheck.StateCheck{
+					assertResultSame.AddStateValue("random_password.test", tfjsonpath.New("result")),
+					statecheck.ExpectKnownValue("random_password.test", tfjsonpath.New("keepers"), knownvalue.MapSizeExact(2)),
+				},
 			},
 		},
 	})
 }
 
 func TestAccResourcePassword_Keepers_FrameworkMigration_NullMapToMultipleValue(t *testing.T) {
-	var result1, result2 string
+	// The result attribute values should differ between test steps
+	assertResultDiffer := statecheck.CompareValue(compare.ValuesDiffer())
 
 	resource.ParallelTest(t, resource.TestCase{
 		Steps: []resource.TestStep{
@@ -2618,10 +2776,10 @@ func TestAccResourcePassword_Keepers_FrameworkMigration_NullMapToMultipleValue(t
 						"key2" = null
 					}
 				}`,
-				Check: resource.ComposeTestCheckFunc(
-					testExtractResourceAttr("random_password.test", "result", &result1),
-					resource.TestCheckResourceAttr("random_password.test", "keepers.%", "0"),
-				),
+				ConfigStateChecks: []statecheck.StateCheck{
+					assertResultDiffer.AddStateValue("random_password.test", tfjsonpath.New("result")),
+					statecheck.ExpectKnownValue("random_password.test", tfjsonpath.New("keepers"), knownvalue.Null()),
+				},
 			},
 			{
 				ProtoV5ProviderFactories: protoV5ProviderFactories(),
@@ -2632,18 +2790,18 @@ func TestAccResourcePassword_Keepers_FrameworkMigration_NullMapToMultipleValue(t
 						"key2" = "456"
 					}
 				}`,
-				Check: resource.ComposeTestCheckFunc(
-					testExtractResourceAttr("random_password.test", "result", &result2),
-					testCheckAttributeValuesDiffer(&result1, &result2),
-					resource.TestCheckResourceAttr("random_password.test", "keepers.%", "2"),
-				),
+				ConfigStateChecks: []statecheck.StateCheck{
+					assertResultDiffer.AddStateValue("random_password.test", tfjsonpath.New("result")),
+					statecheck.ExpectKnownValue("random_password.test", tfjsonpath.New("keepers"), knownvalue.MapSizeExact(2)),
+				},
 			},
 		},
 	})
 }
 
 func TestAccResourcePassword_Keepers_FrameworkMigration_NullMapValue(t *testing.T) {
-	var result1, result2 string
+	// The result attribute values should be the same between test steps
+	assertResultSame := statecheck.CompareValue(compare.ValuesSame())
 
 	resource.ParallelTest(t, resource.TestCase{
 		Steps: []resource.TestStep{
@@ -2656,10 +2814,10 @@ func TestAccResourcePassword_Keepers_FrameworkMigration_NullMapValue(t *testing.
 						"key2" = null
 					}
 				}`,
-				Check: resource.ComposeTestCheckFunc(
-					testExtractResourceAttr("random_password.test", "result", &result1),
-					resource.TestCheckResourceAttr("random_password.test", "keepers.%", "1"),
-				),
+				ConfigStateChecks: []statecheck.StateCheck{
+					assertResultSame.AddStateValue("random_password.test", tfjsonpath.New("result")),
+					statecheck.ExpectKnownValue("random_password.test", tfjsonpath.New("keepers"), knownvalue.MapSizeExact(1)),
+				},
 			},
 			{
 				ProtoV5ProviderFactories: protoV5ProviderFactories(),
@@ -2670,18 +2828,18 @@ func TestAccResourcePassword_Keepers_FrameworkMigration_NullMapValue(t *testing.
 						"key2" = null
 					}
 				}`,
-				Check: resource.ComposeTestCheckFunc(
-					testExtractResourceAttr("random_password.test", "result", &result2),
-					testCheckAttributeValuesEqual(&result1, &result2),
-					resource.TestCheckResourceAttr("random_password.test", "keepers.%", "2"),
-				),
+				ConfigStateChecks: []statecheck.StateCheck{
+					assertResultSame.AddStateValue("random_password.test", tfjsonpath.New("result")),
+					statecheck.ExpectKnownValue("random_password.test", tfjsonpath.New("keepers"), knownvalue.MapSizeExact(2)),
+				},
 			},
 		},
 	})
 }
 
 func TestAccResourcePassword_Keepers_FrameworkMigration_NullMapValueToValue(t *testing.T) {
-	var result1, result2 string
+	// The result attribute values should differ between test steps
+	assertResultDiffer := statecheck.CompareValue(compare.ValuesDiffer())
 
 	resource.ParallelTest(t, resource.TestCase{
 		Steps: []resource.TestStep{
@@ -2694,10 +2852,10 @@ func TestAccResourcePassword_Keepers_FrameworkMigration_NullMapValueToValue(t *t
 						"key2" = null
 					}
 				}`,
-				Check: resource.ComposeTestCheckFunc(
-					testExtractResourceAttr("random_password.test", "result", &result1),
-					resource.TestCheckResourceAttr("random_password.test", "keepers.%", "1"),
-				),
+				ConfigStateChecks: []statecheck.StateCheck{
+					assertResultDiffer.AddStateValue("random_password.test", tfjsonpath.New("result")),
+					statecheck.ExpectKnownValue("random_password.test", tfjsonpath.New("keepers"), knownvalue.MapSizeExact(1)),
+				},
 			},
 			{
 				ProtoV5ProviderFactories: protoV5ProviderFactories(),
@@ -2708,48 +2866,68 @@ func TestAccResourcePassword_Keepers_FrameworkMigration_NullMapValueToValue(t *t
 						"key2" = "456"
 					}
 				}`,
-				Check: resource.ComposeTestCheckFunc(
-					testExtractResourceAttr("random_password.test", "result", &result2),
-					testCheckAttributeValuesDiffer(&result1, &result2),
-					resource.TestCheckResourceAttr("random_password.test", "keepers.%", "2"),
-				),
+				ConfigStateChecks: []statecheck.StateCheck{
+					assertResultDiffer.AddStateValue("random_password.test", tfjsonpath.New("result")),
+					statecheck.ExpectKnownValue("random_password.test", tfjsonpath.New("keepers"), knownvalue.MapSizeExact(2)),
+				},
 			},
 		},
 	})
 }
 
-func testBcryptHashInvalid(hash *string, password *string) resource.TestCheckFunc {
-	return func(_ *terraform.State) error {
-		if hash == nil || *hash == "" {
-			return fmt.Errorf("expected hash value")
-		}
-
-		if password == nil || *password == "" {
-			return fmt.Errorf("expected password value")
-		}
-
-		err := bcrypt.CompareHashAndPassword([]byte(*hash), []byte(*password))
-
-		if !errors.Is(err, bcrypt.ErrMismatchedHashAndPassword) {
-			return fmt.Errorf("unexpected error: %s", err)
-		}
-
-		return nil
-	}
+func TestAccResourcePassword_NumericFalse(t *testing.T) {
+	resource.ParallelTest(t, resource.TestCase{
+		Steps: []resource.TestStep{
+			{
+				ProtoV5ProviderFactories: protoV5ProviderFactories(),
+				Config: `resource "random_password" "test" {
+					length = 12
+					special = false
+					upper = false
+					lower = false
+					numeric = false
+				}`,
+				ExpectError: regexp.MustCompile(`At least one attribute out of \[special,upper,lower,numeric\] must be specified`),
+			},
+		},
+	})
 }
 
-func testBcryptHashValid(hash *string, password *string) resource.TestCheckFunc {
-	return func(_ *terraform.State) error {
-		if hash == nil || *hash == "" {
-			return fmt.Errorf("expected hash value")
-		}
+func TestAccResourcePassword_NumberFalse(t *testing.T) {
+	resource.ParallelTest(t, resource.TestCase{
+		Steps: []resource.TestStep{
+			{
+				ProtoV5ProviderFactories: protoV5ProviderFactories(),
+				Config: `resource "random_password" "test" {
+					length = 12
+					special = false
+					upper = false
+					lower = false
+					number = false
+				}`,
+				ExpectError: regexp.MustCompile(`At least one attribute out of \[special,upper,lower,number\] must be specified`),
+			},
+		},
+	})
+}
 
-		if password == nil || *password == "" {
-			return fmt.Errorf("expected password value")
-		}
-
-		return bcrypt.CompareHashAndPassword([]byte(*hash), []byte(*password))
-	}
+func TestAccResourcePassword_NumericNumberFalse(t *testing.T) {
+	resource.ParallelTest(t, resource.TestCase{
+		Steps: []resource.TestStep{
+			{
+				ProtoV5ProviderFactories: protoV5ProviderFactories(),
+				Config: `resource "random_password" "test" {
+					length = 12
+					special = false
+					upper = false
+					lower = false
+					numeric = false
+					number = false
+				}`,
+				ExpectError: regexp.MustCompile(`At least one attribute out of \[special,upper,lower,numeric\] must be specified((.|\n)*)At least one attribute out of \[special,upper,lower,number\] must be specified`),
+			},
+		},
+	})
 }
 
 func composeImportStateCheck(fs ...resource.ImportStateCheckFunc) resource.ImportStateCheckFunc {
