@@ -31,9 +31,9 @@ resource "random_ip" "example" {
 }
 ```
 
-### Using a count
+### Setting a count
 
-It could be useful to randomly generate a number of IP addresses. This can be done using a [count](https://developer.hashicorp.com/terraform/language/meta-arguments/count).
+It can be useful to generate a random number of IP addresses. You can achieve this by setting the [count](https://developer.hashicorp.com/terraform/language/meta-arguments/count) argument.
 
 ```terraform
 resource "random_ip" "example" {
@@ -46,10 +46,10 @@ output "random_ipv4_addresses" {
 }
 ```
 
-### Using a count followed by a distinct
+### Setting a count followed by a distinct
 
-Keep in mind that using a [count](https://developer.hashicorp.com/terraform/language/meta-arguments/count) you could end up with duplicate IP addresses. 
-If you want to avoid this, perform a [distinct](https://developer.hashicorp.com/terraform/language/functions/distinct) on the list of IP addresses.
+Note that setting a [count](https://developer.hashicorp.com/terraform/language/meta-arguments/count) argument may result in duplicate IP addresses. 
+To prevent this, apply a [distinct](https://developer.hashicorp.com/terraform/language/functions/distinct) function to your list of IP addresses.
 
 ```terraform
 resource "random_ip" "example" {
