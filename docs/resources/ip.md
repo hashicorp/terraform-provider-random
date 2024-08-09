@@ -18,7 +18,7 @@ resource "random_ip" "example" {}
 ### IPv4
 
 ```terraform
-resource "ip" "example" {
+resource "random_ip" "example" {
   cidr_range = "10.1.0.0/16"
 }
 ```
@@ -26,7 +26,7 @@ resource "ip" "example" {
 ### IPv6
 
 ```terraform
-resource "ip" "example" {
+resource "random_ip" "example" {
   cidr_range = "2001:db8::/32"
 }
 ```
