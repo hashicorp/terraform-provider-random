@@ -11,7 +11,9 @@ description: |-
 
 ## Example Usage
 
-### ipv4
+{{ tffile (printf "examples/resources/%s/basic.tf" .Name)}}
+
+### IPv4
 
 {{ tffile (printf "examples/resources/%s/ipv4.tf" .Name)}}
 

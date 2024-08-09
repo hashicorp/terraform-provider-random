@@ -8,13 +8,12 @@ import (
 	"fmt"
 	"math/rand"
 	"net"
+	"time"
 
-	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
-	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 
 	"github.com/terraform-providers/terraform-provider-random/internal/diagnostics"
@@ -37,8 +36,7 @@ func (r *ipResource) Metadata(_ context.Context, req resource.MetadataRequest, r
 
 func (r *ipResource) Schema(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
 	resp.Schema = schema.Schema{
-		Description: "The resource `random_ip` generates a random IP address from a given CIDR range based on the " +
-			"address type specified.",
+		Description: "The `random_ip` resource generates a random IP address, either IPv4 or IPv6. By default, it randomly chooses between 0.0.0.0/0 (IPv4) and ::/0 (IPv6). You can influence the IP type by specifying a `cidr_range`.",
 		Attributes: map[string]schema.Attribute{
 			"keepers": schema.MapAttribute{
 				Description: "Arbitrary map of values that, when changed, will trigger recreation of " +
@@ -49,19 +47,10 @@ func (r *ipResource) Schema(ctx context.Context, req resource.SchemaRequest, res
 					mapplanmodifiers.RequiresReplaceIfValuesNotNull(),
 				},
 			},
-			"address_type": schema.StringAttribute{
-				Description: "A string indicating the type of IP address to generate. Valid values are `ipv4` and `ipv6`.",
-				Required:    true,
-				PlanModifiers: []planmodifier.String{
-					stringplanmodifier.RequiresReplace(),
-				},
-				Validators: []validator.String{
-					stringvalidator.OneOf([]string{"ipv4", "ipv6"}...),
-				},
-			},
 			"cidr_range": schema.StringAttribute{
 				Description: "A CIDR range from which to allocate the IP address.",
-				Required:    true,
+				Computed:    true,
+				Optional:    true,
 				PlanModifiers: []planmodifier.String{
 					stringplanmodifier.RequiresReplace(),
 				},
@@ -93,11 +82,19 @@ func (r *ipResource) Create(ctx context.Context, req resource.CreateRequest, res
 		return
 	}
 
-	addressType := plan.AddressType.ValueString()
 	cidrRange := plan.CIDRRange.ValueString()
+	// Check if CIDR range is empty, and if so, set it to either 0.0.0.0/0 or ::/0
+	if cidrRange == "" {
+		r := rand.New(rand.NewSource(time.Now().UnixNano()))
+		if r.Intn(2) == 0 {
+			cidrRange = "0.0.0.0/0"
+		} else {
+			cidrRange = "::/0"
+		}
+	}
 
 	// Generate a random IP address from a given CIDR range.
-	ip, err := getRandomIP(cidrRange, addressType)
+	ip, err := getRandomIP(cidrRange)
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Create Random IP error",
@@ -109,11 +106,10 @@ func (r *ipResource) Create(ctx context.Context, req resource.CreateRequest, res
 	}
 
 	u := &ipModelV0{
-		ID:          types.StringValue("-"),
-		Keepers:     plan.Keepers,
-		AddressType: types.StringValue(addressType),
-		CIDRRange:   types.StringValue(cidrRange),
-		Result:      types.StringValue(ip.String()),
+		ID:        types.StringValue("-"),
+		Keepers:   plan.Keepers,
+		CIDRRange: types.StringValue(cidrRange),
+		Result:    types.StringValue(ip.String()),
 	}
 
 	diags = resp.State.Set(ctx, u)
@@ -146,36 +142,27 @@ func (r *ipResource) Delete(ctx context.Context, req resource.DeleteRequest, res
 }
 
 type ipModelV0 struct {
-	ID          types.String `tfsdk:"id"`
-	Keepers     types.Map    `tfsdk:"keepers"`
-	AddressType types.String `tfsdk:"address_type"`
-	CIDRRange   types.String `tfsdk:"cidr_range"`
-	Result      types.String `tfsdk:"result"`
+	ID        types.String `tfsdk:"id"`
+	Keepers   types.Map    `tfsdk:"keepers"`
+	CIDRRange types.String `tfsdk:"cidr_range"`
+	Result    types.String `tfsdk:"result"`
 }
 
-func getRandomIP(cidrRange, addressType string) (net.IP, error) {
-	// We first parse the CIDR range to check for errors
+func getRandomIP(cidrRange string) (net.IP, error) {
+	// Parse the CIDR range to check for errors
 	// and to get the network address and netmask.
 	_, network, err := net.ParseCIDR(cidrRange)
 	if err != nil {
 		return nil, fmt.Errorf("error parsing CIDR range: %w", err)
 	}
 
-	// Check if the length of the netmask is valid (either IPv4 or IPv6 length).
+	// Get the netmask and determine the IP type (IPv4 or IPv6)
 	netmaskBytes := network.Mask
+	addressBytes := network.IP
+
+	// Check if the length of the netmask is valid (either IPv4 or IPv6 length).
 	if len(netmaskBytes) != net.IPv4len && len(netmaskBytes) != net.IPv6len {
 		return nil, fmt.Errorf("invalid netmask: must be either IPv4 or IPv6")
-	}
-
-	// Get the network address as a byte slice, either in 4-byte (IPv4) or 16-byte (IPv6) form.
-	var addressBytes net.IP
-	switch addressType {
-	case "ipv4":
-		addressBytes = network.IP.To4() // Convert the IP to 4-byte form.
-	case "ipv6":
-		addressBytes = network.IP.To16() // Convert the IP to 16-byte form.
-	default:
-		return nil, fmt.Errorf("invalid address type: %s", addressType)
 	}
 
 	// This typically occurs when the CIDR range is not of the same type as the address type.
@@ -183,13 +170,11 @@ func getRandomIP(cidrRange, addressType string) (net.IP, error) {
 		return nil, fmt.Errorf("netmask byte length does not match IP address byte length")
 	}
 
-	var picked []byte
+	// Generate the random IP within the CIDR range.
+	picked := make([]byte, len(addressBytes))
 	for i := 0; i < len(netmaskBytes); i++ {
-		// Combine the random bits, determined by the XOR of 255 with the netmask byte
-		// and a randomly generated byte, with the original bits in the network address.
-		// The bitwise OR operation ensures that bits are set where the netmask has 0s,
-		// introducing randomness, while retaining the original bits where the netmask has 1s.
-		picked = append(picked, ((255^netmaskBytes[i])&byte(rand.Intn(256)))|addressBytes[i])
+		// Combine the random bits with the original network address
+		picked[i] = ((255 ^ netmaskBytes[i]) & byte(rand.Intn(256))) | addressBytes[i]
 	}
 
 	// Turn the randomized byte slice into an IP address.
