@@ -4,13 +4,13 @@
 package provider
 
 import (
-	"fmt"
-	"reflect"
-	"strconv"
 	"testing"
 
+	"github.com/hashicorp/terraform-plugin-testing/compare"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
-	"github.com/hashicorp/terraform-plugin-testing/terraform"
+	"github.com/hashicorp/terraform-plugin-testing/knownvalue"
+	"github.com/hashicorp/terraform-plugin-testing/statecheck"
+	"github.com/hashicorp/terraform-plugin-testing/tfjsonpath"
 )
 
 // These results are current as of Go 1.6. The Go
@@ -31,21 +31,27 @@ func TestAccResourceShuffle(t *testing.T) {
     						input = ["a", "b", "c", "d", "e"]
     						seed = "-"
 						}`,
-				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttrWith("random_shuffle.default_length", "result.#", testAccResourceShuffleCheckLength("5")),
-					resource.TestCheckResourceAttr("random_shuffle.default_length", "result.0", "a"),
-					resource.TestCheckResourceAttr("random_shuffle.default_length", "result.1", "c"),
-					resource.TestCheckResourceAttr("random_shuffle.default_length", "result.2", "b"),
-					resource.TestCheckResourceAttr("random_shuffle.default_length", "result.3", "e"),
-					resource.TestCheckResourceAttr("random_shuffle.default_length", "result.4", "d"),
-				),
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue("random_shuffle.default_length", tfjsonpath.New("result"),
+						knownvalue.ListExact(
+							[]knownvalue.Check{
+								knownvalue.StringExact("a"),
+								knownvalue.StringExact("c"),
+								knownvalue.StringExact("b"),
+								knownvalue.StringExact("e"),
+								knownvalue.StringExact("d"),
+							},
+						),
+					),
+				},
 			},
 		},
 	})
 }
 
 func TestAccResourceShuffle_Keepers_Keep_EmptyMap(t *testing.T) {
-	var result1, result2 []string
+	// The result attribute values should be the same between test steps
+	assertResultSame := statecheck.CompareValue(compare.ValuesSame())
 
 	resource.ParallelTest(t, resource.TestCase{
 		Steps: []resource.TestStep{
@@ -55,10 +61,10 @@ func TestAccResourceShuffle_Keepers_Keep_EmptyMap(t *testing.T) {
 					input = ["a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k"]
 					keepers = {}
 				}`,
-				Check: resource.ComposeTestCheckFunc(
-					testExtractResourceAttrList("random_shuffle.test", "result", &result1),
-					resource.TestCheckResourceAttr("random_shuffle.test", "keepers.%", "0"),
-				),
+				ConfigStateChecks: []statecheck.StateCheck{
+					assertResultSame.AddStateValue("random_shuffle.test", tfjsonpath.New("result")),
+					statecheck.ExpectKnownValue("random_shuffle.test", tfjsonpath.New("keepers"), knownvalue.MapSizeExact(0)),
+				},
 			},
 			{
 				ProtoV5ProviderFactories: protoV5ProviderFactories(),
@@ -66,18 +72,18 @@ func TestAccResourceShuffle_Keepers_Keep_EmptyMap(t *testing.T) {
 					input = ["a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k"]
 					keepers = {}
 				}`,
-				Check: resource.ComposeTestCheckFunc(
-					testExtractResourceAttrList("random_shuffle.test", "result", &result2),
-					testCheckAttributeValueListsEqual(&result1, &result2),
-					resource.TestCheckResourceAttr("random_shuffle.test", "keepers.%", "0"),
-				),
+				ConfigStateChecks: []statecheck.StateCheck{
+					assertResultSame.AddStateValue("random_shuffle.test", tfjsonpath.New("result")),
+					statecheck.ExpectKnownValue("random_shuffle.test", tfjsonpath.New("keepers"), knownvalue.MapSizeExact(0)),
+				},
 			},
 		},
 	})
 }
 
 func TestAccResourceShuffle_Keepers_Keep_EmptyMapToNullValue(t *testing.T) {
-	var result1, result2 []string
+	// The result attribute values should be the same between test steps
+	assertResultSame := statecheck.CompareValue(compare.ValuesSame())
 
 	resource.ParallelTest(t, resource.TestCase{
 		Steps: []resource.TestStep{
@@ -87,10 +93,10 @@ func TestAccResourceShuffle_Keepers_Keep_EmptyMapToNullValue(t *testing.T) {
 					input = ["a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k"]
 					keepers = {}
 				}`,
-				Check: resource.ComposeTestCheckFunc(
-					testExtractResourceAttrList("random_shuffle.test", "result", &result1),
-					resource.TestCheckResourceAttr("random_shuffle.test", "keepers.%", "0"),
-				),
+				ConfigStateChecks: []statecheck.StateCheck{
+					assertResultSame.AddStateValue("random_shuffle.test", tfjsonpath.New("result")),
+					statecheck.ExpectKnownValue("random_shuffle.test", tfjsonpath.New("keepers"), knownvalue.MapSizeExact(0)),
+				},
 			},
 			{
 				ProtoV5ProviderFactories: protoV5ProviderFactories(),
@@ -100,18 +106,18 @@ func TestAccResourceShuffle_Keepers_Keep_EmptyMapToNullValue(t *testing.T) {
 						"key" = null
 					}
 				}`,
-				Check: resource.ComposeTestCheckFunc(
-					testExtractResourceAttrList("random_shuffle.test", "result", &result2),
-					testCheckAttributeValueListsEqual(&result1, &result2),
-					resource.TestCheckResourceAttr("random_shuffle.test", "keepers.%", "1"),
-				),
+				ConfigStateChecks: []statecheck.StateCheck{
+					assertResultSame.AddStateValue("random_shuffle.test", tfjsonpath.New("result")),
+					statecheck.ExpectKnownValue("random_shuffle.test", tfjsonpath.New("keepers"), knownvalue.MapSizeExact(1)),
+				},
 			},
 		},
 	})
 }
 
 func TestAccResourceShuffle_Keepers_Keep_NullMap(t *testing.T) {
-	var result1, result2 []string
+	// The result attribute values should be the same between test steps
+	assertResultSame := statecheck.CompareValue(compare.ValuesSame())
 
 	resource.ParallelTest(t, resource.TestCase{
 		Steps: []resource.TestStep{
@@ -120,28 +126,28 @@ func TestAccResourceShuffle_Keepers_Keep_NullMap(t *testing.T) {
 				Config: `resource "random_shuffle" "test" {
 					input = ["a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k"]
 				}`,
-				Check: resource.ComposeTestCheckFunc(
-					testExtractResourceAttrList("random_shuffle.test", "result", &result1),
-					resource.TestCheckResourceAttr("random_shuffle.test", "keepers.%", "0"),
-				),
+				ConfigStateChecks: []statecheck.StateCheck{
+					assertResultSame.AddStateValue("random_shuffle.test", tfjsonpath.New("result")),
+					statecheck.ExpectKnownValue("random_shuffle.test", tfjsonpath.New("keepers"), knownvalue.Null()),
+				},
 			},
 			{
 				ProtoV5ProviderFactories: protoV5ProviderFactories(),
 				Config: `resource "random_shuffle" "test" {
 					input = ["a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k"]
 				}`,
-				Check: resource.ComposeTestCheckFunc(
-					testExtractResourceAttrList("random_shuffle.test", "result", &result2),
-					testCheckAttributeValueListsEqual(&result1, &result2),
-					resource.TestCheckResourceAttr("random_shuffle.test", "keepers.%", "0"),
-				),
+				ConfigStateChecks: []statecheck.StateCheck{
+					assertResultSame.AddStateValue("random_shuffle.test", tfjsonpath.New("result")),
+					statecheck.ExpectKnownValue("random_shuffle.test", tfjsonpath.New("keepers"), knownvalue.Null()),
+				},
 			},
 		},
 	})
 }
 
 func TestAccResourceShuffle_Keepers_Keep_NullMapToNullValue(t *testing.T) {
-	var result1, result2 []string
+	// The result attribute values should be the same between test steps
+	assertResultSame := statecheck.CompareValue(compare.ValuesSame())
 
 	resource.ParallelTest(t, resource.TestCase{
 		Steps: []resource.TestStep{
@@ -150,10 +156,10 @@ func TestAccResourceShuffle_Keepers_Keep_NullMapToNullValue(t *testing.T) {
 				Config: `resource "random_shuffle" "test" {
 					input = ["a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k"]
 				}`,
-				Check: resource.ComposeTestCheckFunc(
-					testExtractResourceAttrList("random_shuffle.test", "result", &result1),
-					resource.TestCheckResourceAttr("random_shuffle.test", "keepers.%", "0"),
-				),
+				ConfigStateChecks: []statecheck.StateCheck{
+					assertResultSame.AddStateValue("random_shuffle.test", tfjsonpath.New("result")),
+					statecheck.ExpectKnownValue("random_shuffle.test", tfjsonpath.New("keepers"), knownvalue.Null()),
+				},
 			},
 			{
 				ProtoV5ProviderFactories: protoV5ProviderFactories(),
@@ -163,18 +169,18 @@ func TestAccResourceShuffle_Keepers_Keep_NullMapToNullValue(t *testing.T) {
 						"key" = null
 					}
 				}`,
-				Check: resource.ComposeTestCheckFunc(
-					testExtractResourceAttrList("random_shuffle.test", "result", &result2),
-					testCheckAttributeValueListsEqual(&result1, &result2),
-					resource.TestCheckResourceAttr("random_shuffle.test", "keepers.%", "1"),
-				),
+				ConfigStateChecks: []statecheck.StateCheck{
+					assertResultSame.AddStateValue("random_shuffle.test", tfjsonpath.New("result")),
+					statecheck.ExpectKnownValue("random_shuffle.test", tfjsonpath.New("keepers"), knownvalue.MapSizeExact(1)),
+				},
 			},
 		},
 	})
 }
 
 func TestAccResourceShuffle_Keepers_Keep_NullValue(t *testing.T) {
-	var result1, result2 []string
+	// The result attribute values should be the same between test steps
+	assertResultSame := statecheck.CompareValue(compare.ValuesSame())
 
 	resource.ParallelTest(t, resource.TestCase{
 		Steps: []resource.TestStep{
@@ -186,10 +192,10 @@ func TestAccResourceShuffle_Keepers_Keep_NullValue(t *testing.T) {
 						"key" = null
 					}
 				}`,
-				Check: resource.ComposeTestCheckFunc(
-					testExtractResourceAttrList("random_shuffle.test", "result", &result1),
-					resource.TestCheckResourceAttr("random_shuffle.test", "keepers.%", "1"),
-				),
+				ConfigStateChecks: []statecheck.StateCheck{
+					assertResultSame.AddStateValue("random_shuffle.test", tfjsonpath.New("result")),
+					statecheck.ExpectKnownValue("random_shuffle.test", tfjsonpath.New("keepers"), knownvalue.MapSizeExact(1)),
+				},
 			},
 			{
 				ProtoV5ProviderFactories: protoV5ProviderFactories(),
@@ -199,18 +205,18 @@ func TestAccResourceShuffle_Keepers_Keep_NullValue(t *testing.T) {
 						"key" = null
 					}
 				}`,
-				Check: resource.ComposeTestCheckFunc(
-					testExtractResourceAttrList("random_shuffle.test", "result", &result2),
-					testCheckAttributeValueListsEqual(&result1, &result2),
-					resource.TestCheckResourceAttr("random_shuffle.test", "keepers.%", "1"),
-				),
+				ConfigStateChecks: []statecheck.StateCheck{
+					assertResultSame.AddStateValue("random_shuffle.test", tfjsonpath.New("result")),
+					statecheck.ExpectKnownValue("random_shuffle.test", tfjsonpath.New("keepers"), knownvalue.MapSizeExact(1)),
+				},
 			},
 		},
 	})
 }
 
 func TestAccResourceShuffle_Keepers_Keep_NullValues(t *testing.T) {
-	var result1, result2 []string
+	// The result attribute values should be the same between test steps
+	assertResultSame := statecheck.CompareValue(compare.ValuesSame())
 
 	resource.ParallelTest(t, resource.TestCase{
 		Steps: []resource.TestStep{
@@ -223,10 +229,10 @@ func TestAccResourceShuffle_Keepers_Keep_NullValues(t *testing.T) {
 						"key2" = null
 					}
 				}`,
-				Check: resource.ComposeTestCheckFunc(
-					testExtractResourceAttrList("random_shuffle.test", "result", &result1),
-					resource.TestCheckResourceAttr("random_shuffle.test", "keepers.%", "2"),
-				),
+				ConfigStateChecks: []statecheck.StateCheck{
+					assertResultSame.AddStateValue("random_shuffle.test", tfjsonpath.New("result")),
+					statecheck.ExpectKnownValue("random_shuffle.test", tfjsonpath.New("keepers"), knownvalue.MapSizeExact(2)),
+				},
 			},
 			{
 				ProtoV5ProviderFactories: protoV5ProviderFactories(),
@@ -237,18 +243,18 @@ func TestAccResourceShuffle_Keepers_Keep_NullValues(t *testing.T) {
 						"key2" = null
 					}
 				}`,
-				Check: resource.ComposeTestCheckFunc(
-					testExtractResourceAttrList("random_shuffle.test", "result", &result2),
-					testCheckAttributeValueListsEqual(&result1, &result2),
-					resource.TestCheckResourceAttr("random_shuffle.test", "keepers.%", "2"),
-				),
+				ConfigStateChecks: []statecheck.StateCheck{
+					assertResultSame.AddStateValue("random_shuffle.test", tfjsonpath.New("result")),
+					statecheck.ExpectKnownValue("random_shuffle.test", tfjsonpath.New("keepers"), knownvalue.MapSizeExact(2)),
+				},
 			},
 		},
 	})
 }
 
 func TestAccResourceShuffle_Keepers_Keep_Value(t *testing.T) {
-	var result1, result2 []string
+	// The result attribute values should be the same between test steps
+	assertResultSame := statecheck.CompareValue(compare.ValuesSame())
 
 	resource.ParallelTest(t, resource.TestCase{
 		Steps: []resource.TestStep{
@@ -260,10 +266,10 @@ func TestAccResourceShuffle_Keepers_Keep_Value(t *testing.T) {
 						"key" = "123"
 					}
 				}`,
-				Check: resource.ComposeTestCheckFunc(
-					testExtractResourceAttrList("random_shuffle.test", "result", &result1),
-					resource.TestCheckResourceAttr("random_shuffle.test", "keepers.%", "1"),
-				),
+				ConfigStateChecks: []statecheck.StateCheck{
+					assertResultSame.AddStateValue("random_shuffle.test", tfjsonpath.New("result")),
+					statecheck.ExpectKnownValue("random_shuffle.test", tfjsonpath.New("keepers"), knownvalue.MapSizeExact(1)),
+				},
 			},
 			{
 				ProtoV5ProviderFactories: protoV5ProviderFactories(),
@@ -273,18 +279,18 @@ func TestAccResourceShuffle_Keepers_Keep_Value(t *testing.T) {
 						"key" = "123"
 					}
 				}`,
-				Check: resource.ComposeTestCheckFunc(
-					testExtractResourceAttrList("random_shuffle.test", "result", &result2),
-					testCheckAttributeValueListsEqual(&result1, &result2),
-					resource.TestCheckResourceAttr("random_shuffle.test", "keepers.%", "1"),
-				),
+				ConfigStateChecks: []statecheck.StateCheck{
+					assertResultSame.AddStateValue("random_shuffle.test", tfjsonpath.New("result")),
+					statecheck.ExpectKnownValue("random_shuffle.test", tfjsonpath.New("keepers"), knownvalue.MapSizeExact(1)),
+				},
 			},
 		},
 	})
 }
 
 func TestAccResourceShuffle_Keepers_Keep_Values(t *testing.T) {
-	var result1, result2 []string
+	// The result attribute values should be the same between test steps
+	assertResultSame := statecheck.CompareValue(compare.ValuesSame())
 
 	resource.ParallelTest(t, resource.TestCase{
 		Steps: []resource.TestStep{
@@ -297,10 +303,10 @@ func TestAccResourceShuffle_Keepers_Keep_Values(t *testing.T) {
 						"key2" = "456"
 					}
 				}`,
-				Check: resource.ComposeTestCheckFunc(
-					testExtractResourceAttrList("random_shuffle.test", "result", &result1),
-					resource.TestCheckResourceAttr("random_shuffle.test", "keepers.%", "2"),
-				),
+				ConfigStateChecks: []statecheck.StateCheck{
+					assertResultSame.AddStateValue("random_shuffle.test", tfjsonpath.New("result")),
+					statecheck.ExpectKnownValue("random_shuffle.test", tfjsonpath.New("keepers"), knownvalue.MapSizeExact(2)),
+				},
 			},
 			{
 				ProtoV5ProviderFactories: protoV5ProviderFactories(),
@@ -311,18 +317,18 @@ func TestAccResourceShuffle_Keepers_Keep_Values(t *testing.T) {
 						"key2" = "456"
 					}
 				}`,
-				Check: resource.ComposeTestCheckFunc(
-					testExtractResourceAttrList("random_shuffle.test", "result", &result2),
-					testCheckAttributeValueListsEqual(&result1, &result2),
-					resource.TestCheckResourceAttr("random_shuffle.test", "keepers.%", "2"),
-				),
+				ConfigStateChecks: []statecheck.StateCheck{
+					assertResultSame.AddStateValue("random_shuffle.test", tfjsonpath.New("result")),
+					statecheck.ExpectKnownValue("random_shuffle.test", tfjsonpath.New("keepers"), knownvalue.MapSizeExact(2)),
+				},
 			},
 		},
 	})
 }
 
 func TestAccResourceShuffle_Keepers_Replace_EmptyMapToValue(t *testing.T) {
-	var result1, result2 []string
+	// The result attribute values should differ between test steps
+	assertResultDiffer := statecheck.CompareValue(compare.ValuesDiffer())
 
 	resource.ParallelTest(t, resource.TestCase{
 		Steps: []resource.TestStep{
@@ -332,10 +338,10 @@ func TestAccResourceShuffle_Keepers_Replace_EmptyMapToValue(t *testing.T) {
 					input = ["a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k"]
 					keepers = {}
 				}`,
-				Check: resource.ComposeTestCheckFunc(
-					testExtractResourceAttrList("random_shuffle.test", "result", &result1),
-					resource.TestCheckResourceAttr("random_shuffle.test", "keepers.%", "0"),
-				),
+				ConfigStateChecks: []statecheck.StateCheck{
+					assertResultDiffer.AddStateValue("random_shuffle.test", tfjsonpath.New("result")),
+					statecheck.ExpectKnownValue("random_shuffle.test", tfjsonpath.New("keepers"), knownvalue.MapSizeExact(0)),
+				},
 			},
 			{
 				ProtoV5ProviderFactories: protoV5ProviderFactories(),
@@ -345,18 +351,18 @@ func TestAccResourceShuffle_Keepers_Replace_EmptyMapToValue(t *testing.T) {
 						"key" = "123"
 					}
 				}`,
-				Check: resource.ComposeTestCheckFunc(
-					testExtractResourceAttrList("random_shuffle.test", "result", &result2),
-					testCheckAttributeValueListsDiffer(&result1, &result2),
-					resource.TestCheckResourceAttr("random_shuffle.test", "keepers.%", "1"),
-				),
+				ConfigStateChecks: []statecheck.StateCheck{
+					assertResultDiffer.AddStateValue("random_shuffle.test", tfjsonpath.New("result")),
+					statecheck.ExpectKnownValue("random_shuffle.test", tfjsonpath.New("keepers"), knownvalue.MapSizeExact(1)),
+				},
 			},
 		},
 	})
 }
 
 func TestAccResourceShuffle_Keepers_Replace_NullMapToValue(t *testing.T) {
-	var result1, result2 []string
+	// The result attribute values should differ between test steps
+	assertResultDiffer := statecheck.CompareValue(compare.ValuesDiffer())
 
 	resource.ParallelTest(t, resource.TestCase{
 		Steps: []resource.TestStep{
@@ -365,10 +371,10 @@ func TestAccResourceShuffle_Keepers_Replace_NullMapToValue(t *testing.T) {
 				Config: `resource "random_shuffle" "test" {
 					input = ["a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k"]
 				}`,
-				Check: resource.ComposeTestCheckFunc(
-					testExtractResourceAttrList("random_shuffle.test", "result", &result1),
-					resource.TestCheckResourceAttr("random_shuffle.test", "keepers.%", "0"),
-				),
+				ConfigStateChecks: []statecheck.StateCheck{
+					assertResultDiffer.AddStateValue("random_shuffle.test", tfjsonpath.New("result")),
+					statecheck.ExpectKnownValue("random_shuffle.test", tfjsonpath.New("keepers"), knownvalue.Null()),
+				},
 			},
 			{
 				ProtoV5ProviderFactories: protoV5ProviderFactories(),
@@ -378,18 +384,18 @@ func TestAccResourceShuffle_Keepers_Replace_NullMapToValue(t *testing.T) {
 						"key" = "123"
 					}
 				}`,
-				Check: resource.ComposeTestCheckFunc(
-					testExtractResourceAttrList("random_shuffle.test", "result", &result2),
-					testCheckAttributeValueListsDiffer(&result1, &result2),
-					resource.TestCheckResourceAttr("random_shuffle.test", "keepers.%", "1"),
-				),
+				ConfigStateChecks: []statecheck.StateCheck{
+					assertResultDiffer.AddStateValue("random_shuffle.test", tfjsonpath.New("result")),
+					statecheck.ExpectKnownValue("random_shuffle.test", tfjsonpath.New("keepers"), knownvalue.MapSizeExact(1)),
+				},
 			},
 		},
 	})
 }
 
 func TestAccResourceShuffle_Keepers_Replace_NullValueToValue(t *testing.T) {
-	var result1, result2 []string
+	// The result attribute values should differ between test steps
+	assertResultDiffer := statecheck.CompareValue(compare.ValuesDiffer())
 
 	resource.ParallelTest(t, resource.TestCase{
 		Steps: []resource.TestStep{
@@ -401,10 +407,10 @@ func TestAccResourceShuffle_Keepers_Replace_NullValueToValue(t *testing.T) {
 						"key" = null
 					}
 				}`,
-				Check: resource.ComposeTestCheckFunc(
-					testExtractResourceAttrList("random_shuffle.test", "result", &result1),
-					resource.TestCheckResourceAttr("random_shuffle.test", "keepers.%", "1"),
-				),
+				ConfigStateChecks: []statecheck.StateCheck{
+					assertResultDiffer.AddStateValue("random_shuffle.test", tfjsonpath.New("result")),
+					statecheck.ExpectKnownValue("random_shuffle.test", tfjsonpath.New("keepers"), knownvalue.MapSizeExact(1)),
+				},
 			},
 			{
 				ProtoV5ProviderFactories: protoV5ProviderFactories(),
@@ -414,18 +420,18 @@ func TestAccResourceShuffle_Keepers_Replace_NullValueToValue(t *testing.T) {
 						"key" = "123"
 					}
 				}`,
-				Check: resource.ComposeTestCheckFunc(
-					testExtractResourceAttrList("random_shuffle.test", "result", &result2),
-					testCheckAttributeValueListsDiffer(&result1, &result2),
-					resource.TestCheckResourceAttr("random_shuffle.test", "keepers.%", "1"),
-				),
+				ConfigStateChecks: []statecheck.StateCheck{
+					assertResultDiffer.AddStateValue("random_shuffle.test", tfjsonpath.New("result")),
+					statecheck.ExpectKnownValue("random_shuffle.test", tfjsonpath.New("keepers"), knownvalue.MapSizeExact(1)),
+				},
 			},
 		},
 	})
 }
 
 func TestAccResourceShuffle_Keepers_Replace_ValueToEmptyMap(t *testing.T) {
-	var result1, result2 []string
+	// The result attribute values should differ between test steps
+	assertResultDiffer := statecheck.CompareValue(compare.ValuesDiffer())
 
 	resource.ParallelTest(t, resource.TestCase{
 		Steps: []resource.TestStep{
@@ -437,10 +443,10 @@ func TestAccResourceShuffle_Keepers_Replace_ValueToEmptyMap(t *testing.T) {
 						"key" = "123"
 					}
 				}`,
-				Check: resource.ComposeTestCheckFunc(
-					testExtractResourceAttrList("random_shuffle.test", "result", &result1),
-					resource.TestCheckResourceAttr("random_shuffle.test", "keepers.%", "1"),
-				),
+				ConfigStateChecks: []statecheck.StateCheck{
+					assertResultDiffer.AddStateValue("random_shuffle.test", tfjsonpath.New("result")),
+					statecheck.ExpectKnownValue("random_shuffle.test", tfjsonpath.New("keepers"), knownvalue.MapSizeExact(1)),
+				},
 			},
 			{
 				ProtoV5ProviderFactories: protoV5ProviderFactories(),
@@ -448,18 +454,18 @@ func TestAccResourceShuffle_Keepers_Replace_ValueToEmptyMap(t *testing.T) {
 					input = ["a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k"]
 					keepers = {}
 				}`,
-				Check: resource.ComposeTestCheckFunc(
-					testExtractResourceAttrList("random_shuffle.test", "result", &result2),
-					testCheckAttributeValueListsDiffer(&result1, &result2),
-					resource.TestCheckResourceAttr("random_shuffle.test", "keepers.%", "0"),
-				),
+				ConfigStateChecks: []statecheck.StateCheck{
+					assertResultDiffer.AddStateValue("random_shuffle.test", tfjsonpath.New("result")),
+					statecheck.ExpectKnownValue("random_shuffle.test", tfjsonpath.New("keepers"), knownvalue.MapSizeExact(0)),
+				},
 			},
 		},
 	})
 }
 
 func TestAccResourceShuffle_Keepers_Replace_ValueToNullMap(t *testing.T) {
-	var result1, result2 []string
+	// The result attribute values should differ between test steps
+	assertResultDiffer := statecheck.CompareValue(compare.ValuesDiffer())
 
 	resource.ParallelTest(t, resource.TestCase{
 		Steps: []resource.TestStep{
@@ -471,28 +477,28 @@ func TestAccResourceShuffle_Keepers_Replace_ValueToNullMap(t *testing.T) {
 						"key" = "123"
 					}
 				}`,
-				Check: resource.ComposeTestCheckFunc(
-					testExtractResourceAttrList("random_shuffle.test", "result", &result1),
-					resource.TestCheckResourceAttr("random_shuffle.test", "keepers.%", "1"),
-				),
+				ConfigStateChecks: []statecheck.StateCheck{
+					assertResultDiffer.AddStateValue("random_shuffle.test", tfjsonpath.New("result")),
+					statecheck.ExpectKnownValue("random_shuffle.test", tfjsonpath.New("keepers"), knownvalue.MapSizeExact(1)),
+				},
 			},
 			{
 				ProtoV5ProviderFactories: protoV5ProviderFactories(),
 				Config: `resource "random_shuffle" "test" {
 					input = ["a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k"]
 				}`,
-				Check: resource.ComposeTestCheckFunc(
-					testExtractResourceAttrList("random_shuffle.test", "result", &result2),
-					testCheckAttributeValueListsDiffer(&result1, &result2),
-					resource.TestCheckResourceAttr("random_shuffle.test", "keepers.%", "0"),
-				),
+				ConfigStateChecks: []statecheck.StateCheck{
+					assertResultDiffer.AddStateValue("random_shuffle.test", tfjsonpath.New("result")),
+					statecheck.ExpectKnownValue("random_shuffle.test", tfjsonpath.New("keepers"), knownvalue.Null()),
+				},
 			},
 		},
 	})
 }
 
 func TestAccResourceShuffle_Keepers_Replace_ValueToNullValue(t *testing.T) {
-	var result1, result2 []string
+	// The result attribute values should differ between test steps
+	assertResultDiffer := statecheck.CompareValue(compare.ValuesDiffer())
 
 	resource.ParallelTest(t, resource.TestCase{
 		Steps: []resource.TestStep{
@@ -504,10 +510,10 @@ func TestAccResourceShuffle_Keepers_Replace_ValueToNullValue(t *testing.T) {
 						"key" = "123"
 					}
 				}`,
-				Check: resource.ComposeTestCheckFunc(
-					testExtractResourceAttrList("random_shuffle.test", "result", &result1),
-					resource.TestCheckResourceAttr("random_shuffle.test", "keepers.%", "1"),
-				),
+				ConfigStateChecks: []statecheck.StateCheck{
+					assertResultDiffer.AddStateValue("random_shuffle.test", tfjsonpath.New("result")),
+					statecheck.ExpectKnownValue("random_shuffle.test", tfjsonpath.New("keepers"), knownvalue.MapSizeExact(1)),
+				},
 			},
 			{
 				ProtoV5ProviderFactories: protoV5ProviderFactories(),
@@ -517,18 +523,18 @@ func TestAccResourceShuffle_Keepers_Replace_ValueToNullValue(t *testing.T) {
 						"key" = null
 					}
 				}`,
-				Check: resource.ComposeTestCheckFunc(
-					testExtractResourceAttrList("random_shuffle.test", "result", &result2),
-					testCheckAttributeValueListsDiffer(&result1, &result2),
-					resource.TestCheckResourceAttr("random_shuffle.test", "keepers.%", "1"),
-				),
+				ConfigStateChecks: []statecheck.StateCheck{
+					assertResultDiffer.AddStateValue("random_shuffle.test", tfjsonpath.New("result")),
+					statecheck.ExpectKnownValue("random_shuffle.test", tfjsonpath.New("keepers"), knownvalue.MapSizeExact(1)),
+				},
 			},
 		},
 	})
 }
 
 func TestAccResourceShuffle_Keepers_Replace_ValueToNewValue(t *testing.T) {
-	var result1, result2 []string
+	// The result attribute values should differ between test steps
+	assertResultDiffer := statecheck.CompareValue(compare.ValuesDiffer())
 
 	resource.ParallelTest(t, resource.TestCase{
 		Steps: []resource.TestStep{
@@ -540,10 +546,10 @@ func TestAccResourceShuffle_Keepers_Replace_ValueToNewValue(t *testing.T) {
 						"key" = "123"
 					}
 				}`,
-				Check: resource.ComposeTestCheckFunc(
-					testExtractResourceAttrList("random_shuffle.test", "result", &result1),
-					resource.TestCheckResourceAttr("random_shuffle.test", "keepers.%", "1"),
-				),
+				ConfigStateChecks: []statecheck.StateCheck{
+					assertResultDiffer.AddStateValue("random_shuffle.test", tfjsonpath.New("result")),
+					statecheck.ExpectKnownValue("random_shuffle.test", tfjsonpath.New("keepers"), knownvalue.MapSizeExact(1)),
+				},
 			},
 			{
 				ProtoV5ProviderFactories: protoV5ProviderFactories(),
@@ -553,18 +559,18 @@ func TestAccResourceShuffle_Keepers_Replace_ValueToNewValue(t *testing.T) {
 						"key" = "456"
 					}
 				}`,
-				Check: resource.ComposeTestCheckFunc(
-					testExtractResourceAttrList("random_shuffle.test", "result", &result2),
-					testCheckAttributeValueListsDiffer(&result1, &result2),
-					resource.TestCheckResourceAttr("random_shuffle.test", "keepers.%", "1"),
-				),
+				ConfigStateChecks: []statecheck.StateCheck{
+					assertResultDiffer.AddStateValue("random_shuffle.test", tfjsonpath.New("result")),
+					statecheck.ExpectKnownValue("random_shuffle.test", tfjsonpath.New("keepers"), knownvalue.MapSizeExact(1)),
+				},
 			},
 		},
 	})
 }
 
 func TestAccResourceShuffle_Keepers_FrameworkMigration_NullMapToNullValue(t *testing.T) {
-	var result1, result2 []string
+	// The result attribute values should be the same between test steps
+	assertResultSame := statecheck.CompareValue(compare.ValuesSame())
 
 	resource.ParallelTest(t, resource.TestCase{
 		Steps: []resource.TestStep{
@@ -576,10 +582,10 @@ func TestAccResourceShuffle_Keepers_FrameworkMigration_NullMapToNullValue(t *tes
 						"key" = null
 					}
 				}`,
-				Check: resource.ComposeTestCheckFunc(
-					testExtractResourceAttrList("random_shuffle.test", "result", &result1),
-					resource.TestCheckResourceAttr("random_shuffle.test", "keepers.%", "0"),
-				),
+				ConfigStateChecks: []statecheck.StateCheck{
+					assertResultSame.AddStateValue("random_shuffle.test", tfjsonpath.New("result")),
+					statecheck.ExpectKnownValue("random_shuffle.test", tfjsonpath.New("keepers"), knownvalue.Null()),
+				},
 			},
 			{
 				ProtoV5ProviderFactories: protoV5ProviderFactories(),
@@ -589,18 +595,18 @@ func TestAccResourceShuffle_Keepers_FrameworkMigration_NullMapToNullValue(t *tes
 						"key" = null
 					}
 				}`,
-				Check: resource.ComposeTestCheckFunc(
-					testExtractResourceAttrList("random_shuffle.test", "result", &result2),
-					testCheckAttributeValueListsEqual(&result1, &result2),
-					resource.TestCheckResourceAttr("random_shuffle.test", "keepers.%", "1"),
-				),
+				ConfigStateChecks: []statecheck.StateCheck{
+					assertResultSame.AddStateValue("random_shuffle.test", tfjsonpath.New("result")),
+					statecheck.ExpectKnownValue("random_shuffle.test", tfjsonpath.New("keepers"), knownvalue.MapSizeExact(1)),
+				},
 			},
 		},
 	})
 }
 
 func TestAccResourceShuffle_Keepers_FrameworkMigration_NullMapToValue(t *testing.T) {
-	var result1, result2 []string
+	// The result attribute values should differ between test steps
+	assertResultDiffer := statecheck.CompareValue(compare.ValuesDiffer())
 
 	resource.ParallelTest(t, resource.TestCase{
 		Steps: []resource.TestStep{
@@ -612,10 +618,10 @@ func TestAccResourceShuffle_Keepers_FrameworkMigration_NullMapToValue(t *testing
 						"key" = null
 					}
 				}`,
-				Check: resource.ComposeTestCheckFunc(
-					testExtractResourceAttrList("random_shuffle.test", "result", &result1),
-					resource.TestCheckResourceAttr("random_shuffle.test", "keepers.%", "0"),
-				),
+				ConfigStateChecks: []statecheck.StateCheck{
+					assertResultDiffer.AddStateValue("random_shuffle.test", tfjsonpath.New("result")),
+					statecheck.ExpectKnownValue("random_shuffle.test", tfjsonpath.New("keepers"), knownvalue.Null()),
+				},
 			},
 			{
 				ProtoV5ProviderFactories: protoV5ProviderFactories(),
@@ -625,18 +631,18 @@ func TestAccResourceShuffle_Keepers_FrameworkMigration_NullMapToValue(t *testing
 						"key" = "123"
 					}
 				}`,
-				Check: resource.ComposeTestCheckFunc(
-					testExtractResourceAttrList("random_shuffle.test", "result", &result2),
-					testCheckAttributeValueListsDiffer(&result1, &result2),
-					resource.TestCheckResourceAttr("random_shuffle.test", "keepers.%", "1"),
-				),
+				ConfigStateChecks: []statecheck.StateCheck{
+					assertResultDiffer.AddStateValue("random_shuffle.test", tfjsonpath.New("result")),
+					statecheck.ExpectKnownValue("random_shuffle.test", tfjsonpath.New("keepers"), knownvalue.MapSizeExact(1)),
+				},
 			},
 		},
 	})
 }
 
 func TestAccResourceShuffle_Keepers_FrameworkMigration_NullMapToMultipleNullValue(t *testing.T) {
-	var result1, result2 []string
+	// The result attribute values should be the same between test steps
+	assertResultSame := statecheck.CompareValue(compare.ValuesSame())
 
 	resource.ParallelTest(t, resource.TestCase{
 		Steps: []resource.TestStep{
@@ -649,10 +655,10 @@ func TestAccResourceShuffle_Keepers_FrameworkMigration_NullMapToMultipleNullValu
 						"key2" = null
 					}
 				}`,
-				Check: resource.ComposeTestCheckFunc(
-					testExtractResourceAttrList("random_shuffle.test", "result", &result1),
-					resource.TestCheckResourceAttr("random_shuffle.test", "keepers.%", "0"),
-				),
+				ConfigStateChecks: []statecheck.StateCheck{
+					assertResultSame.AddStateValue("random_shuffle.test", tfjsonpath.New("result")),
+					statecheck.ExpectKnownValue("random_shuffle.test", tfjsonpath.New("keepers"), knownvalue.Null()),
+				},
 			},
 			{
 				ProtoV5ProviderFactories: protoV5ProviderFactories(),
@@ -663,18 +669,18 @@ func TestAccResourceShuffle_Keepers_FrameworkMigration_NullMapToMultipleNullValu
 						"key2" = null
 					}
 				}`,
-				Check: resource.ComposeTestCheckFunc(
-					testExtractResourceAttrList("random_shuffle.test", "result", &result2),
-					testCheckAttributeValueListsEqual(&result1, &result2),
-					resource.TestCheckResourceAttr("random_shuffle.test", "keepers.%", "2"),
-				),
+				ConfigStateChecks: []statecheck.StateCheck{
+					assertResultSame.AddStateValue("random_shuffle.test", tfjsonpath.New("result")),
+					statecheck.ExpectKnownValue("random_shuffle.test", tfjsonpath.New("keepers"), knownvalue.MapSizeExact(2)),
+				},
 			},
 		},
 	})
 }
 
 func TestAccResourceShuffle_Keepers_FrameworkMigration_NullMapToMultipleValue(t *testing.T) {
-	var result1, result2 []string
+	// The result attribute values should differ between test steps
+	assertResultDiffer := statecheck.CompareValue(compare.ValuesDiffer())
 
 	resource.ParallelTest(t, resource.TestCase{
 		Steps: []resource.TestStep{
@@ -687,10 +693,10 @@ func TestAccResourceShuffle_Keepers_FrameworkMigration_NullMapToMultipleValue(t 
 						"key2" = null
 					}
 				}`,
-				Check: resource.ComposeTestCheckFunc(
-					testExtractResourceAttrList("random_shuffle.test", "result", &result1),
-					resource.TestCheckResourceAttr("random_shuffle.test", "keepers.%", "0"),
-				),
+				ConfigStateChecks: []statecheck.StateCheck{
+					assertResultDiffer.AddStateValue("random_shuffle.test", tfjsonpath.New("result")),
+					statecheck.ExpectKnownValue("random_shuffle.test", tfjsonpath.New("keepers"), knownvalue.Null()),
+				},
 			},
 			{
 				ProtoV5ProviderFactories: protoV5ProviderFactories(),
@@ -701,18 +707,18 @@ func TestAccResourceShuffle_Keepers_FrameworkMigration_NullMapToMultipleValue(t 
 						"key2" = "456"
 					}
 				}`,
-				Check: resource.ComposeTestCheckFunc(
-					testExtractResourceAttrList("random_shuffle.test", "result", &result2),
-					testCheckAttributeValueListsDiffer(&result1, &result2),
-					resource.TestCheckResourceAttr("random_shuffle.test", "keepers.%", "2"),
-				),
+				ConfigStateChecks: []statecheck.StateCheck{
+					assertResultDiffer.AddStateValue("random_shuffle.test", tfjsonpath.New("result")),
+					statecheck.ExpectKnownValue("random_shuffle.test", tfjsonpath.New("keepers"), knownvalue.MapSizeExact(2)),
+				},
 			},
 		},
 	})
 }
 
 func TestAccResourceShuffle_Keepers_FrameworkMigration_NullMapValue(t *testing.T) {
-	var result1, result2 []string
+	// The result attribute values should be the same between test steps
+	assertResultSame := statecheck.CompareValue(compare.ValuesSame())
 
 	resource.ParallelTest(t, resource.TestCase{
 		Steps: []resource.TestStep{
@@ -725,10 +731,10 @@ func TestAccResourceShuffle_Keepers_FrameworkMigration_NullMapValue(t *testing.T
 						"key2" = null
 					}
 				}`,
-				Check: resource.ComposeTestCheckFunc(
-					testExtractResourceAttrList("random_shuffle.test", "result", &result1),
-					resource.TestCheckResourceAttr("random_shuffle.test", "keepers.%", "1"),
-				),
+				ConfigStateChecks: []statecheck.StateCheck{
+					assertResultSame.AddStateValue("random_shuffle.test", tfjsonpath.New("result")),
+					statecheck.ExpectKnownValue("random_shuffle.test", tfjsonpath.New("keepers"), knownvalue.MapSizeExact(1)),
+				},
 			},
 			{
 				ProtoV5ProviderFactories: protoV5ProviderFactories(),
@@ -739,18 +745,18 @@ func TestAccResourceShuffle_Keepers_FrameworkMigration_NullMapValue(t *testing.T
 						"key2" = null
 					}
 				}`,
-				Check: resource.ComposeTestCheckFunc(
-					testExtractResourceAttrList("random_shuffle.test", "result", &result2),
-					testCheckAttributeValueListsEqual(&result1, &result2),
-					resource.TestCheckResourceAttr("random_shuffle.test", "keepers.%", "2"),
-				),
+				ConfigStateChecks: []statecheck.StateCheck{
+					assertResultSame.AddStateValue("random_shuffle.test", tfjsonpath.New("result")),
+					statecheck.ExpectKnownValue("random_shuffle.test", tfjsonpath.New("keepers"), knownvalue.MapSizeExact(2)),
+				},
 			},
 		},
 	})
 }
 
 func TestAccResourceShuffle_Keepers_FrameworkMigration_NullMapValueToValue(t *testing.T) {
-	var result1, result2 []string
+	// The result attribute values should differ between test steps
+	assertResultDiffer := statecheck.CompareValue(compare.ValuesDiffer())
 
 	resource.ParallelTest(t, resource.TestCase{
 		Steps: []resource.TestStep{
@@ -763,10 +769,10 @@ func TestAccResourceShuffle_Keepers_FrameworkMigration_NullMapValueToValue(t *te
 						"key2" = null
 					}
 				}`,
-				Check: resource.ComposeTestCheckFunc(
-					testExtractResourceAttrList("random_shuffle.test", "result", &result1),
-					resource.TestCheckResourceAttr("random_shuffle.test", "keepers.%", "1"),
-				),
+				ConfigStateChecks: []statecheck.StateCheck{
+					assertResultDiffer.AddStateValue("random_shuffle.test", tfjsonpath.New("result")),
+					statecheck.ExpectKnownValue("random_shuffle.test", tfjsonpath.New("keepers"), knownvalue.MapSizeExact(1)),
+				},
 			},
 			{
 				ProtoV5ProviderFactories: protoV5ProviderFactories(),
@@ -777,11 +783,10 @@ func TestAccResourceShuffle_Keepers_FrameworkMigration_NullMapValueToValue(t *te
 						"key2" = "456"
 					}
 				}`,
-				Check: resource.ComposeTestCheckFunc(
-					testExtractResourceAttrList("random_shuffle.test", "result", &result2),
-					testCheckAttributeValueListsDiffer(&result1, &result2),
-					resource.TestCheckResourceAttr("random_shuffle.test", "keepers.%", "2"),
-				),
+				ConfigStateChecks: []statecheck.StateCheck{
+					assertResultDiffer.AddStateValue("random_shuffle.test", tfjsonpath.New("result")),
+					statecheck.ExpectKnownValue("random_shuffle.test", tfjsonpath.New("keepers"), knownvalue.MapSizeExact(2)),
+				},
 			},
 		},
 	})
@@ -799,9 +804,9 @@ func TestAccResourceShuffle_ResultCount_Zero(t *testing.T) {
     						input        = ["a", "b", "c", "d", "e"]
     						result_count = 0
 						}`,
-				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttr("random_shuffle.test", "result.#", "0"),
-				),
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue("random_shuffle.test", tfjsonpath.New("result"), knownvalue.ListSizeExact(0)),
+				},
 			},
 		},
 	})
@@ -817,12 +822,17 @@ func TestAccResourceShuffle_ResultCount_Shorter(t *testing.T) {
     						seed = "-"
     						result_count = 3
 						}`,
-				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttrWith("random_shuffle.shorter_length", "result.#", testAccResourceShuffleCheckLength("3")),
-					resource.TestCheckResourceAttr("random_shuffle.shorter_length", "result.0", "a"),
-					resource.TestCheckResourceAttr("random_shuffle.shorter_length", "result.1", "c"),
-					resource.TestCheckResourceAttr("random_shuffle.shorter_length", "result.2", "b"),
-				),
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue("random_shuffle.shorter_length", tfjsonpath.New("result"),
+						knownvalue.ListExact(
+							[]knownvalue.Check{
+								knownvalue.StringExact("a"),
+								knownvalue.StringExact("c"),
+								knownvalue.StringExact("b"),
+							},
+						),
+					),
+				},
 			},
 		},
 	})
@@ -838,21 +848,26 @@ func TestAccResourceShuffle_ResultCount_Longer(t *testing.T) {
     						seed = "-"
     						result_count = 12
 						}`,
-				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttrWith("random_shuffle.longer_length", "result.#", testAccResourceShuffleCheckLength("12")),
-					resource.TestCheckResourceAttr("random_shuffle.longer_length", "result.0", "a"),
-					resource.TestCheckResourceAttr("random_shuffle.longer_length", "result.1", "c"),
-					resource.TestCheckResourceAttr("random_shuffle.longer_length", "result.2", "b"),
-					resource.TestCheckResourceAttr("random_shuffle.longer_length", "result.3", "e"),
-					resource.TestCheckResourceAttr("random_shuffle.longer_length", "result.4", "d"),
-					resource.TestCheckResourceAttr("random_shuffle.longer_length", "result.5", "a"),
-					resource.TestCheckResourceAttr("random_shuffle.longer_length", "result.6", "e"),
-					resource.TestCheckResourceAttr("random_shuffle.longer_length", "result.7", "d"),
-					resource.TestCheckResourceAttr("random_shuffle.longer_length", "result.8", "c"),
-					resource.TestCheckResourceAttr("random_shuffle.longer_length", "result.9", "b"),
-					resource.TestCheckResourceAttr("random_shuffle.longer_length", "result.10", "a"),
-					resource.TestCheckResourceAttr("random_shuffle.longer_length", "result.11", "b"),
-				),
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue("random_shuffle.longer_length", tfjsonpath.New("result"),
+						knownvalue.ListExact(
+							[]knownvalue.Check{
+								knownvalue.StringExact("a"),
+								knownvalue.StringExact("c"),
+								knownvalue.StringExact("b"),
+								knownvalue.StringExact("e"),
+								knownvalue.StringExact("d"),
+								knownvalue.StringExact("a"),
+								knownvalue.StringExact("e"),
+								knownvalue.StringExact("d"),
+								knownvalue.StringExact("c"),
+								knownvalue.StringExact("b"),
+								knownvalue.StringExact("a"),
+								knownvalue.StringExact("b"),
+							},
+						),
+					),
+				},
 			},
 		},
 	})
@@ -868,9 +883,9 @@ func TestAccResourceShuffle_Input_Empty(t *testing.T) {
     						seed = "-"
     						result_count = 12
 						}`,
-				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttrWith("random_shuffle.empty_length", "result.#", testAccResourceShuffleCheckLength("0")),
-				),
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue("random_shuffle.empty_length", tfjsonpath.New("result"), knownvalue.ListSizeExact(0)),
+				},
 			},
 		},
 	})
@@ -886,10 +901,15 @@ func TestAccResourceShuffle_Input_One(t *testing.T) {
     						seed = "-"
     						result_count = 1
 						}`,
-				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttrWith("random_shuffle.one_length", "result.#", testAccResourceShuffleCheckLength("1")),
-					resource.TestCheckResourceAttr("random_shuffle.one_length", "result.0", "a"),
-				),
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue("random_shuffle.one_length", tfjsonpath.New("result"),
+						knownvalue.ListExact(
+							[]knownvalue.Check{
+								knownvalue.StringExact("a"),
+							},
+						),
+					),
+				},
 			},
 		},
 	})
@@ -904,14 +924,19 @@ func TestAccResourceShuffle_UpgradeFromVersion3_3_2(t *testing.T) {
     						input = ["a", "b", "c", "d", "e"]
     						seed = "-"
 						}`,
-				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttrWith("random_shuffle.default_length", "result.#", testAccResourceShuffleCheckLength("5")),
-					resource.TestCheckResourceAttr("random_shuffle.default_length", "result.0", "a"),
-					resource.TestCheckResourceAttr("random_shuffle.default_length", "result.1", "c"),
-					resource.TestCheckResourceAttr("random_shuffle.default_length", "result.2", "b"),
-					resource.TestCheckResourceAttr("random_shuffle.default_length", "result.3", "e"),
-					resource.TestCheckResourceAttr("random_shuffle.default_length", "result.4", "d"),
-				),
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue("random_shuffle.default_length", tfjsonpath.New("result"),
+						knownvalue.ListExact(
+							[]knownvalue.Check{
+								knownvalue.StringExact("a"),
+								knownvalue.StringExact("c"),
+								knownvalue.StringExact("b"),
+								knownvalue.StringExact("e"),
+								knownvalue.StringExact("d"),
+							},
+						),
+					),
+				},
 			},
 			{
 				ProtoV5ProviderFactories: protoV5ProviderFactories(),
@@ -927,88 +952,20 @@ func TestAccResourceShuffle_UpgradeFromVersion3_3_2(t *testing.T) {
     						input = ["a", "b", "c", "d", "e"]
     						seed = "-"
 						}`,
-				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttrWith("random_shuffle.default_length", "result.#", testAccResourceShuffleCheckLength("5")),
-					resource.TestCheckResourceAttr("random_shuffle.default_length", "result.0", "a"),
-					resource.TestCheckResourceAttr("random_shuffle.default_length", "result.1", "c"),
-					resource.TestCheckResourceAttr("random_shuffle.default_length", "result.2", "b"),
-					resource.TestCheckResourceAttr("random_shuffle.default_length", "result.3", "e"),
-					resource.TestCheckResourceAttr("random_shuffle.default_length", "result.4", "d"),
-				),
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue("random_shuffle.default_length", tfjsonpath.New("result"),
+						knownvalue.ListExact(
+							[]knownvalue.Check{
+								knownvalue.StringExact("a"),
+								knownvalue.StringExact("c"),
+								knownvalue.StringExact("b"),
+								knownvalue.StringExact("e"),
+								knownvalue.StringExact("d"),
+							},
+						),
+					),
+				},
 			},
 		},
 	})
-}
-
-func testAccResourceShuffleCheckLength(expectedLength string) func(input string) error {
-	return func(input string) error {
-		if input != expectedLength {
-			return fmt.Errorf("got length %s; expected length %s", input, expectedLength)
-		}
-
-		return nil
-	}
-}
-
-//nolint:unparam
-func testExtractResourceAttrList(resourceName string, attributeName string, attributeValue *[]string) resource.TestCheckFunc {
-	return func(s *terraform.State) error {
-		rs, ok := s.RootModule().Resources[resourceName]
-
-		if !ok {
-			return fmt.Errorf("resource name %s not found in state", resourceName)
-		}
-
-		elementCountAttr := attributeName + ".#"
-
-		elementCountValue, ok := rs.Primary.Attributes[elementCountAttr]
-
-		if !ok {
-			return fmt.Errorf("attribute %s not found in resource %s state", elementCountAttr, resourceName)
-		}
-
-		elementCount, err := strconv.Atoi(elementCountValue)
-
-		if err != nil {
-			return fmt.Errorf("attribute %s not integer: %w", elementCountAttr, err)
-		}
-
-		listValue := make([]string, elementCount)
-
-		for i := 0; i < elementCount; i++ {
-			attr := attributeName + "." + strconv.Itoa(i)
-
-			attrValue, ok := rs.Primary.Attributes[attr]
-
-			if !ok {
-				return fmt.Errorf("attribute %s not found in resource %s state", attr, resourceName)
-			}
-
-			listValue[i] = attrValue
-		}
-
-		*attributeValue = listValue
-
-		return nil
-	}
-}
-
-func testCheckAttributeValueListsDiffer(i *[]string, j *[]string) resource.TestCheckFunc {
-	return func(s *terraform.State) error {
-		if reflect.DeepEqual(i, j) {
-			return fmt.Errorf("attribute values are the same")
-		}
-
-		return nil
-	}
-}
-
-func testCheckAttributeValueListsEqual(i *[]string, j *[]string) resource.TestCheckFunc {
-	return func(s *terraform.State) error {
-		if !reflect.DeepEqual(i, j) {
-			return fmt.Errorf("attribute values are different, got %v and %v", i, j)
-		}
-
-		return nil
-	}
 }
