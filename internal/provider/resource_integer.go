@@ -101,26 +101,26 @@ func (r *integerResource) Create(ctx context.Context, req resource.CreateRequest
 		return
 	}
 
-	max := int(plan.Max.ValueInt64())
-	min := int(plan.Min.ValueInt64())
+	maxVal := int(plan.Max.ValueInt64())
+	minVal := int(plan.Min.ValueInt64())
 	seed := plan.Seed.ValueString()
 
-	if max < min {
+	if maxVal < minVal {
 		resp.Diagnostics.AddError(
 			"Create Random Integer Error",
-			"The minimum (min) value needs to be smaller than or equal to maximum (max) value.",
+			"The minimum (minVal) value needs to be smaller than or equal to maximum (maxVal) value.",
 		)
 		return
 	}
 
 	rand := random.NewRand(seed)
-	number := rand.Intn((max+1)-min) + min
+	number := rand.Intn((maxVal+1)-minVal) + minVal
 
 	u := &integerModelV0{
 		ID:      types.StringValue(strconv.Itoa(number)),
 		Keepers: plan.Keepers,
-		Min:     types.Int64Value(int64(min)),
-		Max:     types.Int64Value(int64(max)),
+		Min:     types.Int64Value(int64(minVal)),
+		Max:     types.Int64Value(int64(maxVal)),
 		Result:  types.Int64Value(int64(number)),
 	}
 
@@ -179,7 +179,7 @@ func (r *integerResource) ImportState(ctx context.Context, req resource.ImportSt
 		return
 	}
 
-	min, err := strconv.ParseInt(parts[1], 10, 64)
+	minVal, err := strconv.ParseInt(parts[1], 10, 64)
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Import Random Integer Error",
@@ -189,7 +189,7 @@ func (r *integerResource) ImportState(ctx context.Context, req resource.ImportSt
 		return
 	}
 
-	max, err := strconv.ParseInt(parts[2], 10, 64)
+	maxVal, err := strconv.ParseInt(parts[2], 10, 64)
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Import Random Integer Error",
@@ -204,8 +204,8 @@ func (r *integerResource) ImportState(ctx context.Context, req resource.ImportSt
 	state.ID = types.StringValue(parts[0])
 	state.Keepers = types.MapNull(types.StringType)
 	state.Result = types.Int64Value(result)
-	state.Min = types.Int64Value(min)
-	state.Max = types.Int64Value(max)
+	state.Min = types.Int64Value(minVal)
+	state.Max = types.Int64Value(maxVal)
 
 	if len(parts) == 4 {
 		state.Seed = types.StringValue(parts[3])
