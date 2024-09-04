@@ -9,9 +9,9 @@ require (
 	github.com/google/go-cmp v0.6.0
 	github.com/hashicorp/go-uuid v1.0.3
 	github.com/hashicorp/terraform-json v0.22.1
-	github.com/hashicorp/terraform-plugin-framework v1.11.1-0.20240904145558-dce7c875a80c
+	github.com/hashicorp/terraform-plugin-framework v1.11.1-0.20240904212030-b84bb1ddcd3a
 	github.com/hashicorp/terraform-plugin-framework-validators v0.13.0
-	github.com/hashicorp/terraform-plugin-go v0.23.1-0.20240827183355-145d7bc53a3f
+	github.com/hashicorp/terraform-plugin-go v0.23.1-0.20240904211550-7ea64adab752
 	github.com/hashicorp/terraform-plugin-testing v1.10.0
 	golang.org/x/crypto v0.26.0
 )
