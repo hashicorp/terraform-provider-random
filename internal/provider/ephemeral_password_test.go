@@ -93,8 +93,8 @@ func TestAccEphemeralResourcePassword_Result(t *testing.T) {
 	}
 }
 
-// This test creates a low-level protocol request to ValidateEphemeralResourceConfig and then asserts
-// that the expected diagnostics match.
+// This test creates a low-level protocol request to ValidateEphemeralResourceConfig for each test case
+// and then asserts that the expected diagnostics match.
 func TestAccEphemeralResourcePassword_Validation(t *testing.T) {
 	t.Parallel()
 	ctx := context.Background()
