@@ -1,0 +1,6 @@
+kind: NOTES
+body: 'all: This release introduces no functional changes. It does however include
+  dependency updates which address upstream CVEs.'
+time: 2024-09-10T07:35:26.094054-04:00
+custom:
+  Issue: "604"
