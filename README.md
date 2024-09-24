@@ -26,7 +26,7 @@ The remainder of this document will focus on the development aspects of the prov
 ## Requirements
 
 * [Terraform](https://www.terraform.io/downloads) (>= 0.12)
-* [Go](https://go.dev/doc/install) (1.21)
+* [Go](https://go.dev/doc/install) (1.22)
 * [GNU Make](https://www.gnu.org/software/make/)
 * [golangci-lint](https://golangci-lint.run/usage/install/#local-installation) (optional)
 
