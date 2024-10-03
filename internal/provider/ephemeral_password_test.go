@@ -65,7 +65,7 @@ func TestAccEphemeralResourcePassword_Result(t *testing.T) {
 		t.Fatalf("error executing OpenEphemeralResource: %s", err)
 	}
 
-	stateValue, err := gotResp.State.Unmarshal(ephemeralPasswordSchemaType)
+	stateValue, err := gotResp.Result.Unmarshal(ephemeralPasswordSchemaType)
 	if err != nil {
 		t.Fatalf("error parsing MsgPack response from OpenEphemeralResource: %s", err)
 	}

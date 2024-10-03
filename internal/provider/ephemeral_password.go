@@ -171,7 +171,7 @@ func (e *passwordEphemeralResource) Open(ctx context.Context, req ephemeral.Open
 	data.BcryptHash = types.StringValue(hash)
 	data.Result = types.StringValue(string(result))
 
-	resp.Diagnostics.Append(resp.State.Set(ctx, data)...)
+	resp.Diagnostics.Append(resp.Result.Set(ctx, data)...)
 }
 
 func applyDefaultPasswordParameters(data *ephemeralPasswordModel) {
