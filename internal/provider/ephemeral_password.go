@@ -1,3 +1,6 @@
+// Copyright (c) HashiCorp, Inc.
+// SPDX-License-Identifier: MPL-2.0
+
 package provider
 
 import (
@@ -46,7 +49,7 @@ func (e *passwordEphemeralResource) Metadata(ctx context.Context, req ephemeral.
 func (e *passwordEphemeralResource) Schema(ctx context.Context, req ephemeral.SchemaRequest, resp *ephemeral.SchemaResponse) {
 	resp.Schema = schema.Schema{
 		// TODO: Fill out this description
-		Description: "",
+		Description: "TODO",
 		Attributes: map[string]schema.Attribute{
 			"length": schema.Int64Attribute{
 				Description: "The length of the string desired. The minimum value for length is 1 and, length " +
