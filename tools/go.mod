@@ -4,7 +4,7 @@ go 1.22.7
 
 require (
 	github.com/hashicorp/copywrite v0.19.0
-	github.com/hashicorp/terraform-plugin-docs v0.19.5-0.20241031141015-be926c53d12c
+	github.com/hashicorp/terraform-plugin-docs v0.20.0
 )
 
 require (
