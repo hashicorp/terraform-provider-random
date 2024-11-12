@@ -48,8 +48,12 @@ func (e *passwordEphemeralResource) Metadata(ctx context.Context, req ephemeral.
 
 func (e *passwordEphemeralResource) Schema(ctx context.Context, req ephemeral.SchemaRequest, resp *ephemeral.SchemaResponse) {
 	resp.Schema = schema.Schema{
-		// TODO: Fill out this description
-		Description: "TODO",
+		// TODO: If we decide to release this before write-only attributes are available, we should update this phrasing
+		// to indicate write-only is an upcoming feature.
+		Description: "Generates an ephemeral password string using a cryptographic random number generator.\n" +
+			"\n" +
+			"A random ephemeral password used in combination with a write-only resource attribute will avoid Terraform storing " +
+			"the password string in the plan or state file.",
 		Attributes: map[string]schema.Attribute{
 			"length": schema.Int64Attribute{
 				Description: "The length of the string desired. The minimum value for length is 1 and, length " +

@@ -4,264 +4,230 @@
 package provider
 
 import (
-	"context"
+	"fmt"
+	"regexp"
 	"testing"
 
-	"github.com/google/go-cmp/cmp"
-	"github.com/hashicorp/terraform-plugin-framework/ephemeral"
-	"github.com/hashicorp/terraform-plugin-framework/providerserver"
-	"github.com/hashicorp/terraform-plugin-go/tfprotov5"
-	"github.com/hashicorp/terraform-plugin-go/tftypes"
-	"golang.org/x/crypto/bcrypt"
+	"github.com/hashicorp/terraform-plugin-go/tfprotov6"
+	"github.com/hashicorp/terraform-plugin-testing/echoprovider"
+	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
+	"github.com/hashicorp/terraform-plugin-testing/knownvalue"
+	"github.com/hashicorp/terraform-plugin-testing/statecheck"
+	"github.com/hashicorp/terraform-plugin-testing/tfjsonpath"
+	"github.com/hashicorp/terraform-plugin-testing/tfversion"
+	"github.com/terraform-providers/terraform-provider-random/internal/randomtest"
 )
 
-// This test creates a low-level protocol request to OpenEphemeralResource and then asserts
-// that the generated password matches the expected length and the bcrypt_hash is valid.
-func TestAccEphemeralResourcePassword_Result(t *testing.T) {
+func TestAccEphemeralResourcePassword_basic(t *testing.T) {
 	t.Parallel()
-	ctx := context.Background()
 
-	// Get the random provider instance
-	providerFunc := providerserver.NewProtocol5WithError(New())
-	randomProvider, err := providerFunc()
-	if err != nil {
-		t.Fatalf("error retrieving random provider: %s", err)
-	}
-
-	configPasswordLength := 12
-	configObj := map[string]tftypes.Value{
-		"length":           tftypes.NewValue(tftypes.Number, configPasswordLength),
-		"special":          tftypes.NewValue(tftypes.Bool, nil),
-		"upper":            tftypes.NewValue(tftypes.Bool, nil),
-		"lower":            tftypes.NewValue(tftypes.Bool, nil),
-		"numeric":          tftypes.NewValue(tftypes.Bool, nil),
-		"min_numeric":      tftypes.NewValue(tftypes.Number, nil),
-		"min_upper":        tftypes.NewValue(tftypes.Number, nil),
-		"min_lower":        tftypes.NewValue(tftypes.Number, nil),
-		"min_special":      tftypes.NewValue(tftypes.Number, nil),
-		"override_special": tftypes.NewValue(tftypes.String, nil),
-		"result":           tftypes.NewValue(tftypes.String, nil),
-		"bcrypt_hash":      tftypes.NewValue(tftypes.String, nil),
-	}
-
-	// Get the random_password ephemeral resource schema
-	ephPasswordSchema := &passwordEphemeralResource{}
-	schemaResp := ephemeral.SchemaResponse{}
-	ephPasswordSchema.Schema(ctx, ephemeral.SchemaRequest{}, &schemaResp)
-	ephemeralPasswordSchemaType := schemaResp.Schema.Type().TerraformType(ctx)
-
-	// TODO: Provider server implementation is optional for the first release of ephemeral resources to avoid build errors during dependency updates
-	// nolint: staticcheck
-	ephSupportedProvider := randomProvider.(tfprotov5.ProviderServerWithEphemeralResources)
-	req := &tfprotov5.OpenEphemeralResourceRequest{
-		TypeName: "random_password",
-		Config: testNewDynamicValueMust(
-			t,
-			ephemeralPasswordSchemaType,
-			tftypes.NewValue(ephemeralPasswordSchemaType, configObj),
-		),
-	}
-
-	// Execute the RPC call (this is about as close as we can get to testing fully what has been implemented so far)
-	gotResp, err := ephSupportedProvider.OpenEphemeralResource(ctx, req)
-	if err != nil {
-		t.Fatalf("error executing OpenEphemeralResource: %s", err)
-	}
-
-	stateValue, err := gotResp.Result.Unmarshal(ephemeralPasswordSchemaType)
-	if err != nil {
-		t.Fatalf("error parsing MsgPack response from OpenEphemeralResource: %s", err)
-	}
-
-	// Validate the result attribute length matches expectation
-	resultValue, _ := stateValue.ApplyTerraform5AttributePathStep(tftypes.AttributeName("result"))
-	resultTfValue := resultValue.(tftypes.Value) // nolint
-
-	var resultStr string
-	resultTfValue.As(&resultStr) // nolint
-
-	if configPasswordLength != len(resultStr) {
-		t.Fatalf("expected 'result' to be length of: %d, got: %d", configPasswordLength, len(resultStr))
-	}
-
-	// Validate the bcrypt_hash attribute is a valid match of the result attribute
-	bcryptHashValue, _ := stateValue.ApplyTerraform5AttributePathStep(tftypes.AttributeName("bcrypt_hash"))
-	bcryptHashTfValue := bcryptHashValue.(tftypes.Value) // nolint
-
-	var bcryptHashStr string
-	bcryptHashTfValue.As(&bcryptHashStr) // nolint
-
-	if err := bcrypt.CompareHashAndPassword([]byte(bcryptHashStr), []byte(resultStr)); err != nil {
-		t.Fatalf("bcrypt_hash %q is not a valid hash of the result %q: %s", bcryptHashStr, resultStr, err)
-	}
+	resource.UnitTest(t, resource.TestCase{
+		// Ephemeral resources are only available in 1.10 and later
+		TerraformVersionChecks: []tfversion.TerraformVersionCheck{
+			tfversion.SkipBelow(tfversion.Version1_10_0),
+		},
+		ProtoV5ProviderFactories: protoV5ProviderFactories(),
+		ProtoV6ProviderFactories: map[string]func() (tfprotov6.ProviderServer, error){
+			"echo": echoprovider.NewProviderServer(),
+		},
+		Steps: []resource.TestStep{
+			{
+				Config: addEchoConfig(`ephemeral "random_password" "test" {
+					length = 20
+				}`),
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue("echo.password_test", tfjsonpath.New("data").AtMapKey("result"), randomtest.StringLengthExact(20)),
+					statecheck.ExpectKnownValue("echo.password_test", tfjsonpath.New("data").AtMapKey("special"), knownvalue.Bool(true)),
+					statecheck.ExpectKnownValue("echo.password_test", tfjsonpath.New("data").AtMapKey("upper"), knownvalue.Bool(true)),
+					statecheck.ExpectKnownValue("echo.password_test", tfjsonpath.New("data").AtMapKey("lower"), knownvalue.Bool(true)),
+					statecheck.ExpectKnownValue("echo.password_test", tfjsonpath.New("data").AtMapKey("numeric"), knownvalue.Bool(true)),
+					statecheck.ExpectKnownValue("echo.password_test", tfjsonpath.New("data").AtMapKey("min_numeric"), knownvalue.Int64Exact(0)),
+					statecheck.ExpectKnownValue("echo.password_test", tfjsonpath.New("data").AtMapKey("min_upper"), knownvalue.Int64Exact(0)),
+					statecheck.ExpectKnownValue("echo.password_test", tfjsonpath.New("data").AtMapKey("min_lower"), knownvalue.Int64Exact(0)),
+					statecheck.ExpectKnownValue("echo.password_test", tfjsonpath.New("data").AtMapKey("min_special"), knownvalue.Int64Exact(0)),
+				},
+			},
+		},
+	})
 }
 
-// This test creates a low-level protocol request to ValidateEphemeralResourceConfig for each test case
-// and then asserts that the expected diagnostics match.
-func TestAccEphemeralResourcePassword_Validation(t *testing.T) {
+func TestAccEphemeralResourcePassword_BcryptHash(t *testing.T) {
 	t.Parallel()
-	ctx := context.Background()
 
-	// Get the random provider instance
-	providerFunc := providerserver.NewProtocol5WithError(New())
-	randomProvider, err := providerFunc()
-	if err != nil {
-		t.Fatalf("error retrieving random provider: %s", err)
-	}
-
-	// Get the random_password ephemeral resource schema
-	ephPasswordSchema := &passwordEphemeralResource{}
-	schemaResp := ephemeral.SchemaResponse{}
-	ephPasswordSchema.Schema(ctx, ephemeral.SchemaRequest{}, &schemaResp)
-	ephemeralPasswordSchemaType := schemaResp.Schema.Type().TerraformType(ctx)
-
-	testCases := map[string]struct {
-		config        map[string]tftypes.Value
-		expectedDiags []*tfprotov5.Diagnostic
-	}{
-		"valid_config": {
-			config: map[string]tftypes.Value{
-				"length":           tftypes.NewValue(tftypes.Number, 12),
-				"special":          tftypes.NewValue(tftypes.Bool, true),
-				"upper":            tftypes.NewValue(tftypes.Bool, true),
-				"lower":            tftypes.NewValue(tftypes.Bool, true),
-				"numeric":          tftypes.NewValue(tftypes.Bool, true),
-				"min_numeric":      tftypes.NewValue(tftypes.Number, 1),
-				"min_upper":        tftypes.NewValue(tftypes.Number, 2),
-				"min_lower":        tftypes.NewValue(tftypes.Number, 3),
-				"min_special":      tftypes.NewValue(tftypes.Number, 4),
-				"override_special": tftypes.NewValue(tftypes.String, nil),
-				"result":           tftypes.NewValue(tftypes.String, nil),
-				"bcrypt_hash":      tftypes.NewValue(tftypes.String, nil),
-			},
+	resource.UnitTest(t, resource.TestCase{
+		// Ephemeral resources are only available in 1.10 and later
+		TerraformVersionChecks: []tfversion.TerraformVersionCheck{
+			tfversion.SkipBelow(tfversion.Version1_10_0),
 		},
-		"valid_config_override": {
-			config: map[string]tftypes.Value{
-				"length":           tftypes.NewValue(tftypes.Number, 4),
-				"special":          tftypes.NewValue(tftypes.Bool, nil),
-				"upper":            tftypes.NewValue(tftypes.Bool, false),
-				"lower":            tftypes.NewValue(tftypes.Bool, false),
-				"numeric":          tftypes.NewValue(tftypes.Bool, false),
-				"min_numeric":      tftypes.NewValue(tftypes.Number, nil),
-				"min_upper":        tftypes.NewValue(tftypes.Number, nil),
-				"min_lower":        tftypes.NewValue(tftypes.Number, nil),
-				"min_special":      tftypes.NewValue(tftypes.Number, nil),
-				"override_special": tftypes.NewValue(tftypes.String, "!"),
-				"result":           tftypes.NewValue(tftypes.String, nil),
-				"bcrypt_hash":      tftypes.NewValue(tftypes.String, nil),
-			},
+		ProtoV5ProviderFactories: protoV5ProviderFactories(),
+		ProtoV6ProviderFactories: map[string]func() (tfprotov6.ProviderServer, error){
+			"echo": echoprovider.NewProviderServer(),
 		},
-		"invalid_length": {
-			config: map[string]tftypes.Value{
-				"length":           tftypes.NewValue(tftypes.Number, 0),
-				"special":          tftypes.NewValue(tftypes.Bool, nil),
-				"upper":            tftypes.NewValue(tftypes.Bool, nil),
-				"lower":            tftypes.NewValue(tftypes.Bool, nil),
-				"numeric":          tftypes.NewValue(tftypes.Bool, nil),
-				"min_numeric":      tftypes.NewValue(tftypes.Number, nil),
-				"min_upper":        tftypes.NewValue(tftypes.Number, nil),
-				"min_lower":        tftypes.NewValue(tftypes.Number, nil),
-				"min_special":      tftypes.NewValue(tftypes.Number, nil),
-				"override_special": tftypes.NewValue(tftypes.String, nil),
-				"result":           tftypes.NewValue(tftypes.String, nil),
-				"bcrypt_hash":      tftypes.NewValue(tftypes.String, nil),
-			},
-			expectedDiags: []*tfprotov5.Diagnostic{
-				{
-					Severity:  tfprotov5.DiagnosticSeverityError,
-					Summary:   "Invalid Attribute Value",
-					Detail:    "Attribute length value must be at least 1, got: 0",
-					Attribute: tftypes.NewAttributePath().WithAttributeName("length"),
+		Steps: []resource.TestStep{
+			{
+				Config: addEchoConfig(`ephemeral "random_password" "test" {
+					length = 73
+				}`),
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.CompareValuePairs(
+						"echo.password_test", tfjsonpath.New("data").AtMapKey("bcrypt_hash"),
+						"echo.password_test", tfjsonpath.New("data").AtMapKey("result"),
+						randomtest.BcryptHashMatch(),
+					),
 				},
 			},
 		},
-		"invalid_length_sum": {
-			config: map[string]tftypes.Value{
-				"length":           tftypes.NewValue(tftypes.Number, 9),
-				"special":          tftypes.NewValue(tftypes.Bool, nil),
-				"upper":            tftypes.NewValue(tftypes.Bool, nil),
-				"lower":            tftypes.NewValue(tftypes.Bool, nil),
-				"numeric":          tftypes.NewValue(tftypes.Bool, nil),
-				"min_numeric":      tftypes.NewValue(tftypes.Number, 1),
-				"min_upper":        tftypes.NewValue(tftypes.Number, 2),
-				"min_lower":        tftypes.NewValue(tftypes.Number, 3),
-				"min_special":      tftypes.NewValue(tftypes.Number, 4),
-				"override_special": tftypes.NewValue(tftypes.String, nil),
-				"result":           tftypes.NewValue(tftypes.String, nil),
-				"bcrypt_hash":      tftypes.NewValue(tftypes.String, nil),
-			},
-			expectedDiags: []*tfprotov5.Diagnostic{
-				{
-					Severity:  tfprotov5.DiagnosticSeverityError,
-					Summary:   "Invalid Attribute Value",
-					Detail:    "Attribute length value must be at least sum of min_upper + min_lower + min_numeric + min_special, got: 9",
-					Attribute: tftypes.NewAttributePath().WithAttributeName("length"),
-				},
-			},
-		},
-		"invalid_constraint_combination": {
-			config: map[string]tftypes.Value{
-				"length":           tftypes.NewValue(tftypes.Number, 12),
-				"special":          tftypes.NewValue(tftypes.Bool, false),
-				"upper":            tftypes.NewValue(tftypes.Bool, false),
-				"lower":            tftypes.NewValue(tftypes.Bool, false),
-				"numeric":          tftypes.NewValue(tftypes.Bool, false),
-				"min_numeric":      tftypes.NewValue(tftypes.Number, nil),
-				"min_upper":        tftypes.NewValue(tftypes.Number, nil),
-				"min_lower":        tftypes.NewValue(tftypes.Number, nil),
-				"min_special":      tftypes.NewValue(tftypes.Number, nil),
-				"override_special": tftypes.NewValue(tftypes.String, nil),
-				"result":           tftypes.NewValue(tftypes.String, nil),
-				"bcrypt_hash":      tftypes.NewValue(tftypes.String, nil),
-			},
-			expectedDiags: []*tfprotov5.Diagnostic{
-				{
-					Severity:  tfprotov5.DiagnosticSeverityError,
-					Summary:   "Invalid Attribute Combination",
-					Detail:    "At least one attribute out of [special,upper,lower,numeric] must be specified as true",
-					Attribute: tftypes.NewAttributePath().WithAttributeName("numeric"),
-				},
-			},
-		},
-	}
-	for name, testCase := range testCases {
-		name, testCase := name, testCase
-		t.Run(name, func(t *testing.T) {
-			t.Parallel()
-
-			// TODO: Provider server implementation is optional for the first release of ephemeral resources to avoid build errors during dependency updates
-			// nolint: staticcheck
-			ephSupportedProvider := randomProvider.(tfprotov5.ProviderServerWithEphemeralResources)
-			req := &tfprotov5.ValidateEphemeralResourceConfigRequest{
-				TypeName: "random_password",
-				Config: testNewDynamicValueMust(
-					t,
-					ephemeralPasswordSchemaType,
-					tftypes.NewValue(ephemeralPasswordSchemaType, testCase.config),
-				),
-			}
-
-			// Execute the RPC call (this is about as close as we can get to testing fully what has been implemented so far)
-			gotResp, err := ephSupportedProvider.ValidateEphemeralResourceConfig(ctx, req)
-			if err != nil {
-				t.Fatalf("error executing ValidateEphemeralResourceConfig: %s", err)
-			}
-
-			if diff := cmp.Diff(gotResp.Diagnostics, testCase.expectedDiags); diff != "" {
-				t.Errorf("unexpected diagnostics difference: %s", diff)
-			}
-		})
-	}
+	})
 }
 
-func testNewDynamicValueMust(t *testing.T, typ tftypes.Type, value tftypes.Value) *tfprotov5.DynamicValue {
-	t.Helper()
+func TestAccEphemeralResourcePassword_Override(t *testing.T) {
+	t.Parallel()
 
-	dynamicValue, err := tfprotov5.NewDynamicValue(typ, value)
+	resource.UnitTest(t, resource.TestCase{
+		// Ephemeral resources are only available in 1.10 and later
+		TerraformVersionChecks: []tfversion.TerraformVersionCheck{
+			tfversion.SkipBelow(tfversion.Version1_10_0),
+		},
+		ProtoV5ProviderFactories: protoV5ProviderFactories(),
+		ProtoV6ProviderFactories: map[string]func() (tfprotov6.ProviderServer, error){
+			"echo": echoprovider.NewProviderServer(),
+		},
+		Steps: []resource.TestStep{
+			{
+				Config: addEchoConfig(`ephemeral "random_password" "test" {
+					length = 4
+					override_special = "!"
+					lower = false
+					upper = false
+					numeric = false
+				}`),
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue("echo.password_test", tfjsonpath.New("data").AtMapKey("result"), randomtest.StringLengthExact(4)),
+					statecheck.ExpectKnownValue("echo.password_test", tfjsonpath.New("data").AtMapKey("result"), knownvalue.StringExact("!!!!")),
+				},
+			},
+		},
+	})
+}
 
-	if err != nil {
-		t.Fatalf("unable to create DynamicValue: %s", err)
+func TestAccEphemeralResourcePassword_Min(t *testing.T) {
+	t.Parallel()
+
+	resource.UnitTest(t, resource.TestCase{
+		// Ephemeral resources are only available in 1.10 and later
+		TerraformVersionChecks: []tfversion.TerraformVersionCheck{
+			tfversion.SkipBelow(tfversion.Version1_10_0),
+		},
+		ProtoV5ProviderFactories: protoV5ProviderFactories(),
+		ProtoV6ProviderFactories: map[string]func() (tfprotov6.ProviderServer, error){
+			"echo": echoprovider.NewProviderServer(),
+		},
+		Steps: []resource.TestStep{
+			{
+				Config: addEchoConfig(`ephemeral "random_password" "test" {
+					length = 12
+					override_special = "!#@"
+					min_lower = 2
+					min_upper = 3
+					min_special = 1
+					min_numeric = 4
+				}`),
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue("echo.password_test", tfjsonpath.New("data").AtMapKey("result"), randomtest.StringLengthExact(12)),
+					statecheck.ExpectKnownValue("echo.password_test", tfjsonpath.New("data").AtMapKey("result"), knownvalue.StringRegexp(regexp.MustCompile(`([a-z].*){2,}`))),
+					statecheck.ExpectKnownValue("echo.password_test", tfjsonpath.New("data").AtMapKey("result"), knownvalue.StringRegexp(regexp.MustCompile(`([A-Z].*){3,}`))),
+					statecheck.ExpectKnownValue("echo.password_test", tfjsonpath.New("data").AtMapKey("result"), knownvalue.StringRegexp(regexp.MustCompile(`([0-9].*){4,}`))),
+					statecheck.ExpectKnownValue("echo.password_test", tfjsonpath.New("data").AtMapKey("result"), knownvalue.StringRegexp(regexp.MustCompile(`([!#@])`))),
+				},
+			},
+		},
+	})
+}
+
+func TestAccEphemeralResourcePassword_Numeric_ValidationError(t *testing.T) {
+	t.Parallel()
+
+	resource.UnitTest(t, resource.TestCase{
+		// Ephemeral resources are only available in 1.10 and later
+		TerraformVersionChecks: []tfversion.TerraformVersionCheck{
+			tfversion.SkipBelow(tfversion.Version1_10_0),
+		},
+		ProtoV5ProviderFactories: protoV5ProviderFactories(),
+		ProtoV6ProviderFactories: map[string]func() (tfprotov6.ProviderServer, error){
+			"echo": echoprovider.NewProviderServer(),
+		},
+		Steps: []resource.TestStep{
+			{
+				Config: addEchoConfig(`ephemeral "random_password" "test" {
+					length = 12
+					special = false
+					upper = false
+					lower = false
+					numeric = false
+				}`),
+				ExpectError: regexp.MustCompile(`At least one attribute out of \[special,upper,lower,numeric\] must be specified`),
+			},
+		},
+	})
+}
+
+func TestAccEphemeralResourcePassword_Length_ValidationError_SumOf(t *testing.T) {
+	t.Parallel()
+
+	resource.UnitTest(t, resource.TestCase{
+		// Ephemeral resources are only available in 1.10 and later
+		TerraformVersionChecks: []tfversion.TerraformVersionCheck{
+			tfversion.SkipBelow(tfversion.Version1_10_0),
+		},
+		ProtoV5ProviderFactories: protoV5ProviderFactories(),
+		ProtoV6ProviderFactories: map[string]func() (tfprotov6.ProviderServer, error){
+			"echo": echoprovider.NewProviderServer(),
+		},
+		Steps: []resource.TestStep{
+			{
+				Config: addEchoConfig(`ephemeral "random_password" "test" {
+					length		= 11
+					min_upper	= 3
+					min_lower	= 3
+					min_numeric	= 3
+					min_special	= 3
+				}`),
+				ExpectError: regexp.MustCompile(`Attribute length value must be at least sum of`),
+			},
+		},
+	})
+}
+
+func TestAccEphemeralResourcePassword_Length_ValidationError_AtLeast(t *testing.T) {
+	t.Parallel()
+
+	resource.UnitTest(t, resource.TestCase{
+		// Ephemeral resources are only available in 1.10 and later
+		TerraformVersionChecks: []tfversion.TerraformVersionCheck{
+			tfversion.SkipBelow(tfversion.Version1_10_0),
+		},
+		ProtoV5ProviderFactories: protoV5ProviderFactories(),
+		ProtoV6ProviderFactories: map[string]func() (tfprotov6.ProviderServer, error){
+			"echo": echoprovider.NewProviderServer(),
+		},
+		Steps: []resource.TestStep{
+			{
+				Config: addEchoConfig(`ephemeral "random_password" "test" {
+					length		= 0
+				}`),
+				ExpectError: regexp.MustCompile(`Attribute length value must be at least 1, got: 0`),
+			},
+		},
+	})
+}
+
+// Adds the test echo provider to enable using state checks with ephemeral resources
+func addEchoConfig(cfg string) string {
+	return fmt.Sprintf(`
+	%s
+	provider "echo" {
+		data = ephemeral.random_password.test
 	}
-
-	return &dynamicValue
+	resource "echo" "password_test" {}
+	`, cfg)
 }

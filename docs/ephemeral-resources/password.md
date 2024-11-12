@@ -3,12 +3,15 @@
 page_title: "random_password Ephemeral Resource - terraform-provider-random"
 subcategory: ""
 description: |-
-  TODO
+  Generates an ephemeral password string using a cryptographic random number generator.
+  A random ephemeral password used in combination with a write-only resource attribute will avoid Terraform storing the password string in the plan or state file.
 ---
 
 # random_password (Ephemeral Resource)
 
-TODO
+Generates an ephemeral password string using a cryptographic random number generator.
+
+A random ephemeral password used in combination with a write-only resource attribute will avoid Terraform storing the password string in the plan or state file.
 
 ## Example Usage
 
