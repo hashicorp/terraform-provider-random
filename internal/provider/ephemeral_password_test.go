@@ -221,7 +221,7 @@ func TestAccEphemeralResourcePassword_Length_ValidationError_AtLeast(t *testing.
 	})
 }
 
-// Adds the test echo provider to enable using state checks with ephemeral resources
+// Adds the test echo provider to enable using state checks with ephemeral resources.
 func addEchoConfig(cfg string) string {
 	return fmt.Sprintf(`
 	%s
