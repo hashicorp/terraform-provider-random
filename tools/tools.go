@@ -19,5 +19,4 @@ import (
 // to ensure the documentation is formatted properly.
 //go:generate terraform fmt -recursive ../examples/
 // Generate documentation.
-// TODO: Remove the 1.10-beta1 flag when 1.10 is generally available
-//go:generate go run github.com/hashicorp/terraform-plugin-docs/cmd/tfplugindocs generate --provider-dir .. --tf-version 1.10-beta1
+//go:generate go run github.com/hashicorp/terraform-plugin-docs/cmd/tfplugindocs generate --provider-dir ..
