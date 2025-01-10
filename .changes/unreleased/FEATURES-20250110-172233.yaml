@@ -1,0 +1,7 @@
+kind: FEATURES
+body: 'ephemeral/random_password: New ephemeral resource that generates a password
+  string. When used in combination with a managed resource write-only attribute, Terraform
+  will not store the password in the plan or state file.'
+time: 2025-01-10T17:22:33.1113-05:00
+custom:
+  Issue: "625"
