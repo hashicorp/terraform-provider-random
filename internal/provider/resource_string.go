@@ -558,6 +558,7 @@ func stringSchemaV3() schema.Schema {
 				Description: "Determines if the exclusions list should be case-sensitive. Default value is `false`.",
 				Optional:    true,
 				Default:     booldefault.StaticBool(false),
+				Computed:    true,
 				PlanModifiers: []planmodifier.Bool{
 					boolplanmodifier.RequiresReplaceIf(
 						boolplanmodifiers.RequiresReplaceIfResultMatchesExclusions(),
