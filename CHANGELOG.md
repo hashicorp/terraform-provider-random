@@ -1,3 +1,9 @@
+## 3.7.0-alpha1 (February 13, 2025)
+
+NOTES:
+
+* all: This release is being used to test new build and release actions.
+
 ## 3.6.3 (September 11, 2024)
 
 NOTES:
