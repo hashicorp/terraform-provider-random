@@ -584,10 +584,14 @@ func generateHash(toHash string) (string, error) {
 func passwordSchemaV3() schema.Schema {
 	return schema.Schema{
 		Version: 3,
-		Description: "Identical to [random_string](string.html) with the exception that the result is " +
-			"treated as sensitive and, thus, _not_ displayed in console output. Read more about sensitive " +
-			"data handling in the " +
-			"[Terraform documentation](https://www.terraform.io/docs/language/state/sensitive-data.html).\n\n" +
+		Description: "-> If the managed resource supports a write-only attribute for the password (first introduced in Terraform 1.11), then the " +
+			"ephemeral variant of [`random_password`](https://registry.terraform.io/providers/hashicorp/random/latest/docs/ephemeral-resources/password) " +
+			"should be used, when possible, to avoid storing the password in the plan or state file.\n" +
+			"\n" +
+			"Identical to [`random_string`](https://registry.terraform.io/providers/hashicorp/random/latest/docs/resources/string) with the exception that the result is " +
+			"treated as sensitive and, thus, _not_ displayed in console output. Read more about sensitive data handling in the " +
+			"[Terraform documentation](https://developer.hashicorp.com/terraform/language/state/sensitive-data).\n" +
+			"\n" +
 			"This resource *does* use a cryptographic random number generator.",
 		Attributes: map[string]schema.Attribute{
 			"keepers": schema.MapAttribute{
