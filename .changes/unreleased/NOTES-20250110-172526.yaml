@@ -1,6 +1,0 @@
-kind: NOTES
-body: New [ephemeral resource](https://developer.hashicorp.com/terraform/language/resources/ephemeral)
-  `random_password` now supports [ephemeral values](https://developer.hashicorp.com/terraform/language/values/variables#exclude-values-from-state).
-time: 2025-01-10T17:25:26.145298-05:00
-custom:
-  Issue: "625"
