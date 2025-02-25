@@ -59,7 +59,7 @@ event "promote-staging" {
     repository   = "crt-workflows-common"
     workflow     = "promote-staging"
     depends      = null
-    config       = "oss-release-metadata.hcl"
+    config       = "release-metadata.hcl"
   }
 
   depends = ["trigger-staging"]
