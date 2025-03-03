@@ -5,18 +5,18 @@
 page_title: "random_password Ephemeral Resource - terraform-provider-random"
 subcategory: ""
 description: |-
-  -> If the managed resource doesn't have a write-only attribute available for the password (first introduced in Terraform 1.11), then the password can only be created with the managed resource variant of random_password https://registry.terraform.io/providers/hashicorp/random/latest/docs/resources/password.
+  -> If the managed resource doesn't have a write-only argument available for the password (first introduced in Terraform 1.11), then the password can only be created with the managed resource variant of random_password https://registry.terraform.io/providers/hashicorp/random/latest/docs/resources/password.
   Generates an ephemeral password string using a cryptographic random number generator.
-  The primary use-case for generating an ephemeral random password is to be used in combination with a write-only attribute in a managed resource, which will avoid Terraform storing the password string in the plan or state file.
+  The primary use-case for generating an ephemeral random password is to be used in combination with a write-only argument in a managed resource, which will avoid Terraform storing the password string in the plan or state file.
 ---
 
 # random_password (Ephemeral Resource)
 
--> If the managed resource doesn't have a write-only attribute available for the password (first introduced in Terraform 1.11), then the password can only be created with the managed resource variant of [`random_password`](https://registry.terraform.io/providers/hashicorp/random/latest/docs/resources/password).
+-> If the managed resource doesn't have a write-only argument available for the password (first introduced in Terraform 1.11), then the password can only be created with the managed resource variant of [`random_password`](https://registry.terraform.io/providers/hashicorp/random/latest/docs/resources/password).
 
 Generates an ephemeral password string using a cryptographic random number generator.
 
-The primary use-case for generating an ephemeral random password is to be used in combination with a write-only attribute in a managed resource, which will avoid Terraform storing the password string in the plan or state file.
+The primary use-case for generating an ephemeral random password is to be used in combination with a write-only argument in a managed resource, which will avoid Terraform storing the password string in the plan or state file.
 
 ## Example Usage
 
@@ -53,4 +53,4 @@ class MyConvertedCode(TerraformStack):
 - `bcrypt_hash` (String, Sensitive) A bcrypt hash of the generated random string. **NOTE**: If the generated random string is greater than 72 bytes in length, `bcrypt_hash` will contain a hash of the first 72 bytes.
 - `result` (String, Sensitive) The generated random string.
 
-<!-- cache-key: cdktf-0.20.8 input-8673628508fea3a3eb46c9f117059a3e105a2caae3de359049eb11a27206b22c -->
+<!-- cache-key: cdktf-0.20.8 input-719e735ef83655b71fc2608255ea0efefac2a66aabbfd002e924abd1a90acd87 -->
