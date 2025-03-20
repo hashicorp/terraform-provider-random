@@ -4,8 +4,8 @@ The Random provider supports the use of randomness within Terraform configuratio
 provider resources can be used to generate a random [id](docs/resources/id.md),
 [integer](docs/resources/integer.md), [password](docs/resources/password.md),
 [pet](docs/resources/pet.md), [shuffle](docs/resources/shuffle.md) (random permutation
-of a list of strings), [string](docs/resources/string.md) or 
-[uuid](docs/resources/uuid.md).
+of a list of strings), [string](docs/resources/string.md), 
+[uuid](docs/resources/uuid.md) or [ip](docs/resources/ip.md).
 
 ## Documentation, questions and discussions
 
