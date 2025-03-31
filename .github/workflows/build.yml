@@ -18,7 +18,7 @@ name: build
 on: [workflow_dispatch, push]
 
 env:
-  PKG_NAME: "terraform-provider-crt-example" # TODO: Update with the name of your provider
+  PKG_NAME: "terraform-provider-random"
 
 jobs:
   # Detects the Go toolchain version to use for product builds.
