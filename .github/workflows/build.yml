@@ -151,8 +151,6 @@ jobs:
           PRERELEASE_VERSION: ${{ needs.set-product-version.outputs.product-prerelease-version}}
           METADATA_VERSION: ${{ env.METADATA }}
         with:
-          # TODO: Customize `bin_name` for your provider. Compare to existing .goreleaser.yml.
-          # Protocol v6 providers should omit the `_x5` suffix.
           bin_name: "${{ env.PKG_NAME }}_v${{ needs.set-product-version.outputs.product-version }}_x5"
           product_name: ${{ env.PKG_NAME }}
           product_version: ${{ needs.set-product-version.outputs.product-version }}
