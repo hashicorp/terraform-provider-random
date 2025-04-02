@@ -158,9 +158,6 @@ jobs:
           os: ${{ matrix.goos }}
           arch: ${{ matrix.goarch }}
           reproducible: report
-          # TODO: Customize `go build` flags for your provider. Compare to existing .goreleaser.yml.
-          # TODO: Customize `ldflags` for your provider. Ensure that the import path and name in the -X flag
-          # are correct for your provider.
           instructions: |
             go build \
               -o "$BIN_PATH" \
