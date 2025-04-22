@@ -6,6 +6,9 @@ project {
 
 
   header_ignore = [
+    # internal catalog metadata (prose)
+    "META.d/**/*.yaml",
+
     # changie tooling configuration and CHANGELOG entries (prose)
     ".changes/unreleased/*.yaml",
     ".changie.yaml",
