@@ -25,9 +25,6 @@ project {
     # golangci-lint tooling configuration
     ".golangci.yml",
 
-    # GoReleaser tooling configuration
-    ".goreleaser.yml",
-
     # Release Engineering tooling configuration
     ".release/*.hcl",
   ]
