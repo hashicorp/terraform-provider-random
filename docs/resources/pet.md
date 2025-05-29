@@ -53,3 +53,13 @@ resource "aws_instance" "server" {
 ### Read-Only
 
 - `id` (String) The random pet name.
+
+## Import
+
+Import is supported using the following syntax:
+
+```shell
+# Random Pet can be imported with format: pet_name,separator,prefix
+
+terraform import random_pet.example pet_name,separator,prefix
+```
