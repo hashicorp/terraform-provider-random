@@ -16,6 +16,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/int64default"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/int64planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/setplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
@@ -24,6 +25,7 @@ import (
 	"github.com/terraform-providers/terraform-provider-random/internal/diagnostics"
 	boolplanmodifiers "github.com/terraform-providers/terraform-provider-random/internal/planmodifiers/bool"
 	mapplanmodifiers "github.com/terraform-providers/terraform-provider-random/internal/planmodifiers/map"
+	setplanmodifiers "github.com/terraform-providers/terraform-provider-random/internal/planmodifiers/set"
 	stringplanmodifiers "github.com/terraform-providers/terraform-provider-random/internal/planmodifiers/string"
 	"github.com/terraform-providers/terraform-provider-random/internal/random"
 	"github.com/terraform-providers/terraform-provider-random/internal/validators"
@@ -58,17 +60,24 @@ func (r *passwordResource) Create(ctx context.Context, req resource.CreateReques
 		return
 	}
 
+	exclusions := make([]string, len(plan.Exclusions.Elements()))
+	for i, exclusion := range plan.Exclusions.Elements() {
+		exclusions[i] = exclusion.(types.String).ValueString()
+	}
+
 	params := random.StringParams{
-		Length:          plan.Length.ValueInt64(),
-		Upper:           plan.Upper.ValueBool(),
-		MinUpper:        plan.MinUpper.ValueInt64(),
-		Lower:           plan.Lower.ValueBool(),
-		MinLower:        plan.MinLower.ValueInt64(),
-		Numeric:         plan.Numeric.ValueBool(),
-		MinNumeric:      plan.MinNumeric.ValueInt64(),
-		Special:         plan.Special.ValueBool(),
-		MinSpecial:      plan.MinSpecial.ValueInt64(),
-		OverrideSpecial: plan.OverrideSpecial.ValueString(),
+		Length:                  plan.Length.ValueInt64(),
+		Upper:                   plan.Upper.ValueBool(),
+		MinUpper:                plan.MinUpper.ValueInt64(),
+		Lower:                   plan.Lower.ValueBool(),
+		MinLower:                plan.MinLower.ValueInt64(),
+		Numeric:                 plan.Numeric.ValueBool(),
+		MinNumeric:              plan.MinNumeric.ValueInt64(),
+		Special:                 plan.Special.ValueBool(),
+		MinSpecial:              plan.MinSpecial.ValueInt64(),
+		OverrideSpecial:         plan.OverrideSpecial.ValueString(),
+		Exclusions:              exclusions,
+		ExclusionsCaseSensitive: plan.ExclusionsCaseSensitive.ValueBool(),
 	}
 
 	result, err := random.CreateString(params)
@@ -115,20 +124,22 @@ func (r *passwordResource) ImportState(ctx context.Context, req resource.ImportS
 	id := req.ID
 
 	state := passwordModelV3{
-		ID:              types.StringValue("none"),
-		Result:          types.StringValue(id),
-		Length:          types.Int64Value(int64(len(id))),
-		Special:         types.BoolValue(true),
-		Upper:           types.BoolValue(true),
-		Lower:           types.BoolValue(true),
-		Number:          types.BoolValue(true),
-		Numeric:         types.BoolValue(true),
-		MinSpecial:      types.Int64Value(0),
-		MinUpper:        types.Int64Value(0),
-		MinLower:        types.Int64Value(0),
-		MinNumeric:      types.Int64Value(0),
-		Keepers:         types.MapNull(types.StringType),
-		OverrideSpecial: types.StringNull(),
+		ID:                      types.StringValue("none"),
+		Result:                  types.StringValue(id),
+		Length:                  types.Int64Value(int64(len(id))),
+		Special:                 types.BoolValue(true),
+		Upper:                   types.BoolValue(true),
+		Lower:                   types.BoolValue(true),
+		Number:                  types.BoolValue(true),
+		Numeric:                 types.BoolValue(true),
+		MinSpecial:              types.Int64Value(0),
+		MinUpper:                types.Int64Value(0),
+		MinLower:                types.Int64Value(0),
+		MinNumeric:              types.Int64Value(0),
+		Keepers:                 types.MapNull(types.StringType),
+		OverrideSpecial:         types.StringNull(),
+		Exclusions:              types.SetNull(types.StringType),
+		ExclusionsCaseSensitive: types.BoolValue(false),
 	}
 
 	hash, err := generateHash(id)
@@ -248,21 +259,26 @@ func upgradePasswordStateV0toV3(ctx context.Context, req resource.UpgradeStateRe
 		number = types.BoolValue(true)
 	}
 
+	exclusions := types.SetNull(types.StringType)
+	exclusionsCaseSensitive := types.BoolValue(false)
+
 	passwordDataV3 := passwordModelV3{
-		Keepers:         passwordDataV0.Keepers,
-		Length:          length,
-		Special:         special,
-		Upper:           upper,
-		Lower:           lower,
-		Number:          number,
-		Numeric:         number,
-		MinNumeric:      minNumeric,
-		MinUpper:        minUpper,
-		MinLower:        minLower,
-		MinSpecial:      minSpecial,
-		OverrideSpecial: passwordDataV0.OverrideSpecial,
-		Result:          passwordDataV0.Result,
-		ID:              passwordDataV0.ID,
+		Keepers:                 passwordDataV0.Keepers,
+		Length:                  length,
+		Special:                 special,
+		Upper:                   upper,
+		Lower:                   lower,
+		Number:                  number,
+		Numeric:                 number,
+		MinNumeric:              minNumeric,
+		MinUpper:                minUpper,
+		MinLower:                minLower,
+		MinSpecial:              minSpecial,
+		OverrideSpecial:         passwordDataV0.OverrideSpecial,
+		Exclusions:              exclusions,
+		ExclusionsCaseSensitive: exclusionsCaseSensitive,
+		Result:                  passwordDataV0.Result,
+		ID:                      passwordDataV0.ID,
 	}
 
 	hash, err := generateHash(passwordDataV3.Result.ValueString())
@@ -360,22 +376,27 @@ func upgradePasswordStateV1toV3(ctx context.Context, req resource.UpgradeStateRe
 		number = types.BoolValue(true)
 	}
 
+	exclusions := types.SetNull(types.StringType)
+	exclusionsCaseSensitive := types.BoolValue(false)
+
 	passwordDataV3 := passwordModelV3{
-		Keepers:         passwordDataV1.Keepers,
-		Length:          length,
-		Special:         special,
-		Upper:           upper,
-		Lower:           lower,
-		Number:          number,
-		Numeric:         number,
-		MinNumeric:      minNumeric,
-		MinUpper:        minUpper,
-		MinLower:        minLower,
-		MinSpecial:      minSpecial,
-		OverrideSpecial: passwordDataV1.OverrideSpecial,
-		BcryptHash:      passwordDataV1.BcryptHash,
-		Result:          passwordDataV1.Result,
-		ID:              passwordDataV1.ID,
+		Keepers:                 passwordDataV1.Keepers,
+		Length:                  length,
+		Special:                 special,
+		Upper:                   upper,
+		Lower:                   lower,
+		Number:                  number,
+		Numeric:                 number,
+		MinNumeric:              minNumeric,
+		MinUpper:                minUpper,
+		MinLower:                minLower,
+		MinSpecial:              minSpecial,
+		OverrideSpecial:         passwordDataV1.OverrideSpecial,
+		Exclusions:              exclusions,
+		ExclusionsCaseSensitive: exclusionsCaseSensitive,
+		BcryptHash:              passwordDataV1.BcryptHash,
+		Result:                  passwordDataV1.Result,
+		ID:                      passwordDataV1.ID,
 	}
 
 	diags := resp.State.Set(ctx, passwordDataV3)
@@ -473,25 +494,30 @@ func upgradePasswordStateV2toV3(ctx context.Context, req resource.UpgradeStateRe
 		numeric = types.BoolValue(true)
 	}
 
+	exclusions := types.SetNull(types.StringType)
+	exclusionsCaseSensitive := types.BoolValue(false)
+
 	// Schema version 2 to schema version 3 is a duplicate of the data,
 	// however the BcryptHash value may have been incorrectly generated.
 	//nolint:gosimple // V3 model will expand over time so all fields are written out to help future code changes.
 	passwordDataV3 := passwordModelV3{
-		BcryptHash:      passwordDataV2.BcryptHash,
-		ID:              passwordDataV2.ID,
-		Keepers:         passwordDataV2.Keepers,
-		Length:          length,
-		Lower:           lower,
-		MinLower:        minLower,
-		MinNumeric:      minNumeric,
-		MinSpecial:      minSpecial,
-		MinUpper:        minUpper,
-		Number:          number,
-		Numeric:         numeric,
-		OverrideSpecial: passwordDataV2.OverrideSpecial,
-		Result:          passwordDataV2.Result,
-		Special:         special,
-		Upper:           upper,
+		BcryptHash:              passwordDataV2.BcryptHash,
+		ID:                      passwordDataV2.ID,
+		Keepers:                 passwordDataV2.Keepers,
+		Length:                  length,
+		Lower:                   lower,
+		MinLower:                minLower,
+		MinNumeric:              minNumeric,
+		MinSpecial:              minSpecial,
+		MinUpper:                minUpper,
+		Number:                  number,
+		Numeric:                 numeric,
+		OverrideSpecial:         passwordDataV2.OverrideSpecial,
+		Exclusions:              exclusions,
+		ExclusionsCaseSensitive: exclusionsCaseSensitive,
+		Result:                  passwordDataV2.Result,
+		Special:                 special,
+		Upper:                   upper,
 	}
 
 	// Set the duplicated data now so we can easily return early below.
@@ -715,6 +741,36 @@ func passwordSchemaV3() schema.Schema {
 						stringplanmodifiers.RequiresReplaceUnlessEmptyStringToNull(),
 						"Replace on modification unless updating from empty string (\"\") to null.",
 						"Replace on modification unless updating from empty string (`\"\"`) to `null`.",
+					),
+				},
+			},
+
+			"exclusions": schema.SetAttribute{
+				Description: "Supply your own set of exclusions to check against the generated password. " +
+					"If the generated password contains any of the exclusions, it will be regenerated until " +
+					"it does not contain any excluded substrings. Exclusions are case-insensitive by default " +
+					", but can be configured as case-sensitive via the `exclusions_case_sensitive` argument.",
+				Optional:    true,
+				ElementType: types.StringType,
+				PlanModifiers: []planmodifier.Set{
+					setplanmodifier.RequiresReplaceIf(
+						setplanmodifiers.RequiresReplaceIfResultMatchesExclusions(),
+						"Replace on modification if result matches exclusion list.",
+						"Replace on modification if result matches exclusion list.",
+					),
+				},
+			},
+
+			"exclusions_case_sensitive": schema.BoolAttribute{
+				Description: "Determines if the exclusions list should be case-sensitive. Default value is `false`.",
+				Optional:    true,
+				Default:     booldefault.StaticBool(false),
+				Computed:    true,
+				PlanModifiers: []planmodifier.Bool{
+					boolplanmodifier.RequiresReplaceIf(
+						boolplanmodifiers.RequiresReplaceIfResultMatchesExclusions(),
+						"Replace on modification if result matches exclusion list.",
+						"Replace on modification if result matches exclusion list.",
 					),
 				},
 			},
@@ -1050,19 +1106,21 @@ func passwordSchemaV0() schema.Schema {
 }
 
 type passwordModelV3 struct {
-	ID              types.String `tfsdk:"id"`
-	Keepers         types.Map    `tfsdk:"keepers"`
-	Length          types.Int64  `tfsdk:"length"`
-	Special         types.Bool   `tfsdk:"special"`
-	Upper           types.Bool   `tfsdk:"upper"`
-	Lower           types.Bool   `tfsdk:"lower"`
-	Number          types.Bool   `tfsdk:"number"`
-	Numeric         types.Bool   `tfsdk:"numeric"`
-	MinNumeric      types.Int64  `tfsdk:"min_numeric"`
-	MinUpper        types.Int64  `tfsdk:"min_upper"`
-	MinLower        types.Int64  `tfsdk:"min_lower"`
-	MinSpecial      types.Int64  `tfsdk:"min_special"`
-	OverrideSpecial types.String `tfsdk:"override_special"`
-	Result          types.String `tfsdk:"result"`
-	BcryptHash      types.String `tfsdk:"bcrypt_hash"`
+	ID                      types.String `tfsdk:"id"`
+	Keepers                 types.Map    `tfsdk:"keepers"`
+	Length                  types.Int64  `tfsdk:"length"`
+	Special                 types.Bool   `tfsdk:"special"`
+	Upper                   types.Bool   `tfsdk:"upper"`
+	Lower                   types.Bool   `tfsdk:"lower"`
+	Number                  types.Bool   `tfsdk:"number"`
+	Numeric                 types.Bool   `tfsdk:"numeric"`
+	MinNumeric              types.Int64  `tfsdk:"min_numeric"`
+	MinUpper                types.Int64  `tfsdk:"min_upper"`
+	MinLower                types.Int64  `tfsdk:"min_lower"`
+	MinSpecial              types.Int64  `tfsdk:"min_special"`
+	OverrideSpecial         types.String `tfsdk:"override_special"`
+	Exclusions              types.Set    `tf:"exclusions"`
+	ExclusionsCaseSensitive types.Bool   `tf:"exclusions_case_sensitive"`
+	Result                  types.String `tfsdk:"result"`
+	BcryptHash              types.String `tfsdk:"bcrypt_hash"`
 }
