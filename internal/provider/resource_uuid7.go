@@ -43,7 +43,7 @@ func (r *uuidV7Resource) Schema(ctx context.Context, req resource.SchemaRequest,
 		Attributes: map[string]schema.Attribute{
 			"keepers": schema.MapAttribute{
 				Description: "Arbitrary map of values that, when changed, will trigger recreation of " +
-					"resource. See [the main provider documentation](../index.html) for more information.",
+					"resource. See the [main provider documentation](../index.html) for more information.",
 				ElementType: types.StringType,
 				Optional:    true,
 				PlanModifiers: []planmodifier.Map{
