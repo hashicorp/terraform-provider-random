@@ -62,6 +62,8 @@ resource "aws_alb_listener_rule" "main" {
 
 Import is supported using the following syntax:
 
+The [`terraform import` command](https://developer.hashicorp.com/terraform/cli/commands/import) can be used, for example:
+
 ```shell
 # Random integers can be imported using the result, min, and max, with an
 # optional seed. This can be used to replace a config value with a value
