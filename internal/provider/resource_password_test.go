@@ -17,6 +17,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/tfsdk"
 	"github.com/hashicorp/terraform-plugin-go/tftypes"
 	"github.com/hashicorp/terraform-plugin-testing/compare"
+	"github.com/hashicorp/terraform-plugin-testing/config"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/hashicorp/terraform-plugin-testing/knownvalue"
 	"github.com/hashicorp/terraform-plugin-testing/plancheck"
@@ -179,9 +180,7 @@ func TestAccResourcePassword_BcryptHash_FromVersion3_3_2(t *testing.T) {
 		Steps: []resource.TestStep{
 			{
 				ExternalProviders: providerVersion332(),
-				Config: `resource "random_password" "test" {
-							length = 12
-						}`,
+				ConfigDirectory:   config.TestNameDirectory(),
 				ConfigStateChecks: []statecheck.StateCheck{
 					assertBcryptHashSame.AddStateValue("random_password.test", tfjsonpath.New("bcrypt_hash")),
 					statecheck.CompareValuePairs(
@@ -193,9 +192,7 @@ func TestAccResourcePassword_BcryptHash_FromVersion3_3_2(t *testing.T) {
 			},
 			{
 				ProtoV5ProviderFactories: protoV5ProviderFactories(),
-				Config: `resource "random_password" "test" {
-					length = 12
-				}`,
+				ConfigDirectory:          config.TestNameDirectory(),
 				ConfigStateChecks: []statecheck.StateCheck{
 					assertBcryptHashSame.AddStateValue("random_password.test", tfjsonpath.New("bcrypt_hash")),
 					statecheck.CompareValuePairs(
