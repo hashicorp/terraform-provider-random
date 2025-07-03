@@ -43,6 +43,8 @@ resource "azurerm_resource_group" "test" {
 
 Import is supported using the following syntax:
 
+The [`terraform import` command](https://developer.hashicorp.com/terraform/cli/commands/import) can be used, for example:
+
 ```shell
 # Random UUID's can be imported. This can be used to replace a config
 # value with a value interpolated from the random provider without
