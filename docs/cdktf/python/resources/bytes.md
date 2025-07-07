@@ -64,9 +64,11 @@ class MyConvertedCode(TerraformStack):
 
 Import is supported using the following syntax:
 
+The [`terraform import` command](https://developer.hashicorp.com/terraform/cli/commands/import) can be used, for example:
+
 ```shell
 # Random bytes can be imported by specifying the value as base64 string.
 terraform import random_bytes.basic "8/fu3q+2DcgSJ19i0jZ5Cw=="
 ```
 
-<!-- cache-key: cdktf-0.20.8 input-25dd9466f22fbe7d883503390ce1b83d66bac79809038270884f1aa9e1707016 -->
+<!-- cache-key: cdktf-0.20.8 input-1491898ea6dc5de206b80477becb8af7d16a65484aed4c2e657ee03553f3732b -->
