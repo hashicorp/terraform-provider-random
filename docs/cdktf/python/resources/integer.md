@@ -72,6 +72,8 @@ class MyConvertedCode(TerraformStack):
 
 Import is supported using the following syntax:
 
+The [`terraform import` command](https://developer.hashicorp.com/terraform/cli/commands/import) can be used, for example:
+
 ```shell
 # Random integers can be imported using the result, min, and max, with an
 # optional seed. This can be used to replace a config value with a value
@@ -81,4 +83,4 @@ Import is supported using the following syntax:
 terraform import random_integer.priority 15390,1,50000
 ```
 
-<!-- cache-key: cdktf-0.20.8 input-14468c71f20ebc7d2a161542108e1cc214b9ae4d6f2c5008aa55d67bf9354ebf -->
+<!-- cache-key: cdktf-0.20.8 input-04a623631d19c9c19f96f265a4c72584ae8122078c454a5281bfaf35bd615ab2 -->

@@ -57,6 +57,8 @@ class MyConvertedCode(TerraformStack):
 
 Import is supported using the following syntax:
 
+The [`terraform import` command](https://developer.hashicorp.com/terraform/cli/commands/import) can be used, for example:
+
 ```shell
 # Random UUID's can be imported. This can be used to replace a config
 # value with a value interpolated from the random provider without
@@ -65,4 +67,4 @@ Import is supported using the following syntax:
 terraform import random_uuid.main aabbccdd-eeff-0011-2233-445566778899
 ```
 
-<!-- cache-key: cdktf-0.20.8 input-28b6319e244b3425052c370a8691eaadb0c8a850033c058c030cffbcec995a1d -->
+<!-- cache-key: cdktf-0.20.8 input-a93e5a190f5a4ad5f4367c23ecfe2b327c5bdcf6a7367b97c92bed98db5e5050 -->

@@ -91,6 +91,8 @@ class MyConvertedCode(TerraformStack):
 
 Import is supported using the following syntax:
 
+The [`terraform import` command](https://developer.hashicorp.com/terraform/cli/commands/import) can be used, for example:
+
 ```shell
 # Random IDs can be imported using the b64_url with an optional prefix. This
 # can be used to replace a config value with a value interpolated from the
@@ -103,4 +105,4 @@ terraform import random_id.server p-9hUg
 $ terraform import random_id.server my-prefix-,p-9hUg
 ```
 
-<!-- cache-key: cdktf-0.20.8 input-5f91020093f3912bfcdaccf929f7d6b4f81c78dec85ef60164d34297667dd198 -->
+<!-- cache-key: cdktf-0.20.8 input-dba7eb7903c51c58e9ff55fba6c6d64a8342eddd04d55a863b71bc3e3a233c99 -->
