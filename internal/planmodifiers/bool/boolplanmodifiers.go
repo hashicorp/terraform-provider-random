@@ -5,8 +5,8 @@ package boolplanmodifiers
 
 import (
 	"context"
-
 	"github.com/hashicorp/terraform-plugin-framework/path"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/boolplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 )
@@ -67,5 +67,14 @@ func (d *numberNumericAttributePlanModifier) PlanModifyBool(ctx context.Context,
 	if !numberConfig.IsNull() && numericConfig.IsNull() {
 		resp.PlanValue = numberConfig
 		return
+	}
+}
+
+func RequiresReplaceIfResultMatchesExclusions() boolplanmodifier.RequiresReplaceIfFunc {
+	return func(ctx context.Context, req planmodifier.BoolRequest, resp *boolplanmodifier.RequiresReplaceIfFuncResponse) {
+		// TODO: Implement this plan modifier.
+		// if existing result matches the exclusion set, enforce recreation of the resource
+		// else recreation is not required
+		resp.RequiresReplace = true
 	}
 }
