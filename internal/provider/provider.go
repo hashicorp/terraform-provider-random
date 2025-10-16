@@ -41,6 +41,7 @@ func (p *randomProvider) Resources(context.Context) []func() resource.Resource {
 		NewShuffleResource,
 		NewStringResource,
 		NewUuidResource,
+		NewIPResource,
 	}
 }
 
