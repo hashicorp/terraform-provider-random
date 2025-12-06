@@ -8,19 +8,22 @@ import (
 	"errors"
 	"math/big"
 	"sort"
+	"strings"
 )
 
 type StringParams struct {
-	Length          int64
-	Upper           bool
-	MinUpper        int64
-	Lower           bool
-	MinLower        int64
-	Numeric         bool
-	MinNumeric      int64
-	Special         bool
-	MinSpecial      int64
-	OverrideSpecial string
+	Length                  int64
+	Upper                   bool
+	MinUpper                int64
+	Lower                   bool
+	MinLower                int64
+	Numeric                 bool
+	MinNumeric              int64
+	Special                 bool
+	MinSpecial              int64
+	OverrideSpecial         string
+	Exclusions              []string
+	ExclusionsCaseSensitive bool
 }
 
 func CreateString(input StringParams) ([]byte, error) {
@@ -85,7 +88,25 @@ func CreateString(input StringParams) ([]byte, error) {
 		return order[i] < order[j]
 	})
 
+	if containsExclusions(result, input.Exclusions, input.ExclusionsCaseSensitive) {
+		return CreateString(input)
+	}
+
 	return result, nil
+}
+
+func containsExclusions(result []byte, exclusions []string, caseSensitive bool) bool {
+	resultStr := string(result)
+	for _, exclusion := range exclusions {
+		if !caseSensitive {
+			exclusion = strings.ToLower(exclusion)
+			resultStr = strings.ToLower(resultStr)
+		}
+		if strings.Contains(resultStr, exclusion) {
+			return true
+		}
+	}
+	return false
 }
 
 func generateRandomBytes(charSet *string, length int64) ([]byte, error) {
