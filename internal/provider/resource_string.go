@@ -184,6 +184,8 @@ func (r *stringResource) ModifyPlan(ctx context.Context, req resource.ModifyPlan
 		return
 	}
 
+	// TODO: This was just a quick hack implementation, we should ensure that this marshalling/unmarshaling to JSON
+	// doesn't lose/change the generated string value with some comprehensive testing.
 	plannedRandomValJSON, err = json.Marshal(plannedRandomValue{Value: string(result)})
 	if err != nil {
 		resp.Diagnostics.Append(diagnostics.RandomReadError(err.Error())...)
