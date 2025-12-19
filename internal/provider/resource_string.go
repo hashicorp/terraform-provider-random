@@ -5,6 +5,7 @@ package provider
 
 import (
 	"context"
+	"encoding/json"
 
 	"github.com/hashicorp/terraform-plugin-framework-validators/int64validator"
 	"github.com/hashicorp/terraform-plugin-framework/path"
@@ -29,6 +30,7 @@ import (
 
 var (
 	_ resource.Resource                 = (*stringResource)(nil)
+	_ resource.ResourceWithModifyPlan   = (*stringResource)(nil)
 	_ resource.ResourceWithImportState  = (*stringResource)(nil)
 	_ resource.ResourceWithUpgradeState = (*stringResource)(nil)
 )
@@ -56,27 +58,30 @@ func (r *stringResource) Create(ctx context.Context, req resource.CreateRequest,
 		return
 	}
 
-	params := random.StringParams{
-		Length:          plan.Length.ValueInt64(),
-		Upper:           plan.Upper.ValueBool(),
-		MinUpper:        plan.MinUpper.ValueInt64(),
-		Lower:           plan.Lower.ValueBool(),
-		MinLower:        plan.MinLower.ValueInt64(),
-		Numeric:         plan.Numeric.ValueBool(),
-		MinNumeric:      plan.MinNumeric.ValueInt64(),
-		Special:         plan.Special.ValueBool(),
-		MinSpecial:      plan.MinSpecial.ValueInt64(),
-		OverrideSpecial: plan.OverrideSpecial.ValueString(),
-	}
+	// If we didn't already generate the ID and result during plan, we need to do that now
+	if plan.ID.IsUnknown() || plan.Result.IsUnknown() {
+		params := random.StringParams{
+			Length:          plan.Length.ValueInt64(),
+			Upper:           plan.Upper.ValueBool(),
+			MinUpper:        plan.MinUpper.ValueInt64(),
+			Lower:           plan.Lower.ValueBool(),
+			MinLower:        plan.MinLower.ValueInt64(),
+			Numeric:         plan.Numeric.ValueBool(),
+			MinNumeric:      plan.MinNumeric.ValueInt64(),
+			Special:         plan.Special.ValueBool(),
+			MinSpecial:      plan.MinSpecial.ValueInt64(),
+			OverrideSpecial: plan.OverrideSpecial.ValueString(),
+		}
 
-	result, err := random.CreateString(params)
-	if err != nil {
-		resp.Diagnostics.Append(diagnostics.RandomReadError(err.Error())...)
-		return
-	}
+		result, err := random.CreateString(params)
+		if err != nil {
+			resp.Diagnostics.Append(diagnostics.RandomReadError(err.Error())...)
+			return
+		}
 
-	plan.ID = types.StringValue(string(result))
-	plan.Result = types.StringValue(string(result))
+		plan.ID = types.StringValue(string(result))
+		plan.Result = types.StringValue(string(result))
+	}
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, plan)...)
 }
@@ -101,6 +106,100 @@ func (r *stringResource) Update(ctx context.Context, req resource.UpdateRequest,
 // Delete does not need to explicitly call resp.State.RemoveResource() as this is automatically handled by the
 // [framework](https://github.com/hashicorp/terraform-plugin-framework/pull/301).
 func (r *stringResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
+}
+
+type plannedRandomValue struct {
+	Value string `json:"value"`
+}
+
+func (r *stringResource) ModifyPlan(ctx context.Context, req resource.ModifyPlanRequest, resp *resource.ModifyPlanResponse) {
+	// This method enhances the create plan by calculating the id and result, which is persisted between initial and
+	// final plan using private data to ensure the value is only generated once.
+	//
+	// If the client doesn't support persisting private data between plans or the resource state already exists (update or destroy plan), we can skip this logic.
+	if !req.ClientCapabilities.StorePlannedPrivate || !req.State.Raw.IsNull() {
+		return
+	}
+
+	var plan stringModelV3
+	resp.Diagnostics.Append(req.Plan.Get(ctx, &plan)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	// These are all of the config attributes needed to create a random string, if any of them are unknown, we can't create the random string yet.
+	if plan.Length.IsUnknown() ||
+		plan.Upper.IsUnknown() ||
+		plan.MinUpper.IsUnknown() ||
+		plan.Lower.IsUnknown() ||
+		plan.MinLower.IsUnknown() ||
+		plan.Numeric.IsUnknown() ||
+		plan.MinNumeric.IsUnknown() ||
+		plan.Special.IsUnknown() ||
+		plan.MinSpecial.IsUnknown() ||
+		plan.OverrideSpecial.IsUnknown() {
+		return
+	}
+
+	plannedRandomValJSON, diags := req.PlannedPrivate.GetKey(ctx, "planned_random_value")
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	if len(plannedRandomValJSON) > 0 {
+		// This is the final plan, so we can just use the planned random value from the PlannedPrivate data
+		var privatePlannedVal plannedRandomValue
+		err := json.Unmarshal(plannedRandomValJSON, &privatePlannedVal)
+		if err != nil {
+			resp.Diagnostics.Append(diagnostics.RandomReadError(err.Error())...)
+			return
+		}
+
+		plan.ID = types.StringValue(privatePlannedVal.Value)
+		plan.Result = types.StringValue(privatePlannedVal.Value)
+
+		resp.Diagnostics.Append(resp.Plan.Set(ctx, plan)...)
+
+		return
+	}
+
+	// This is the initial plan, so we need to create the random string and store it for the final plan
+	params := random.StringParams{
+		Length:          plan.Length.ValueInt64(),
+		Upper:           plan.Upper.ValueBool(),
+		MinUpper:        plan.MinUpper.ValueInt64(),
+		Lower:           plan.Lower.ValueBool(),
+		MinLower:        plan.MinLower.ValueInt64(),
+		Numeric:         plan.Numeric.ValueBool(),
+		MinNumeric:      plan.MinNumeric.ValueInt64(),
+		Special:         plan.Special.ValueBool(),
+		MinSpecial:      plan.MinSpecial.ValueInt64(),
+		OverrideSpecial: plan.OverrideSpecial.ValueString(),
+	}
+
+	result, err := random.CreateString(params)
+	if err != nil {
+		resp.Diagnostics.Append(diagnostics.RandomReadError(err.Error())...)
+		return
+	}
+
+	plannedRandomValJSON, err = json.Marshal(plannedRandomValue{Value: string(result)})
+	if err != nil {
+		resp.Diagnostics.Append(diagnostics.RandomReadError(err.Error())...)
+		return
+	}
+
+	// Set private data to ensure the final plan will have the same generated random value.
+	resp.Diagnostics.Append(resp.Private.SetKey(ctx, "planned_random_value", plannedRandomValJSON)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	plan.ID = types.StringValue(string(result))
+	plan.Result = types.StringValue(string(result))
+
+	resp.Diagnostics.Append(resp.Plan.Set(ctx, plan)...)
 }
 
 func (r *stringResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
