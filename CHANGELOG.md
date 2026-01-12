@@ -1,9 +1,14 @@
+## 3.8.0 (January 12, 2026)
+
+ENHANCEMENTS:
+
+* Add uuid4 and uuid7 resources to generate valid random uuids of the appropriate version ([#402](https://github.com/hashicorp/terraform-provider-random/issues/402))
+
 ## 3.7.2 (April 22, 2025)
 
 NOTES:
 
 * Update dependencies ([#683](https://github.com/hashicorp/terraform-provider-random/issues/683))
-
 ## 3.7.1 (February 25, 2025)
 
 NOTES:

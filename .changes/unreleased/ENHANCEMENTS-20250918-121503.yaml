@@ -1,5 +1,0 @@
-kind: ENHANCEMENTS
-body: Add uuid4 and uuid7 resources to generate valid random uuids of the appropriate version
-time: 2025-09-18T12:15:03.335115-04:00
-custom:
-    Issue: "402"
