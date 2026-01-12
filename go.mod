@@ -1,6 +1,6 @@
 module github.com/terraform-providers/terraform-provider-random
 
-go 1.24.0
+go 1.24.11
 
 require (
 	github.com/dustinkirkland/golang-petname v0.0.0-20240428194347-eebcea082ee0
