@@ -52,6 +52,7 @@ func (p *randomProvider) DataSources(context.Context) []func() datasource.DataSo
 
 func (p *randomProvider) EphemeralResources(context.Context) []func() ephemeral.EphemeralResource {
 	return []func() ephemeral.EphemeralResource{
+		NewBytesEphemeralResource,
 		NewPasswordEphemeralResource,
 	}
 }
