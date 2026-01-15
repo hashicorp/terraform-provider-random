@@ -21,7 +21,10 @@ import (
 	mapplanmodifiers "github.com/terraform-providers/terraform-provider-random/internal/planmodifiers/map"
 )
 
-var _ resource.Resource = (*petResource)(nil)
+var (
+	_ resource.Resource                = (*petResource)(nil)
+	_ resource.ResourceWithImportState = (*petResource)(nil)
+)
 
 func NewPetResource() resource.Resource {
 	return &petResource{}
@@ -149,6 +152,43 @@ func (r *petResource) Update(ctx context.Context, req resource.UpdateRequest, re
 // Delete does not need to explicitly call resp.State.RemoveResource() as this is automatically handled by the
 // [framework](https://github.com/hashicorp/terraform-plugin-framework/pull/301).
 func (r *petResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
+}
+
+func (r *petResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
+	parts := strings.Split(req.ID, ",")
+	if len(parts) != 3 {
+		resp.Diagnostics.AddError(
+			"Unexpected Import Identifier",
+			fmt.Sprintf("Expected import identifier with format: pet_name,separator,prefix. Got: %q", req.ID),
+		)
+		return
+	}
+
+	id, separator, prefix := parts[0], parts[1], parts[2]
+	if separator == "" {
+		separator = "-"
+	}
+
+	nameLength := len(strings.Split(id, separator))
+
+	prefixVal := types.StringNull()
+	if prefix != "" {
+		prefixVal = types.StringValue(prefix)
+	}
+
+	state := petModelV0{
+		ID:        types.StringValue(id),
+		Length:    types.Int64Value(int64(nameLength)),
+		Prefix:    prefixVal,
+		Separator: types.StringValue(separator),
+		Keepers:   types.MapNull(types.StringType),
+	}
+
+	diags := resp.State.Set(ctx, &state)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
 }
 
 type petModelV0 struct {
