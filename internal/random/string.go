@@ -27,14 +27,14 @@ func CreateString(input StringParams) ([]byte, error) {
 	const numChars = "0123456789"
 	const lowerChars = "abcdefghijklmnopqrstuvwxyz"
 	const upperChars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
-	var specialChars = "!@#$%&*()-_=+[]{}<>:?"
-	var result []byte
+	specialChars := "!@#$%&*()-_=+[]{}<>:?"
+	var result []rune
 
 	if input.OverrideSpecial != "" {
 		specialChars = input.OverrideSpecial
 	}
 
-	var chars = ""
+	chars := ""
 	if input.Upper {
 		chars += upperChars
 	}
@@ -59,7 +59,7 @@ func CreateString(input StringParams) ([]byte, error) {
 		specialChars: input.MinSpecial,
 	}
 
-	result = make([]byte, 0, input.Length)
+	result = make([]rune, 0, input.Length)
 
 	for k, v := range minMapping {
 		s, err := generateRandomBytes(&k, v)
@@ -85,10 +85,10 @@ func CreateString(input StringParams) ([]byte, error) {
 		return order[i] < order[j]
 	})
 
-	return result, nil
+	return []byte(string(result)), nil
 }
 
-func generateRandomBytes(charSet *string, length int64) ([]byte, error) {
+func generateRandomBytes(charSet *string, length int64) ([]rune, error) {
 	if charSet == nil {
 		return nil, errors.New("charSet is nil")
 	}
@@ -97,14 +97,17 @@ func generateRandomBytes(charSet *string, length int64) ([]byte, error) {
 		return nil, errors.New("charSet is empty")
 	}
 
-	bytes := make([]byte, length)
-	setLen := big.NewInt(int64(len(*charSet)))
+	runeSet := []rune(*charSet)
+
+	bytes := make([]rune, length)
+	setLen := big.NewInt(int64(len(runeSet)))
 	for i := range bytes {
 		idx, err := rand.Int(rand.Reader, setLen)
 		if err != nil {
 			return nil, err
 		}
-		bytes[i] = (*charSet)[idx.Int64()]
+		character := runeSet[idx.Int64()]
+		bytes[i] = character
 	}
 	return bytes, nil
 }
