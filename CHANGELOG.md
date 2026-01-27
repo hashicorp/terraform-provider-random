@@ -1,3 +1,9 @@
+## 3.8.1 (January 27, 2026)
+
+NOTES:
+
+* This release introduces no functional changes but has been signed with a valid certificate for the windows binary. ([#749](https://github.com/hashicorp/terraform-provider-random/issues/749))
+
 ## 3.8.0 (January 12, 2026)
 
 ENHANCEMENTS:
