@@ -6,6 +6,7 @@ package randomtest
 import (
 	"fmt"
 	"strconv"
+	"unicode/utf8"
 
 	"github.com/hashicorp/terraform-plugin-testing/knownvalue"
 )
@@ -17,7 +18,7 @@ type stringLengthExact struct {
 }
 
 // CheckValue determines whether the passed value is of type string, and
-// contains a matching length of bytes.
+// contains a matching length of characters (runes).
 func (v stringLengthExact) CheckValue(other any) error {
 	otherVal, ok := other.(string)
 
@@ -25,8 +26,9 @@ func (v stringLengthExact) CheckValue(other any) error {
 		return fmt.Errorf("expected string value for StringLengthExact check, got: %T", other)
 	}
 
-	if len(otherVal) != v.length {
-		return fmt.Errorf("expected string of length %d for StringLengthExact check, got: %d (value = %s)", v.length, len(otherVal), otherVal)
+	runeCount := utf8.RuneCountInString(otherVal)
+	if runeCount != v.length {
+		return fmt.Errorf("expected string of length %d for StringLengthExact check, got: %d (value = %s)", v.length, runeCount, otherVal)
 	}
 
 	return nil
