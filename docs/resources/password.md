@@ -42,6 +42,8 @@ resource "aws_db_instance" "example" {
 
 ### Optional
 
+- `exclusions` (Set of String) Supply your own set of exclusions to check against the generated password. If the generated password contains any of the exclusions, it will be regenerated until it does not contain any excluded substrings. Exclusions are case-insensitive by default , but can be configured as case-sensitive via the `exclusions_case_sensitive` argument.
+- `exclusions_case_sensitive` (Boolean) Determines if the exclusions list should be case-sensitive. Default value is `false`.
 - `keepers` (Map of String) Arbitrary map of values that, when changed, will trigger recreation of resource. See [the main provider documentation](../index.html) for more information.
 - `lower` (Boolean) Include lowercase alphabet characters in the result. Default value is `true`.
 - `min_lower` (Number) Minimum number of lowercase alphabet characters in the result. Default value is `0`.
