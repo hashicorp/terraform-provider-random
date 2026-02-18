@@ -6,6 +6,7 @@ package randomtest
 import (
 	"fmt"
 	"strconv"
+	"unicode/utf8"
 
 	"github.com/hashicorp/terraform-plugin-testing/knownvalue"
 )
@@ -17,7 +18,7 @@ type stringLengthMin struct {
 }
 
 // CheckValue determines whether the passed value is of type string, and
-// contains a matching length of bytes.
+// contains a matching length of characters (runes).
 func (v stringLengthMin) CheckValue(other any) error {
 	otherVal, ok := other.(string)
 
@@ -25,8 +26,9 @@ func (v stringLengthMin) CheckValue(other any) error {
 		return fmt.Errorf("expected string value for StringLengthMin check, got: %T", other)
 	}
 
-	if len(otherVal) < v.minLength {
-		return fmt.Errorf("expected string length to be at least %d for StringLengthMin check, got: %d (value = %s)", v.minLength, len(otherVal), otherVal)
+	runeCount := utf8.RuneCountInString(otherVal)
+	if runeCount < v.minLength {
+		return fmt.Errorf("expected string length to be at least %d for StringLengthMin check, got: %d (value = %s)", v.minLength, runeCount, otherVal)
 	}
 
 	return nil

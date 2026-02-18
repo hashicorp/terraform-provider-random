@@ -523,7 +523,6 @@ func upgradePasswordStateV2toV3(ctx context.Context, req resource.UpgradeStateRe
 
 	// Regenerate the BcryptHash value.
 	newBcryptHash, err := bcrypt.GenerateFromPassword([]byte(passwordDataV2.Result.ValueString()), bcrypt.DefaultCost)
-
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Version 3 State Upgrade Error",
@@ -613,7 +612,8 @@ func passwordSchemaV3() schema.Schema {
 				Default:     booldefault.StaticBool(true),
 				PlanModifiers: []planmodifier.Bool{
 					boolplanmodifier.RequiresReplace(),
-				}},
+				},
+			},
 
 			"lower": schema.BoolAttribute{
 				Description: "Include lowercase alphabet characters in the result. Default value is `true`.",
