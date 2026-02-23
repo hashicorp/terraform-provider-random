@@ -1,0 +1,4 @@
+kind: BUG FIXES
+body: 'resource/random_password, resource/random_string: Fix UTF-8 character handling to correctly count characters instead of bytes when using multi-byte UTF-8 characters in override_special'
+custom:
+  Issue: 741

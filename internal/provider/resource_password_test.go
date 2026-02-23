@@ -270,6 +270,27 @@ func TestAccResourcePassword_Override(t *testing.T) {
 	})
 }
 
+func TestAccResourcePassword_OverrideSpecialUTF8(t *testing.T) {
+	resource.UnitTest(t, resource.TestCase{
+		ProtoV5ProviderFactories: protoV5ProviderFactories(),
+		Steps: []resource.TestStep{
+			{
+				Config: `resource "random_password" "utf8" {
+							length = 10
+							override_special = "°"
+							lower = false
+							upper = false
+							numeric = false
+						}`,
+				ConfigStateChecks: []statecheck.StateCheck{
+					statecheck.ExpectKnownValue("random_password.utf8", tfjsonpath.New("result"), randomtest.StringLengthExact(10)),
+					statecheck.ExpectKnownValue("random_password.utf8", tfjsonpath.New("result"), knownvalue.StringExact("°°°°°°°°°°")),
+				},
+			},
+		},
+	})
+}
+
 // TestAccResourcePassword_OverrideSpecial_FromVersion3_3_2 verifies behaviour
 // when upgrading the provider version from 3.3.2, which set the
 // override_special value to null and should not result in a plan difference.
