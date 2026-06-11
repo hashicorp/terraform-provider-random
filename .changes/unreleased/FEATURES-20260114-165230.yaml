@@ -1,0 +1,5 @@
+kind: FEATURES
+body: 'resource/random_bytes: add ephemeral random_bytes resource'
+time: 2026-01-14T16:52:30.801175+01:00
+custom:
+    Issue: "711"
