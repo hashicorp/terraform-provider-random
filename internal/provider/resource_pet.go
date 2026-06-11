@@ -81,6 +81,7 @@ func (r *petResource) Schema(ctx context.Context, req resource.SchemaRequest, re
 				Computed:    true,
 				PlanModifiers: []planmodifier.String{
 					stringplanmodifier.UseStateForUnknown(),
+					SetPetOnPlan(),
 				},
 			},
 		},
@@ -88,11 +89,7 @@ func (r *petResource) Schema(ctx context.Context, req resource.SchemaRequest, re
 }
 
 func (r *petResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
-	// This is necessary to ensure each call to petname is properly randomised:
-	// the library uses `rand.Intn()` and does NOT seed `rand.Seed()` by default,
-	// so this call takes care of that.
-	petname.NonDeterministicMode()
-
+	// since we generate the id in the plan modifier, we just need to take the plan and save it to state
 	var plan petModelV0
 
 	diags := req.Plan.Get(ctx, &plan)
@@ -101,28 +98,7 @@ func (r *petResource) Create(ctx context.Context, req resource.CreateRequest, re
 		return
 	}
 
-	length := plan.Length.ValueInt64()
-	separator := plan.Separator.ValueString()
-	prefix := plan.Prefix.ValueString()
-
-	pet := strings.ToLower(petname.Generate(int(length), separator))
-
-	pn := petModelV0{
-		Keepers:   plan.Keepers,
-		Length:    types.Int64Value(length),
-		Separator: types.StringValue(separator),
-	}
-
-	if prefix != "" {
-		pet = fmt.Sprintf("%s%s%s", prefix, separator, pet)
-		pn.Prefix = types.StringValue(prefix)
-	} else {
-		pn.Prefix = types.StringNull()
-	}
-
-	pn.ID = types.StringValue(pet)
-
-	diags = resp.State.Set(ctx, pn)
+	diags = resp.State.Set(ctx, plan)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
 		return
@@ -157,4 +133,72 @@ type petModelV0 struct {
 	Length    types.Int64  `tfsdk:"length"`
 	Prefix    types.String `tfsdk:"prefix"`
 	Separator types.String `tfsdk:"separator"`
+}
+
+func SetPetOnPlan() planmodifier.String {
+	return SetPetOnPlanModifier{}
+}
+
+// SetPetOnPlanModifier implements the plan modifier.
+type SetPetOnPlanModifier struct{}
+
+// Description returns a human-readable description of the plan modifier.
+func (m SetPetOnPlanModifier) Description(_ context.Context) string {
+	return "Sets the value of the random pet during resource planning."
+}
+
+// MarkdownDescription returns a markdown description of the plan modifier.
+func (m SetPetOnPlanModifier) MarkdownDescription(_ context.Context) string {
+	return "Sets the value of the random pet during resource planning."
+}
+
+// PlanModifyString implements the plan modification logic.
+func (m SetPetOnPlanModifier) PlanModifyString(ctx context.Context, req planmodifier.StringRequest, resp *planmodifier.StringResponse) {
+	// Retrieving the planned id on the second run of PlanResourceChange
+	// This does not work as the context no longer has the value
+	id, ok := ctx.Value("planned_id").(string)
+	if ok {
+		resp.PlanValue = types.StringValue(id)
+		return
+	}
+
+	// PlanResourceChange is called twice per run for each resource type.
+	// Generating the initial ID and saving it to a context value for retrieval on second run
+	// if the id does not match on each run of PlanResourceChange, terraform will error
+	if req.State.Raw.IsNull() {
+		// This is necessary to ensure each call to petname is properly randomised:
+		// the library uses `rand.Intn()` and does NOT seed `rand.Seed()` by default,
+		// so this call takes care of that.
+		petname.NonDeterministicMode()
+		var plan petModelV0
+
+		diags := req.Plan.Get(ctx, &plan)
+		resp.Diagnostics.Append(diags...)
+		if resp.Diagnostics.HasError() {
+			return
+		}
+
+		length := plan.Length.ValueInt64()
+		separator := plan.Separator.ValueString()
+		prefix := plan.Prefix.ValueString()
+
+		pet := strings.ToLower(petname.Generate(int(length), separator))
+
+		pn := petModelV0{
+			Keepers:   plan.Keepers,
+			Length:    types.Int64Value(length),
+			Separator: types.StringValue(separator),
+		}
+
+		if prefix != "" {
+			pet = fmt.Sprintf("%s%s%s", prefix, separator, pet)
+			pn.Prefix = types.StringValue(prefix)
+		} else {
+			pn.Prefix = types.StringNull()
+		}
+
+		resp.PlanValue = types.StringValue(pet)
+		ctx = context.WithValue(ctx, "planned_id", pet)
+	}
+
 }
