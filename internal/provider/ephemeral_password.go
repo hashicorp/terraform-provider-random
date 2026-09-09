@@ -57,7 +57,7 @@ func (e *passwordEphemeralResource) Schema(ctx context.Context, req ephemeral.Sc
 			"in a managed resource, which will avoid Terraform storing the password string in the plan or state file.",
 		Attributes: map[string]schema.Attribute{
 			"length": schema.Int64Attribute{
-				Description: "The length of the string desired. The minimum value for length is 1 and, length " +
+				Description: "The length of the password desired. The minimum value for length is 1 and, length " +
 					"must also be >= (`min_upper` + `min_lower` + `min_numeric` + `min_special`).",
 				Required: true,
 				Validators: []validator.Int64{
@@ -121,19 +121,19 @@ func (e *passwordEphemeralResource) Schema(ctx context.Context, req ephemeral.Sc
 				Computed:    true,
 			},
 			"override_special": schema.StringAttribute{
-				Description: "Supply your own list of special characters to use for string generation.  This " +
+				Description: "Supply your own list of special characters to use for password generation.  This " +
 					"overrides the default character list in the special argument.  The `special` argument must " +
 					"still be set to true for any overwritten characters to be used in generation.",
 				Optional: true,
 			},
 			"result": schema.StringAttribute{
-				Description: "The generated random string.",
+				Description: "The generated random password.",
 				Computed:    true,
 				Sensitive:   true,
 			},
 			"bcrypt_hash": schema.StringAttribute{
-				Description: "A bcrypt hash of the generated random string. " +
-					"**NOTE**: If the generated random string is greater than 72 bytes in length, " +
+				Description: "A bcrypt hash of the generated random password. " +
+					"**NOTE**: If the generated random password is greater than 72 bytes in length, " +
 					"`bcrypt_hash` will contain a hash of the first 72 bytes.",
 				Computed:  true,
 				Sensitive: true,
