@@ -1,5 +1,0 @@
-kind: NOTES
-body: Update golang.org/x/mod to v0.40.0 and google.golang.org/protobuf to v1.36.12.
-time: 2026-09-10T16:40:34.239892+02:00
-custom:
-    Issue: "814"
