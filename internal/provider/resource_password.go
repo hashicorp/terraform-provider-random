@@ -6,6 +6,8 @@ package provider
 import (
 	"context"
 	"errors"
+	"fmt"
+	"strings"
 
 	"github.com/hashicorp/terraform-plugin-framework-validators/int64validator"
 	"github.com/hashicorp/terraform-plugin-framework/path"
@@ -33,6 +35,7 @@ var (
 	_ resource.Resource                 = (*passwordResource)(nil)
 	_ resource.ResourceWithImportState  = (*passwordResource)(nil)
 	_ resource.ResourceWithUpgradeState = (*passwordResource)(nil)
+	_ resource.ResourceWithMoveState    = (*passwordResource)(nil)
 )
 
 func NewPasswordResource() resource.Resource {
@@ -162,6 +165,55 @@ func (r *passwordResource) UpgradeState(context.Context) map[int64]resource.Stat
 		2: {
 			PriorSchema:   &schemaV2,
 			StateUpgrader: upgradePasswordStateV2toV3,
+		},
+	}
+}
+
+func (r *passwordResource) MoveState(context.Context) []resource.StateMover {
+	sourceSchema := stringSchemaV3()
+	return []resource.StateMover{
+		{
+			SourceSchema: &sourceSchema,
+			StateMover: func(ctx context.Context, req resource.MoveStateRequest, resp *resource.MoveStateResponse) {
+				if req.SourceTypeName != "random_string" || !strings.HasSuffix(req.SourceProviderAddress, "hashicorp/random") {
+					return
+				}
+				if req.SourceSchemaVersion != sourceSchema.Version {
+					resp.Diagnostics.AddError(
+						"Unsupported schema version",
+						fmt.Sprintf("Expected %d, got %d", sourceSchema.Version, req.SourceSchemaVersion),
+					)
+					return
+				}
+				var src stringModelV3
+				resp.Diagnostics.Append(req.SourceState.Get(ctx, &src)...)
+				if resp.Diagnostics.HasError() {
+					return
+				}
+				hash, err := generateHash(src.Result.ValueString())
+				if err != nil {
+					resp.Diagnostics.Append(diagnostics.HashGenerationError(err.Error())...)
+					return
+				}
+				dst := passwordModelV3{
+					ID:              types.StringValue("none"),
+					Keepers:         src.Keepers,
+					Length:          src.Length,
+					Result:          src.Result,
+					Number:          src.Number,
+					Upper:           src.Upper,
+					MinUpper:        src.MinUpper,
+					Lower:           src.Lower,
+					MinLower:        src.MinLower,
+					Numeric:         src.Numeric,
+					MinNumeric:      src.MinNumeric,
+					Special:         src.Special,
+					MinSpecial:      src.MinSpecial,
+					OverrideSpecial: src.OverrideSpecial,
+					BcryptHash:      types.StringValue(hash),
+				}
+				resp.Diagnostics.Append(resp.TargetState.Set(ctx, dst)...)
+			},
 		},
 	}
 }
