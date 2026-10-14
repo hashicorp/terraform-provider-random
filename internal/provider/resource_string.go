@@ -5,6 +5,8 @@ package provider
 
 import (
 	"context"
+	"fmt"
+	"strings"
 
 	"github.com/hashicorp/terraform-plugin-framework-validators/int64validator"
 	"github.com/hashicorp/terraform-plugin-framework/path"
@@ -31,6 +33,7 @@ var (
 	_ resource.Resource                 = (*stringResource)(nil)
 	_ resource.ResourceWithImportState  = (*stringResource)(nil)
 	_ resource.ResourceWithUpgradeState = (*stringResource)(nil)
+	_ resource.ResourceWithMoveState    = (*stringResource)(nil)
 )
 
 func NewStringResource() resource.Resource {
@@ -142,6 +145,49 @@ func (r *stringResource) UpgradeState(context.Context) map[int64]resource.StateU
 		2: {
 			PriorSchema:   &schemaV2,
 			StateUpgrader: upgradeStringStateV2toV3,
+		},
+	}
+}
+
+func (r *stringResource) MoveState(context.Context) []resource.StateMover {
+	sourceSchema := passwordSchemaV3()
+	return []resource.StateMover{
+		{
+			SourceSchema: &sourceSchema,
+			StateMover: func(ctx context.Context, req resource.MoveStateRequest, resp *resource.MoveStateResponse) {
+				if req.SourceTypeName != "random_password" || !strings.HasSuffix(req.SourceProviderAddress, "hashicorp/random") {
+					return
+				}
+				if req.SourceSchemaVersion != sourceSchema.Version {
+					resp.Diagnostics.AddError(
+						"Unsupported schema version",
+						fmt.Sprintf("Expected %d, got %d", sourceSchema.Version, req.SourceSchemaVersion),
+					)
+					return
+				}
+				var src passwordModelV3
+				resp.Diagnostics.Append(req.SourceState.Get(ctx, &src)...)
+				if resp.Diagnostics.HasError() {
+					return
+				}
+				dst := stringModelV3{
+					ID:              src.ID,
+					Keepers:         src.Keepers,
+					Length:          src.Length,
+					Special:         src.Special,
+					Upper:           src.Upper,
+					Lower:           src.Lower,
+					Number:          src.Number,
+					Numeric:         src.Numeric,
+					MinNumeric:      src.MinNumeric,
+					MinUpper:        src.MinUpper,
+					MinLower:        src.MinLower,
+					MinSpecial:      src.MinSpecial,
+					OverrideSpecial: src.OverrideSpecial,
+					Result:          src.Result,
+				}
+				resp.Diagnostics.Append(resp.TargetState.Set(ctx, dst)...)
+			},
 		},
 	}
 }

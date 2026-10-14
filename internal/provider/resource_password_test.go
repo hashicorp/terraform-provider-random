@@ -23,6 +23,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-testing/statecheck"
 	"github.com/hashicorp/terraform-plugin-testing/terraform"
 	"github.com/hashicorp/terraform-plugin-testing/tfjsonpath"
+	"github.com/hashicorp/terraform-plugin-testing/tfversion"
 	"golang.org/x/crypto/bcrypt"
 
 	"github.com/terraform-providers/terraform-provider-random/internal/random"
@@ -51,19 +52,16 @@ func TestGenerateHash(t *testing.T) {
 			t.Parallel()
 
 			randomBytes, err := random.CreateString(testCase.input)
-
 			if err != nil {
 				t.Fatalf("unexpected random.CreateString error: %s", err)
 			}
 
 			hash, err := generateHash(string(randomBytes))
-
 			if err != nil {
 				t.Fatalf("unexpected generateHash error: %s", err)
 			}
 
 			err = bcrypt.CompareHashAndPassword([]byte(hash), randomBytes)
-
 			if err != nil {
 				t.Fatalf("unexpected bcrypt.CompareHashAndPassword error: %s", err)
 			}
@@ -2022,7 +2020,6 @@ func TestUpgradePasswordStateV2toV3(t *testing.T) {
 			resultPath := tftypes.NewAttributePath().WithAttributeName("result")
 
 			requestBcryptHashValue, err := testTftypesValueAtPath(testCase.request.State.Raw, bcryptHashPath)
-
 			if err != nil {
 				t.Fatalf("unexpected error getting request bcrypt_hash value: %s", err)
 			}
@@ -2032,7 +2029,6 @@ func TestUpgradePasswordStateV2toV3(t *testing.T) {
 			}
 
 			requestResultValue, err := testTftypesValueAtPath(testCase.request.State.Raw, resultPath)
-
 			if err != nil {
 				t.Fatalf("unexpected error getting request result value: %s", err)
 			}
@@ -2042,7 +2038,6 @@ func TestUpgradePasswordStateV2toV3(t *testing.T) {
 			}
 
 			expectedBcryptHashValue, err := testTftypesValueAtPath(testCase.expected.State.Raw, bcryptHashPath)
-
 			if err != nil {
 				t.Fatalf("unexpected error getting expected bcrypt_hash value: %s", err)
 			}
@@ -2052,7 +2047,6 @@ func TestUpgradePasswordStateV2toV3(t *testing.T) {
 			}
 
 			gotBcryptHashValue, err := testTftypesValueAtPath(got.State.Raw, bcryptHashPath)
-
 			if err != nil {
 				t.Fatalf("unexpected error getting got bcrypt_hash value: %s", err)
 			}
@@ -2062,7 +2056,6 @@ func TestUpgradePasswordStateV2toV3(t *testing.T) {
 			}
 
 			gotResultValue, err := testTftypesValueAtPath(got.State.Raw, resultPath)
-
 			if err != nil {
 				t.Fatalf("unexpected error getting got result value: %s", err)
 			}
@@ -2112,7 +2105,6 @@ func TestUpgradePasswordStateV2toV3(t *testing.T) {
 						return value, nil
 					},
 				)
-
 				if err != nil {
 					t.Fatalf("unexpected error transforming got: %s", err)
 				}
@@ -2940,6 +2932,42 @@ func TestAccResourcePassword_NumericNumberFalse(t *testing.T) {
 					number = false
 				}`,
 				ExpectError: regexp.MustCompile(`At least one attribute out of \[special,upper,lower,numeric\] must be specified((.|\n)*)At least one attribute out of \[special,upper,lower,number\] must be specified`),
+			},
+		},
+	})
+}
+
+func TestAccResourcePassword_MoveFromString(t *testing.T) {
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV5ProviderFactories: protoV5ProviderFactories(),
+		TerraformVersionChecks: []tfversion.TerraformVersionCheck{
+			tfversion.SkipBelow(tfversion.Version1_8_0),
+		},
+		Steps: []resource.TestStep{
+			{
+				Config: `resource "random_string" "test" {
+				  length  = 12
+				  upper   = false
+				  numeric = false
+				  special = false
+				}`,
+			},
+			{
+				Config: `resource "random_password" "test" {
+					  length  = 12
+					  upper   = false
+					  numeric = false
+					  special = false
+					}
+					moved {
+					  from = random_string.test
+					  to   = random_password.test
+					}`,
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectResourceAction("random_password.test", plancheck.ResourceActionNoop),
+					},
+				},
 			},
 		},
 	})

@@ -15,8 +15,10 @@ import (
 	"github.com/hashicorp/terraform-plugin-testing/compare"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/hashicorp/terraform-plugin-testing/knownvalue"
+	"github.com/hashicorp/terraform-plugin-testing/plancheck"
 	"github.com/hashicorp/terraform-plugin-testing/statecheck"
 	"github.com/hashicorp/terraform-plugin-testing/tfjsonpath"
+	"github.com/hashicorp/terraform-plugin-testing/tfversion"
 	"github.com/terraform-providers/terraform-provider-random/internal/randomtest"
 )
 
@@ -1321,6 +1323,42 @@ func TestAccResourceString_UpgradeFromVersion3_3_2(t *testing.T) {
 					statecheck.ExpectKnownValue("random_string.min", tfjsonpath.New("min_upper"), knownvalue.Int64Exact(3)),
 					statecheck.ExpectKnownValue("random_string.min", tfjsonpath.New("min_lower"), knownvalue.Int64Exact(2)),
 					statecheck.ExpectKnownValue("random_string.min", tfjsonpath.New("min_numeric"), knownvalue.Int64Exact(4)),
+				},
+			},
+		},
+	})
+}
+
+func TestAccResourceString_MoveFromPassword(t *testing.T) {
+	resource.ParallelTest(t, resource.TestCase{
+		ProtoV5ProviderFactories: protoV5ProviderFactories(),
+		TerraformVersionChecks: []tfversion.TerraformVersionCheck{
+			tfversion.SkipBelow(tfversion.Version1_8_0),
+		},
+		Steps: []resource.TestStep{
+			{
+				Config: `resource "random_password" "test" {
+				  length  = 12
+				  upper   = false
+				  numeric = false
+				  special = false
+				}`,
+			},
+			{
+				Config: `resource "random_string" "test" {
+				  length  = 12
+				  upper   = false
+				  numeric = false
+				  special = false
+				}
+				moved {
+				  from = random_password.test
+				  to   = random_string.test
+				}`,
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectResourceAction("random_string.test", plancheck.ResourceActionNoop),
+					},
 				},
 			},
 		},
