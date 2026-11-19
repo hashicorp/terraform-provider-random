@@ -1,0 +1,5 @@
+kind: NOTES
+body: Upgrade the Go toolchain to 1.26.10 to address CVE-2026-111943 (GO-2026-6809).
+time: 2026-11-02T10:18:52.000000+01:00
+custom:
+    Issue: "825"
